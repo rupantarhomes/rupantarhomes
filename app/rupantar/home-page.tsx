@@ -1,0 +1,438 @@
+"use client";
+
+import {
+  ArrowRight,
+  Check,
+  CircleDollarSign,
+  ImageUp,
+  Instagram,
+  MapPin,
+  Music2,
+  Phone,
+  Ruler,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  Upload,
+} from "lucide-react";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { categories } from "./data";
+import { categoryIcons, PhotoPlaceholder } from "./shared";
+import type {
+  EstimateForm,
+  Page,
+  QueryForm,
+  Review,
+  SiteSettings,
+  Work,
+} from "./types";
+
+type HomePageProps = {
+  works: Work[];
+  reviews: Review[];
+  settings: SiteSettings;
+  estimate: EstimateForm;
+  setEstimate: Dispatch<SetStateAction<EstimateForm>>;
+  query: QueryForm;
+  setQuery: Dispatch<SetStateAction<QueryForm>>;
+  navigate: (page: Page) => void;
+  onEstimate: () => void;
+  onCategory: (category: string) => void;
+  onWork: (id: string) => void;
+};
+
+const morphWords = ["Spaces", "Kitchens", "Wardrobes", "Ceilings", "Homes", "Interiors"];
+
+export function HomePage({
+  works,
+  reviews,
+  settings,
+  estimate,
+  setEstimate,
+  query,
+  setQuery,
+  navigate,
+  onEstimate,
+  onCategory,
+  onWork,
+}: HomePageProps) {
+  const featured = works.filter((work) => work.featured).slice(0, 3);
+  const [wordIndex, setWordIndex] = useState(0);
+  const [morphing, setMorphing] = useState(false);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setMorphing(true);
+      window.setTimeout(() => {
+        setWordIndex((value) => (value + 1) % morphWords.length);
+        setMorphing(false);
+      }, 320);
+    }, 2600);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  return (
+    <main className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="pt-14 pb-10 sm:pt-20 sm:pb-16 min-h-[30vh] sm:min-h-[56vh] md:min-h-[72vh] grid lg:grid-cols-[1.15fr_0.85fr] gap-6 sm:gap-8 items-start">
+        <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FFF0F2] text-[#FF1A3D] text-[11px] font-semibold tracking-wide uppercase mt-2 sm:mt-0">
+            <Sparkles className="w-3.5 h-3.5" /> Kathmandu
+          </div>
+          <div className="hidden" />
+          <h2 className="font-heading font-semibold text-[22px] sm:text-[26px] leading-tight mt-6 sm:mt-4 text-zinc-800">
+            Transforming{" "}
+            <span
+              id="morph-word"
+              className={`inline-block text-[#FF1A3D] transition-all duration-500 ${morphing ? "morph-out" : "morph-in"}`}
+            >
+              {morphWords[wordIndex]}
+            </span>{" "}
+            <br /> Inspiring Lives
+          </h2>
+          <p className="mt-4 text-[15px] leading-6 text-zinc-600 max-w-[520px]">
+            We craft interiors, kitchens, wardrobes &amp; ceilings from our Kathmandu workshop.
+            Send a photo, get a 3D sample and factory finish installation.
+          </p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <button
+              onClick={onEstimate}
+              className="h-12 px-7 rounded-full bg-[#FF1A3D] text-white font-semibold text-[14px] flex items-center gap-2 shadow-[0_10px_28px_rgba(255,26,61,0.25)] hover:brightness-95 transition"
+            >
+              Start Your Project <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => navigate("works")}
+              className="h-12 px-7 rounded-full bg-white border border-zinc-200 text-zinc-900 font-medium text-[14px] flex items-center gap-2 hover:bg-zinc-50 transition"
+            >
+              View Works
+            </button>
+          </div>
+          <div className="mt-8 flex items-center gap-6 text-[12px] text-zinc-500">
+            {["Site Visit", "3D Design", "Factory Finish"].map((item) => (
+              <span key={item} className="flex items-center gap-1.5">
+                <Check className="w-4 h-4 text-[#FF1A3D]" /> {item}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="relative hidden sm:block">
+          <PhotoPlaceholder aspect="aspect-[16/9]" label="Hero Visual Coming Soon 16:9" />
+          <div className="absolute -bottom-4 -left-4 hidden sm:flex bg-white rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.08)] border border-zinc-100 p-4 gap-3 items-center">
+            <div className="w-11 h-11 rounded-xl bg-[#FFF0F2] text-[#FF1A3D] flex items-center justify-center">
+              <CircleDollarSign className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-[12px] font-semibold">Workshop Direct</div>
+              <div className="text-[11px] text-zinc-500">No middleman pricing</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-4 sm:py-16">
+        <div className="flex items-center justify-between mb-3 sm:mb-7">
+          <h3 className="font-heading text-[18px] sm:text-[30px] font-bold">Recent Works</h3>
+          <button
+            onClick={() => navigate("works")}
+            className="h-9 px-5 rounded-full border border-zinc-200 text-[13px] font-medium hover:bg-zinc-50 flex items-center gap-1.5"
+          >
+            View All <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-5 sm:gap-6">
+          {featured.map((work) => (
+            <article
+              key={work.id}
+              className="group bg-white border border-zinc-100 rounded-[1.5rem] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgba(0,0,0,0.08)] transition"
+            >
+              <div className="p-3">
+                <PhotoPlaceholder />
+              </div>
+              <div className="px-5 pb-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[10px] px-2.5 py-1 rounded-full bg-[#FFF0F2] text-[#FF1A3D] font-semibold uppercase tracking-wide">
+                    {work.category.replace("-", " ")}
+                  </span>
+                  {work.featured && (
+                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-[#FF1A3D] text-white font-semibold">
+                      Featured
+                    </span>
+                  )}
+                </div>
+                <div className="font-heading font-semibold text-[16px] leading-tight">{work.title}</div>
+                <div className="text-[12px] text-zinc-500 mt-1 flex items-center gap-1">
+                  <MapPin className="w-3 h-3" /> {work.location}
+                </div>
+                <div className="text-[13px] text-zinc-600 mt-2.5 leading-5 line-clamp-2">
+                  {work.shortDesc}
+                </div>
+                <button
+                  onClick={() => onWork(work.id)}
+                  className="mt-4 text-[13px] font-semibold flex items-center gap-1 hover:text-[#FF1A3D] transition"
+                >
+                  View Details <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section id="services" className="py-12 sm:py-16 border-t border-zinc-100">
+        <div className="flex items-end justify-between gap-4 mb-8">
+          <div>
+            <div className="text-[11px] tracking-[0.18em] uppercase font-semibold text-[#FF1A3D]">
+              What We Do
+            </div>
+            <h3 className="font-heading text-[28px] sm:text-[32px] font-bold mt-1">
+              Crafted for Nepali Homes
+            </h3>
+          </div>
+          <div className="hidden sm:block text-[13px] text-zinc-500 max-w-[320px] text-right">
+            8 core services from our Kathmandu workshop. Click any card to see works.
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          {categories.map((category) => {
+            const Icon = categoryIcons[category.slug as keyof typeof categoryIcons];
+            return (
+              <button
+                key={category.slug}
+                onClick={() => onCategory(category.slug)}
+                className="text-left group bg-white border border-zinc-100 rounded-[1.5rem] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.06)] hover:border-zinc-200 transition-all"
+              >
+                <div className="w-11 h-11 rounded-2xl bg-[#FFF0F2] text-[#FF1A3D] flex items-center justify-center mb-4 group-hover:scale-105 transition">
+                  <Icon className="w-5 h-5" />
+                </div>
+                <div className="font-heading font-semibold text-[15px] text-zinc-900">{category.name}</div>
+                <div className="text-[12.5px] leading-5 text-zinc-500 mt-1.5 line-clamp-2">
+                  {category.desc}
+                </div>
+                <div className="mt-4 text-[12px] font-medium text-zinc-900 flex items-center gap-1 group-hover:text-[#FF1A3D] transition">
+                  View Works <ArrowRight className="w-3.5 h-3.5" />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <section id="estimate" className="py-12 sm:py-20">
+        <div className="rounded-[2rem] bg-zinc-900 text-white overflow-hidden grid lg:grid-cols-[0.9fr_1.1fr] relative">
+          <div className="p-7 sm:p-10 lg:p-12">
+            <div className="inline-flex px-3 py-1 rounded-full bg-white/10 text-[11px] tracking-wide font-medium">
+              Dedicated Estimate
+            </div>
+            <h3 className="font-heading text-[28px] sm:text-[34px] font-bold leading-[1.05] mt-4">
+              Why Upload Your <span className="text-[#FF1A3D]">Space Photo?</span>
+            </h3>
+            <ul className="mt-8 space-y-5">
+              {[
+                { title: "Accurate Quote in 2 Hours", desc: "We measure from your photos & video, no guesswork." },
+                { title: "Free 3D Preview", desc: "See materials, colors and lights before fabrication." },
+                { title: "Workshop Visit Sample", desc: "Touch laminates, ply and hardware at Kathmandu." },
+              ].map((item) => (
+                <li key={item.title} className="flex gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-[#FF1A3D] flex items-center justify-center shrink-0 mt-0.5">
+                    <Check className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-[14px]">{item.title}</div>
+                    <div className="text-[12.5px] text-zinc-400 mt-1 leading-5">{item.desc}</div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-10 p-4 rounded-2xl bg-white/5 border border-white/10 flex gap-3 items-start">
+              <ImageUp className="w-5 h-5 text-[#FF1A3D] mt-0.5" />
+              <div className="text-[12px] leading-5 text-zinc-300">
+                Tip: Upload 3-4 photos – wide angle, close-up of wall, floor measurement if possible. We
+                respond on WhatsApp same day.
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white text-zinc-900 p-6 sm:p-8 lg:p-10 rounded-t-[2rem] lg:rounded-l-none lg:rounded-r-[2rem] rounded-b-[2rem] lg:rounded-bl-none m-2 lg:m-0">
+            <div className="flex items-center justify-between mb-6">
+              <h4 className="font-heading font-bold text-[18px]">Send Estimate Request</h4>
+              <span className="text-[11px] px-2.5 py-1 rounded-full bg-[#FFF0F2] text-[#FF1A3D] font-semibold">
+                WhatsApp Fast Reply
+              </span>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <input
+                value={estimate.name}
+                onChange={(event) => setEstimate((value) => ({ ...value, name: event.target.value }))}
+                placeholder="Full Name"
+                className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] focus:ring-2 focus:ring-[#FF1A3D]/10"
+              />
+              <input
+                value={estimate.phone}
+                onChange={(event) => setEstimate((value) => ({ ...value, phone: event.target.value }))}
+                placeholder="Phone 9745xxxxxx"
+                className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] focus:ring-2 focus:ring-[#FF1A3D]/10"
+              />
+              <input
+                value={estimate.location}
+                onChange={(event) => setEstimate((value) => ({ ...value, location: event.target.value }))}
+                placeholder="Location e.g. Kathmandu"
+                className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] focus:ring-2 focus:ring-[#FF1A3D]/10 sm:col-span-2"
+              />
+              <select
+                value={estimate.category}
+                onChange={(event) => setEstimate((value) => ({ ...value, category: event.target.value }))}
+                className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] bg-white outline-none focus:border-[#FF1A3D]"
+              >
+                {categories.map((category) => (
+                  <option key={category.slug} value={category.slug}>{category.name}</option>
+                ))}
+              </select>
+              <input
+                value={estimate.size}
+                onChange={(event) => setEstimate((value) => ({ ...value, size: event.target.value }))}
+                placeholder="Approx Size (e.g. 10x12 ft)"
+                className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]"
+              />
+              <input
+                value={estimate.material}
+                onChange={(event) => setEstimate((value) => ({ ...value, material: event.target.value }))}
+                placeholder="Material Preference"
+                className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] sm:col-span-2"
+              />
+              <div className="sm:col-span-2 border-2 border-dashed border-zinc-200 rounded-2xl p-5 flex flex-col items-center justify-center text-zinc-400 gap-2 hover:border-[#FF1A3D]/30 transition cursor-pointer">
+                <Upload className="w-6 h-6" />
+                <span className="text-[12px] font-medium">Drag &amp; Drop Photo or Click to Upload</span>
+                <span className="text-[11px]">JPG, PNG up to 10MB</span>
+              </div>
+              <textarea
+                value={estimate.message}
+                onChange={(event) => setEstimate((value) => ({ ...value, message: event.target.value }))}
+                placeholder="Message / Requirements"
+                rows={3}
+                className="sm:col-span-2 w-full px-4 py-3 rounded-2xl border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] resize-none"
+              />
+            </div>
+            <button
+              onClick={() => window.alert(`Estimate Request JSON:\n${JSON.stringify(estimate, null, 2)}\n\nTODO: Send to WhatsApp 9745941799`)}
+              className="mt-6 w-full h-12 rounded-full bg-[#FF1A3D] text-white font-semibold text-[14px] flex items-center justify-center gap-2 hover:brightness-95 transition"
+            >
+              Send Estimate Request <ArrowRight className="w-4 h-4" />
+            </button>
+            <div className="mt-3 text-[11px] text-zinc-500 text-center">We reply within 2 hours • No spam</div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-12 sm:py-16 bg-zinc-50 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 rounded-[2rem]">
+        <div className="max-w-[1280px] mx-auto">
+          <div className="text-center max-w-[640px] mx-auto">
+            <h3 className="font-heading text-[26px] sm:text-[30px] font-bold">How We Work</h3>
+            <p className="text-[14px] text-zinc-500 mt-2">Transparent 3-step process from photo to final handover.</p>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-5 sm:gap-6 mt-10">
+            {[
+              { step: "01", icon: ImageUp, title: "Send Photo", desc: "Share site photos, video & measurements on WhatsApp. Get instant budget range." },
+              { step: "02", icon: Ruler, title: "Home Visit, Samples & 3D", desc: "We visit, show laminates, ply, handles. You get 3D design & final quote." },
+              { step: "03", icon: ShieldCheck, title: "Fabrication & Install", desc: "Factory finish at Kathmandu workshop. Clean install in 7-21 days." },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.step} className="bg-white rounded-[1.5rem] border border-zinc-100 p-6 shadow-[0_6px_24px_rgba(0,0,0,0.04)]">
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="w-11 h-11 rounded-2xl bg-zinc-900 text-white flex items-center justify-center"><Icon className="w-5 h-5" /></div>
+                    <span className="font-heading font-bold text-[28px] text-zinc-200">{item.step}</span>
+                  </div>
+                  <div className="font-heading font-semibold text-[16px]">{item.title}</div>
+                  <div className="text-[13px] leading-6 text-zinc-600 mt-2">{item.desc}</div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-8 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-zinc-200 text-[12px] text-zinc-600">
+              <MapPin className="w-4 h-4 text-[#FF1A3D]" /> Workshop by appointment – Kathmandu, Nepal
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-12 sm:py-16">
+        <div className="flex items-end justify-between mb-7">
+          <div>
+            <div className="text-[11px] tracking-[0.18em] uppercase font-semibold text-[#FF1A3D]">Client Reviews</div>
+            <h3 className="font-heading text-[26px] sm:text-[30px] font-bold mt-1">Real Homes, Real Reviews</h3>
+          </div>
+          <div className="hidden sm:flex items-center gap-1 text-[12px] font-medium">
+            <Star className="w-4 h-4 fill-[#FF1A3D] text-[#FF1A3D]" /> 4.9 average from 80+ homes
+          </div>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          {reviews.map((review) => (
+            <div key={review.id} className="rounded-[1.5rem] border border-zinc-100 p-5 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+              <div className="hidden" />
+              <div className="flex gap-0.5 mb-2">
+                {Array.from({ length: review.rating }).map((_, index) => (
+                  <Star key={index} className="w-3.5 h-3.5 fill-[#FF1A3D] text-[#FF1A3D]" />
+                ))}
+              </div>
+              <div className="text-[13px] leading-5 text-zinc-700 line-clamp-4">“{review.message}”</div>
+              <div className="mt-4 flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-zinc-900 text-white flex items-center justify-center text-[11px] font-semibold">{review.name[0]}</div>
+                <div>
+                  <div className="text-[12px] font-semibold leading-none">{review.name}</div>
+                  <div className="text-[11px] text-zinc-500 mt-1">{review.location}</div>
+                </div>
+              </div>
+              <a
+                href={review.instagramLink || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex h-7 px-3 rounded-full bg-[#FFF0F2] text-[#FF1A3D] text-[11px] font-medium items-center hover:bg-[#FF1A3D] hover:text-white transition"
+              >
+                View Review →
+              </a>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="py-10 sm:py-12">
+        <div className="rounded-[2rem] bg-[#FFF0F2] border border-[#FF1A3D]/10 p-7 sm:p-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+          <div>
+            <h3 className="font-heading text-[22px] sm:text-[24px] font-bold">Connect With Us</h3>
+            <p className="text-[13px] text-zinc-600 mt-1.5 max-w-[420px]">Daily site updates, before-after reels and material tips. Follow Rupantar Homes on Instagram &amp; TikTok.</p>
+          </div>
+          <div className="flex gap-3">
+            <a href={settings.instagram} target="_blank" rel="noopener noreferrer" className="h-11 px-6 rounded-full bg-white border border-zinc-200 text-[13px] font-medium flex items-center gap-2 hover:border-[#FF1A3D]/30 transition"><Instagram className="w-4 h-4" /> Instagram</a>
+            <a href={settings.tiktok} target="_blank" rel="noopener noreferrer" className="h-11 px-6 rounded-full bg-zinc-900 text-white text-[13px] font-medium flex items-center gap-2 hover:opacity-90 transition"><Music2 className="w-4 h-4" /> TikTok</a>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-12 sm:py-16 border-t border-zinc-100">
+        <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-8 sm:gap-10 items-start">
+          <div>
+            <h3 className="font-heading text-[28px] font-bold leading-tight">Have a Query?</h3>
+            <p className="text-[14px] text-zinc-600 mt-3 leading-6 max-w-[380px]">Tell us about your space, budget and timeline. We reply on WhatsApp within 2 hours during work hours.</p>
+            <div className="mt-8 space-y-3">
+              <div className="flex gap-3 text-[13px]"><div className="w-8 h-8 rounded-full bg-[#FFF0F2] text-[#FF1A3D] flex items-center justify-center"><Phone className="w-4 h-4" /></div> 9745941799 – Gokul Kunwar</div>
+              <div className="flex gap-3 text-[13px]"><div className="w-8 h-8 rounded-full bg-zinc-900 text-white flex items-center justify-center"><MapPin className="w-4 h-4" /></div> Kathmandu, Nepal</div>
+            </div>
+          </div>
+          <div className="bg-white border border-zinc-100 rounded-[1.75rem] p-6 sm:p-7 shadow-[0_12px_40px_rgba(0,0,0,0.05)]">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <input value={query.name} onChange={(event) => setQuery((value) => ({ ...value, name: event.target.value }))} placeholder="Your Name" className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]" />
+              <input value={query.phone} onChange={(event) => setQuery((value) => ({ ...value, phone: event.target.value }))} placeholder="Phone" className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]" />
+              <select value={query.category} onChange={(event) => setQuery((value) => ({ ...value, category: event.target.value }))} className="sm:col-span-2 h-11 px-4 rounded-full border border-zinc-200 text-[13px] bg-white outline-none focus:border-[#FF1A3D]">
+                {categories.map((category) => <option key={category.slug} value={category.slug}>{category.name}</option>)}
+              </select>
+              <textarea value={query.message} onChange={(event) => setQuery((value) => ({ ...value, message: event.target.value }))} placeholder="Your message..." rows={4} className="sm:col-span-2 w-full px-4 py-3 rounded-2xl border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] resize-none" />
+              <div className="sm:col-span-2 border border-dashed border-zinc-200 rounded-2xl p-4 flex items-center justify-center gap-2 text-[12px] text-zinc-500 cursor-pointer hover:border-[#FF1A3D]/30"><Upload className="w-4 h-4" /> Attach Photo (optional)</div>
+            </div>
+            <button onClick={() => window.alert(`Query:\n${JSON.stringify(query, null, 2)}`)} className="mt-5 w-full h-12 rounded-full bg-[#FF1A3D] text-white font-semibold text-[14px]">Send Query</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}

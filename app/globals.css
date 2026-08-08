@@ -1,0 +1,85 @@
+@import "./locked-utilities.css";
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  background: #ffffff;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+.font-heading {
+  font-family: "Space Grotesk", sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.hero-h1 {
+  font-family: "Playfair Display", serif !important;
+  font-size: 56px;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+}
+
+@media (max-width: 768px) {
+  .hero-h1 {
+    font-size: 38px !important;
+    line-height: 1.02;
+  }
+}
+
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+#morph-word {
+  display: inline-block;
+  min-width: 95px;
+  will-change: transform, opacity, filter;
+  transition:
+    transform 0.55s cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 0.4s ease,
+    filter 0.55s ease;
+}
+
+.morph-out {
+  transform: translateY(-18px);
+  opacity: 0;
+  filter: blur(6px);
+}
+
+.morph-in {
+  transform: translateY(0);
+  opacity: 1;
+  filter: blur(0);
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
