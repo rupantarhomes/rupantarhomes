@@ -3,5 +3,14 @@
   "name": "rupantar-homes",
   "pages_build_output_dir": "./dist",
   "compatibility_date": "2026-08-08",
-  "compatibility_flags": ["nodejs_compat"]
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "VITE_SUPABASE_URL": "https://gmtdqeskyvdvyibccxwt.supabase.co",
+    "VITE_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_RdT2JC1U6Im3VKobzFzTjg_hy-SWjJo",
+    "SUPABASE_URL": "https://gmtdqeskyvdvyibccxwt.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_RdT2JC1U6Im3VKobzFzTjg_hy-SWjJo",
+    "CLOUDINARY_CLOUD_NAME": "lkln9llc",
+    "CLOUDINARY_API_KEY": "144277162759167",
+    "CLOUDINARY_UPLOAD_PRESET": "rupantar_works_signed"
+  }
 }
