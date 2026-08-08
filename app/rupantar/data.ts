@@ -71,6 +71,7 @@ export const initialWorks: Work[] = [
     longDesc:
       "A complete transformation of a 3BHK apartment in Kathmandu. We focused on warm neutrals, fluted panels, hidden storage and layered lighting. The client wanted a calm, clutter-free home that still feels lived-in. Delivered in 22 days with factory-finished modular elements fabricated at our workshop.",
     featured: true,
+    images: [],
   },
   {
     id: "w2",
@@ -82,6 +83,7 @@ export const initialWorks: Work[] = [
     longDesc:
       "L-shaped kitchen with tall unit, built-in chimney space and corner optimization. Materials: BWR ply, Hettich hinges, quartz countertop. Includes under-cabinet lights and cutlery organizers. Designed after detailed site measurement and 3D visualization.",
     featured: true,
+    images: [],
   },
   {
     id: "w3",
@@ -93,6 +95,7 @@ export const initialWorks: Work[] = [
     longDesc:
       "A sleek floating TV cabinet designed to hide wiring and add depth to the living wall. Combination of sintered stone, laminate and open display niches. Integrated warm LED strip adds a premium floating effect in the evening.",
     featured: true,
+    images: [],
   },
   {
     id: "w4",
@@ -104,6 +107,7 @@ export const initialWorks: Work[] = [
     longDesc:
       "Custom 10ft wardrobe with soft-close sliding doors, internal drawers, and loft box. Optimized for a compact bedroom, maximizing vertical storage without making the room feel heavy.",
     featured: false,
+    images: [],
   },
   {
     id: "w5",
@@ -115,6 +119,7 @@ export const initialWorks: Work[] = [
     longDesc:
       "Upholstered hydraulic bed with premium fabric, teakwood legs and high-capacity storage. Hydraulic mechanism tested for 50k cycles. Paired with matching side tables.",
     featured: false,
+    images: [],
   },
   {
     id: "w6",
@@ -126,6 +131,7 @@ export const initialWorks: Work[] = [
     longDesc:
       "Contemporary gypsum false ceiling featuring layered cove, hidden profile lights and magnetic track system. Adds height and drama while concealing wiring and providing soft ambient lighting.",
     featured: false,
+    images: [],
   },
 ];
 
@@ -201,6 +207,7 @@ export const emptyWork: WorkForm = {
   shortDesc: "",
   longDesc: "",
   featured: false,
+  images: [],
 };
 
 export const emptyReview: ReviewForm = {

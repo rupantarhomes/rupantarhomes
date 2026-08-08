@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { categories } from "./data";
-import { categoryIcons, PhotoPlaceholder } from "./shared";
+import { categoryIcons, PhotoPlaceholder, WorkPhoto } from "./shared";
 import type {
   EstimateForm,
   Page,
@@ -39,6 +39,10 @@ type HomePageProps = {
   onEstimate: () => void;
   onCategory: (category: string) => void;
   onWork: (id: string) => void;
+  onSubmitEstimate: () => Promise<void>;
+  onSubmitQuery: () => Promise<void>;
+  estimateBusy: boolean;
+  queryBusy: boolean;
 };
 
 const morphWords = ["Spaces", "Kitchens", "Wardrobes", "Ceilings", "Homes", "Interiors"];
@@ -55,6 +59,10 @@ export function HomePage({
   onEstimate,
   onCategory,
   onWork,
+  onSubmitEstimate,
+  onSubmitQuery,
+  estimateBusy,
+  queryBusy,
 }: HomePageProps) {
   const featured = works.filter((work) => work.featured).slice(0, 3);
   const [wordIndex, setWordIndex] = useState(0);
@@ -146,7 +154,7 @@ export function HomePage({
               className="group bg-white border border-zinc-100 rounded-[1.5rem] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgba(0,0,0,0.08)] transition"
             >
               <div className="p-3">
-                <PhotoPlaceholder />
+                <WorkPhoto image={work.images[0]} alt={work.title} />
               </div>
               <div className="px-5 pb-5">
                 <div className="flex items-center gap-2 mb-2">
@@ -313,10 +321,11 @@ export function HomePage({
               />
             </div>
             <button
-              onClick={() => window.alert(`Estimate Request JSON:\n${JSON.stringify(estimate, null, 2)}\n\nTODO: Send to WhatsApp 9745941799`)}
-              className="mt-6 w-full h-12 rounded-full bg-[#FF1A3D] text-white font-semibold text-[14px] flex items-center justify-center gap-2 hover:brightness-95 transition"
+              onClick={onSubmitEstimate}
+              disabled={estimateBusy}
+              className="mt-6 w-full h-12 rounded-full bg-[#FF1A3D] text-white font-semibold text-[14px] flex items-center justify-center gap-2 hover:brightness-95 transition disabled:opacity-60"
             >
-              Send Estimate Request <ArrowRight className="w-4 h-4" />
+              {estimateBusy ? "Sending..." : "Send Estimate Request"} <ArrowRight className="w-4 h-4" />
             </button>
             <div className="mt-3 text-[11px] text-zinc-500 text-center">We reply within 2 hours • No spam</div>
           </div>
@@ -350,7 +359,7 @@ export function HomePage({
           </div>
           <div className="mt-8 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-zinc-200 text-[12px] text-zinc-600">
-              <MapPin className="w-4 h-4 text-[#FF1A3D]" /> Workshop by appointment – Kathmandu, Nepal
+              <MapPin className="w-4 h-4 text-[#FF1A3D]" /> {settings.workshopNote} – {settings.address}
             </div>
           </div>
         </div>
@@ -415,8 +424,8 @@ export function HomePage({
             <h3 className="font-heading text-[28px] font-bold leading-tight">Have a Query?</h3>
             <p className="text-[14px] text-zinc-600 mt-3 leading-6 max-w-[380px]">Tell us about your space, budget and timeline. We reply on WhatsApp within 2 hours during work hours.</p>
             <div className="mt-8 space-y-3">
-              <div className="flex gap-3 text-[13px]"><div className="w-8 h-8 rounded-full bg-[#FFF0F2] text-[#FF1A3D] flex items-center justify-center"><Phone className="w-4 h-4" /></div> 9745941799 – Gokul Kunwar</div>
-              <div className="flex gap-3 text-[13px]"><div className="w-8 h-8 rounded-full bg-zinc-900 text-white flex items-center justify-center"><MapPin className="w-4 h-4" /></div> Kathmandu, Nepal</div>
+              <div className="flex gap-3 text-[13px]"><div className="w-8 h-8 rounded-full bg-[#FFF0F2] text-[#FF1A3D] flex items-center justify-center"><Phone className="w-4 h-4" /></div> {settings.phone} – Gokul Kunwar</div>
+              <div className="flex gap-3 text-[13px]"><div className="w-8 h-8 rounded-full bg-zinc-900 text-white flex items-center justify-center"><MapPin className="w-4 h-4" /></div> {settings.address}</div>
             </div>
           </div>
           <div className="bg-white border border-zinc-100 rounded-[1.75rem] p-6 sm:p-7 shadow-[0_12px_40px_rgba(0,0,0,0.05)]">
@@ -429,7 +438,7 @@ export function HomePage({
               <textarea value={query.message} onChange={(event) => setQuery((value) => ({ ...value, message: event.target.value }))} placeholder="Your message..." rows={4} className="sm:col-span-2 w-full px-4 py-3 rounded-2xl border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] resize-none" />
               <div className="sm:col-span-2 border border-dashed border-zinc-200 rounded-2xl p-4 flex items-center justify-center gap-2 text-[12px] text-zinc-500 cursor-pointer hover:border-[#FF1A3D]/30"><Upload className="w-4 h-4" /> Attach Photo (optional)</div>
             </div>
-            <button onClick={() => window.alert(`Query:\n${JSON.stringify(query, null, 2)}`)} className="mt-5 w-full h-12 rounded-full bg-[#FF1A3D] text-white font-semibold text-[14px]">Send Query</button>
+            <button disabled={queryBusy} onClick={onSubmitQuery} className="mt-5 w-full h-12 rounded-full bg-[#FF1A3D] text-white font-semibold text-[14px] disabled:opacity-60">{queryBusy ? "Sending..." : "Send Query"}</button>
           </div>
         </div>
       </section>

@@ -1,0 +1,7 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "rupantar-homes",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-08-09",
+  "compatibility_flags": ["nodejs_compat"]
+}

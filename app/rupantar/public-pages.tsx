@@ -2,8 +2,8 @@
 
 import { ArrowLeft, ArrowRight, Check, MapPin } from "lucide-react";
 import { brandAssets, categories } from "./data";
-import { PhotoPlaceholder } from "./shared";
-import type { Page, Work } from "./types";
+import { PhotoPlaceholder, WorkPhoto } from "./shared";
+import type { Page, SiteSettings, Work } from "./types";
 
 export function WorksPage({
   works,
@@ -76,7 +76,7 @@ export function WorksPage({
             className="group cursor-pointer bg-white border border-zinc-100 rounded-[1.5rem] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgba(0,0,0,0.08)] transition"
           >
             <div className="p-3">
-              <PhotoPlaceholder />
+              <WorkPhoto image={work.images[0]} alt={work.title} />
             </div>
             <div className="px-5 pb-5">
               <div className="flex items-center gap-2 mb-2">
@@ -154,11 +154,11 @@ export function WorkDetailPage({
             {work.title}
           </h1>
           <div className="mt-6">
-            <PhotoPlaceholder aspect="aspect-[16/10]" label="Main Gallery Photo Coming Soon" />
+            <WorkPhoto image={work.images[0]} alt={work.title} aspect="aspect-[16/10]" label="Main Gallery Photo Coming Soon" eager />
           </div>
           <div className="grid grid-cols-4 gap-3 mt-3">
-            {[1, 2, 3, 4].map((number) => (
-              <PhotoPlaceholder key={number} aspect="aspect-square" label={`Thumb ${number}`} />
+            {Array.from({ length: Math.max(4, work.images.length) }, (_, index) => (
+              <WorkPhoto key={work.images[index]?.id ?? `slot-${index}`} image={work.images[index]} alt={`${work.title} ${index + 1}`} aspect="aspect-square" label={`Thumb ${index + 1}`} />
             ))}
           </div>
         </div>
@@ -188,7 +188,7 @@ export function WorkDetailPage({
                   className="w-full text-left flex gap-3 p-3 rounded-2xl border border-zinc-100 hover:border-zinc-200 bg-white transition"
                 >
                   <div className="w-16 h-16 shrink-0">
-                    <PhotoPlaceholder aspect="aspect-square" label="" />
+                    <WorkPhoto image={item.images[0]} alt={item.title} aspect="aspect-square" label="" />
                   </div>
                   <div>
                     <div className="font-medium text-[13px] leading-tight line-clamp-2">{item.title}</div>
@@ -205,7 +205,7 @@ export function WorkDetailPage({
   );
 }
 
-export function AboutPage({ navigate }: { navigate: (page: Page) => void }) {
+export function AboutPage({ navigate, settings }: { navigate: (page: Page) => void; settings: SiteSettings }) {
   return (
     <main className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       <button
@@ -272,7 +272,7 @@ export function AboutPage({ navigate }: { navigate: (page: Page) => void }) {
             <div className="rounded-2xl bg-zinc-900 text-white p-5">
               <div className="font-heading font-semibold">Contact Direct</div>
               <div className="text-[13px] text-zinc-300 mt-1">
-                Gokul Kunwar 9745941799. No middleman, workshop direct pricing and warranty.
+                Gokul Kunwar {settings.phone}. No middleman, workshop direct pricing and warranty.
               </div>
             </div>
           </div>

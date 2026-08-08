@@ -11,17 +11,24 @@ import {
   Star,
   Upload,
 } from "lucide-react";
-import type { Dispatch, SetStateAction } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { brandAssets, categories, emptyWork } from "./data";
-import type { Page, Review, ReviewForm, SiteSettings, Work, WorkForm } from "./types";
+import type { AdminStats, Page, Review, ReviewForm, SiteSettings, Work, WorkForm } from "./types";
 
 export function AdminLogin({
   navigate,
   onLogin,
+  error,
+  busy,
 }: {
   navigate: (page: Page) => void;
-  onLogin: () => void;
+  onLogin: (email: string, password: string) => Promise<void>;
+  error: string;
+  busy: boolean;
 }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   return (
     <div className="min-h-screen bg-[#fbfbfb] flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-[420px] bg-white border border-zinc-100 rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.06)] p-8">
@@ -39,29 +46,44 @@ export function AdminLogin({
             style={{ borderRadius: "12px" }}
           />
           <h2 className="font-heading font-bold text-[22px] mt-4">Admin Login</h2>
-          <p className="text-[12px] text-zinc-500 mt-1">Demo: any email/password works</p>
+          <p className="text-[12px] text-zinc-500 mt-1">Authorized accounts only</p>
         </div>
-        <div className="mt-7 space-y-4">
+        <form
+          className="mt-7 space-y-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void onLogin(email, password);
+          }}
+        >
           <input
             placeholder="Email"
-            defaultValue="admin@rupantar.com"
+            type="email"
+            autoComplete="username"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
             className="w-full h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]"
           />
           <input
             placeholder="Password"
             type="password"
-            defaultValue="admin123"
+            autoComplete="current-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
             className="w-full h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]"
           />
+          {error && <div className="text-[11px] text-[#FF1A3D] text-center" role="alert">{error}</div>}
           <button
-            onClick={onLogin}
+            type="submit"
+            disabled={busy}
             className="w-full h-11 rounded-full bg-[#FF1A3D] text-white font-semibold text-[14px] shadow-[0_8px_20px_rgba(255,26,61,0.25)]"
           >
-            Login
+            {busy ? "Signing in..." : "Login"}
           </button>
-        </div>
+        </form>
         <div className="mt-6 text-[11px] text-zinc-500 text-center">
-          This is a demo admin – no real auth, data lives in memory.
+          Your session is protected by Supabase authentication.
         </div>
       </div>
     </div>
@@ -71,7 +93,7 @@ export function AdminLogin({
 type AdminPortalProps = {
   page: Page;
   navigate: (page: Page) => void;
-  onLogout: () => void;
+  onLogout: () => void | Promise<void>;
   works: Work[];
   workForm: WorkForm;
   setWorkForm: Dispatch<SetStateAction<WorkForm>>;
@@ -80,6 +102,8 @@ type AdminPortalProps = {
   onEditWork: (work: Work) => void;
   onDeleteWork: (id: string) => void;
   onCancelWork: () => void;
+  onUploadImages: (files: File[]) => Promise<void>;
+  uploadingImages: boolean;
   reviews: Review[];
   reviewForm: ReviewForm;
   setReviewForm: Dispatch<SetStateAction<ReviewForm>>;
@@ -87,6 +111,9 @@ type AdminPortalProps = {
   onDeleteReview: (id: string) => void;
   settings: SiteSettings;
   setSettings: Dispatch<SetStateAction<SiteSettings>>;
+  onSaveSettings: () => Promise<void>;
+  adminStats: AdminStats;
+  busy: boolean;
 };
 
 const adminTabs = [
@@ -177,12 +204,12 @@ export function AdminPortal(props: AdminPortalProps) {
   );
 }
 
-function AdminDashboard({ works, navigate }: AdminPortalProps) {
+function AdminDashboard({ works, navigate, adminStats }: AdminPortalProps) {
   const stats = [
     { label: "Total Works", value: works.length, icon: FileText },
     { label: "Featured", value: works.filter((work) => work.featured).length, icon: Star },
-    { label: "Queries", value: 0, icon: MessageCircle },
-    { label: "Estimates", value: 0, icon: FileText },
+    { label: "Queries", value: adminStats.queries, icon: MessageCircle },
+    { label: "Estimates", value: adminStats.estimates, icon: FileText },
   ];
 
   return (
@@ -243,6 +270,9 @@ function AdminWorks({
   onEditWork,
   onDeleteWork,
   onCancelWork,
+  onUploadImages,
+  uploadingImages,
+  busy,
 }: AdminPortalProps) {
   const slugify = (value: string) =>
     value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -278,16 +308,51 @@ function AdminWorks({
             <input value={workForm.shortDesc} onChange={(event) => setWorkForm((value) => ({ ...value, shortDesc: event.target.value }))} placeholder="Short Description" className="w-full h-10 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]" />
             <textarea value={workForm.longDesc} onChange={(event) => setWorkForm((value) => ({ ...value, longDesc: event.target.value }))} placeholder="Long Description" rows={3} className="w-full px-4 py-3 rounded-2xl border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] resize-none" />
             <div className="grid grid-cols-1 gap-3">
-              <div className="border border-dashed border-zinc-200 rounded-2xl p-4 flex flex-col items-center justify-center gap-1.5 text-zinc-400"><Upload className="w-5 h-5" /><span className="text-[11px]">Cover Photo Placeholder</span></div>
+              <label className="border border-dashed border-zinc-200 rounded-2xl p-4 flex flex-col items-center justify-center gap-1.5 text-zinc-400 cursor-pointer hover:border-[#FF1A3D]/40">
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                  multiple
+                  className="hidden"
+                  disabled={uploadingImages}
+                  onChange={(event) => {
+                    const files = Array.from(event.target.files ?? []);
+                    event.target.value = "";
+                    void onUploadImages(files);
+                  }}
+                />
+                <Upload className="w-5 h-5" />
+                <span className="text-[11px]">{uploadingImages ? "Converting and uploading..." : "Upload JPEG / PNG Photos"}</span>
+              </label>
               <div className="grid grid-cols-4 gap-2">
-                {[1, 2, 3, 4].map((number) => <div key={number} className="border border-dashed border-zinc-200 rounded-xl aspect-square flex items-center justify-center text-zinc-300"><ImageIcon className="w-4 h-4" /></div>)}
+                {Array.from({ length: Math.max(4, workForm.images.length) }, (_, index) => {
+                  const image = workForm.images[index];
+                  return image ? (
+                    <div key={image.id} className="relative border border-zinc-200 rounded-xl aspect-square overflow-hidden">
+                      <img src={image.url} alt={image.altText || workForm.title} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        aria-label="Remove image"
+                        onClick={() => setWorkForm((current) => ({
+                          ...current,
+                          images: current.images.filter((_, imageIndex) => imageIndex !== index).map((item, sortOrder) => ({ ...item, sortOrder })),
+                        }))}
+                        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/75 text-white text-[13px] leading-none"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ) : (
+                    <div key={`slot-${index}`} className="border border-dashed border-zinc-200 rounded-xl aspect-square flex items-center justify-center text-zinc-300"><ImageIcon className="w-4 h-4" /></div>
+                  );
+                })}
               </div>
             </div>
             <label className="flex items-center gap-2 text-[13px] mt-1">
               <input type="checkbox" checked={workForm.featured} onChange={(event) => setWorkForm((value) => ({ ...value, featured: event.target.checked }))} className="rounded" /> Featured on Home
             </label>
             <div className="flex gap-2">
-              <button onClick={onSaveWork} className="flex-1 h-10 rounded-full bg-[#FF1A3D] text-white text-[13px] font-semibold">{editingWorkId ? "Update Work" : "Save Work"}</button>
+              <button disabled={busy || uploadingImages} onClick={onSaveWork} className="flex-1 h-10 rounded-full bg-[#FF1A3D] text-white text-[13px] font-semibold disabled:opacity-60">{busy ? "Saving..." : editingWorkId ? "Update Work" : "Save Work"}</button>
               {editingWorkId && <button onClick={onCancelWork} className="h-10 px-4 rounded-full border border-zinc-200 text-[13px]">Cancel</button>}
             </div>
           </div>
@@ -297,7 +362,9 @@ function AdminWorks({
             {works.map((work) => (
               <div key={work.id} className="flex items-center justify-between gap-3 p-3 rounded-2xl border border-zinc-100 hover:border-zinc-200 transition">
                 <div className="flex gap-3 items-center min-w-0">
-                  <div className="w-12 h-12 rounded-xl bg-zinc-50 border border-dashed border-zinc-200 flex items-center justify-center shrink-0"><ImageIcon className="w-4 h-4 text-zinc-400" /></div>
+                  <div className="w-12 h-12 rounded-xl bg-zinc-50 border border-dashed border-zinc-200 flex items-center justify-center shrink-0 overflow-hidden">
+                    {work.images[0] ? <img src={work.images[0].url} alt={work.images[0].altText || work.title} className="w-full h-full object-cover" /> : <ImageIcon className="w-4 h-4 text-zinc-400" />}
+                  </div>
                   <div className="min-w-0">
                     <div className="text-[13px] font-medium truncate max-w-[180px] sm:max-w-[260px]">{work.title}</div>
                     <div className="text-[11px] text-zinc-500 flex items-center gap-1.5">
@@ -320,7 +387,7 @@ function AdminWorks({
   );
 }
 
-function AdminReviews({ reviews, reviewForm, setReviewForm, onSaveReview, onDeleteReview }: AdminPortalProps) {
+function AdminReviews({ reviews, reviewForm, setReviewForm, onSaveReview, onDeleteReview, busy }: AdminPortalProps) {
   return (
     <>
       <h1 className="font-heading text-[22px] font-bold">Manage Reviews</h1>
@@ -338,7 +405,7 @@ function AdminReviews({ reviews, reviewForm, setReviewForm, onSaveReview, onDele
               </select>
             </div>
             <input value={reviewForm.instagramLink || ""} onChange={(event) => setReviewForm((value) => ({ ...value, instagramLink: event.target.value }))} placeholder="Instagram Video Link (paste URL)" className="w-full h-10 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]" />
-            <button onClick={onSaveReview} className="w-full h-10 rounded-full bg-[#FF1A3D] text-white text-[13px] font-semibold">Save Review</button>
+            <button disabled={busy} onClick={onSaveReview} className="w-full h-10 rounded-full bg-[#FF1A3D] text-white text-[13px] font-semibold disabled:opacity-60">{busy ? "Saving..." : "Save Review"}</button>
           </div>
         </div>
         <div className="bg-white border border-zinc-100 rounded-[1.5rem] p-6">
@@ -360,7 +427,7 @@ function AdminReviews({ reviews, reviewForm, setReviewForm, onSaveReview, onDele
   );
 }
 
-function AdminSettings({ settings, setSettings }: AdminPortalProps) {
+function AdminSettings({ settings, setSettings, onSaveSettings, busy }: AdminPortalProps) {
   return (
     <>
       <h1 className="font-heading text-[22px] font-bold">Settings</h1>
@@ -374,7 +441,7 @@ function AdminSettings({ settings, setSettings }: AdminPortalProps) {
           </div>
           <SettingField label="Address" value={settings.address} onChange={(address) => setSettings((value) => ({ ...value, address }))} />
           <SettingField label="Workshop Note" value={settings.workshopNote} onChange={(workshopNote) => setSettings((value) => ({ ...value, workshopNote }))} />
-          <button onClick={() => window.alert(`TODO: Save settings\n${JSON.stringify(settings, null, 2)}`)} className="mt-2 h-11 rounded-full bg-[#FF1A3D] text-white font-semibold text-[13px]">Save Settings</button>
+          <button disabled={busy} onClick={onSaveSettings} className="mt-2 h-11 rounded-full bg-[#FF1A3D] text-white font-semibold text-[13px] disabled:opacity-60">{busy ? "Saving..." : "Save Settings"}</button>
         </div>
       </div>
     </>

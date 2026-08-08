@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { brandAssets, categories } from "./data";
-import type { Page, SiteSettings } from "./types";
+import type { Page, SiteSettings, WorkImage } from "./types";
 
 export const categoryIcons = {
   "interior-designing": PencilRuler,
@@ -55,13 +55,39 @@ export function PhotoPlaceholder({
   );
 }
 
-export function TopBar() {
+export function WorkPhoto({
+  image,
+  alt,
+  aspect = "aspect-[4/3]",
+  label = "Photo Coming Soon",
+  eager = false,
+}: {
+  image?: WorkImage;
+  alt: string;
+  aspect?: string;
+  label?: string;
+  eager?: boolean;
+}) {
+  if (!image) return <PhotoPlaceholder aspect={aspect} label={label} />;
+  return (
+    <div className={`${aspect} w-full rounded-[1.25rem] overflow-hidden bg-[#F8F8F8]`}>
+      <img
+        src={image.url}
+        alt={image.altText || alt}
+        className="w-full h-full object-cover"
+        loading={eager ? "eager" : "lazy"}
+      />
+    </div>
+  );
+}
+
+export function TopBar({ settings }: { settings: SiteSettings }) {
   return (
     <div className="w-full bg-black text-white border-b-[2px] border-[#FF1A3D]">
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 h-[36px] flex items-center justify-between text-[11px] sm:text-xs tracking-wide">
         <div className="flex items-center gap-3 sm:gap-5">
           <span className="hidden sm:flex items-center gap-1.5 opacity-80">
-            <MapPin className="w-3.5 h-3.5" /> Kathmandu, Nepal
+            <MapPin className="w-3.5 h-3.5" /> {settings.address}
           </span>
           <span className="flex sm:hidden items-center gap-1.5 opacity-80">
             Kathmandu Workshop
@@ -70,10 +96,10 @@ export function TopBar() {
         <div className="flex items-center gap-4">
           <span className="hidden" />
           <a
-            href="tel:9745941799"
+            href={`tel:${settings.phone.replace(/[^+\d]/g, "")}`}
             className="flex items-center gap-1.5 font-medium hover:text-[#FF1A3D] transition"
           >
-            <Phone className="w-3.5 h-3.5" /> 9745941799
+            <Phone className="w-3.5 h-3.5" /> {settings.phone}
           </a>
         </div>
       </div>
@@ -240,14 +266,14 @@ export function PublicFooter({
                 Rupantar Homes
               </div>
               <div className="text-[11px] text-zinc-400 mt-1 leading-4">
-                Transforming Spaces Inspiring Lives
+                {settings.slogan}
               </div>
             </div>
           </div>
           <div className="mt-5 text-[13px] text-zinc-300 flex items-center gap-2">
-            <Phone className="w-4 h-4 text-[#FF1A3D]" /> 9745941799
+            <Phone className="w-4 h-4 text-[#FF1A3D]" /> {settings.phone}
           </div>
-          <div className="mt-2 text-[12px] text-zinc-400 leading-5">Kathmandu, Nepal</div>
+          <div className="mt-2 text-[12px] text-zinc-400 leading-5">{settings.address}</div>
         </div>
 
         <div>
@@ -295,8 +321,8 @@ export function PublicFooter({
             Contact
           </div>
           <div className="mt-4 space-y-2 text-[13px] text-zinc-400">
-            <div>Phone: 9745941799</div>
-            <div>Address: Kathmandu, Nepal</div>
+            <div>Phone: {settings.phone}</div>
+            <div>Address: {settings.address}</div>
             <div className="flex gap-2 mt-3">
               <a
                 href={settings.instagram}

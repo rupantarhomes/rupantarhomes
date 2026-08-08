@@ -25,6 +25,19 @@ export type Work = {
   shortDesc: string;
   longDesc: string;
   featured: boolean;
+  images: WorkImage[];
+};
+
+export type WorkImage = {
+  id: string;
+  workId?: string;
+  url: string;
+  publicId: string;
+  altText: string;
+  sortOrder: number;
+  width?: number;
+  height?: number;
+  bytes?: number;
 };
 
 export type Review = {
@@ -43,6 +56,11 @@ export type SiteSettings = {
   tiktok: string;
   address: string;
   workshopNote: string;
+};
+
+export type AdminStats = {
+  queries: number;
+  estimates: number;
 };
 
 export type EstimateForm = {
