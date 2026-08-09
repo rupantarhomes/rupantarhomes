@@ -13,7 +13,7 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
-    "types": ["vite/client", "@cloudflare/workers-types"],
+    "types": ["vite/client"],
     "paths": {
       "@/*": ["./*"]
     }
@@ -22,6 +22,7 @@
     "app/**/*.ts",
     "app/**/*.tsx",
     "functions/**/*.ts",
+    "worker-configuration.d.ts",
     "vite.config.ts",
     "**/*.mts"
   ],

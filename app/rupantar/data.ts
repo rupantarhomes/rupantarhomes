@@ -190,6 +190,7 @@ export const emptyEstimate: EstimateForm = {
   size: "",
   material: "",
   message: "",
+  attachment: null,
 };
 
 export const emptyQuery: QueryForm = {
@@ -197,6 +198,7 @@ export const emptyQuery: QueryForm = {
   phone: "",
   category: "interior-designing",
   message: "",
+  attachment: null,
 };
 
 export const emptyWork: WorkForm = {

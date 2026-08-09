@@ -37,6 +37,10 @@ function messageFrom(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong. Please try again.";
 }
 
+function trimmed(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
 export function RupantarSite() {
   const [page, setPage] = useState<Page>("home");
   const [filter, setFilter] = useState("all");
@@ -98,6 +102,10 @@ export function RupantarSite() {
       setPage("admin-login");
     } else {
       setPage(nextPage);
+      if (nextPage.startsWith("admin-") && nextPage !== "admin-login") {
+        void refreshContent().catch((error) => console.error("Unable to refresh admin content", error));
+        if (nextPage === "admin-dashboard") void refreshAdminStats();
+      }
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -126,6 +134,20 @@ export function RupantarSite() {
 
   const selectedWork = works.find((work) => work.id === selectedWorkId) || works[0];
 
+  const persistedDraftImageIds = () =>
+    new Set(
+      (editingWorkId ? works.find((work) => work.id === editingWorkId)?.images ?? [] : []).map(
+        (image) => image.publicId,
+      ),
+    );
+
+  const draftImagePublicIds = () => {
+    const persisted = persistedDraftImageIds();
+    return (Array.isArray(workForm.images) ? workForm.images : [])
+      .map((image) => image.publicId)
+      .filter((publicId) => publicId && !persisted.has(publicId));
+  };
+
   const handleLogin = async (email: string, password: string) => {
     setLoginBusy(true);
     setLoginError("");
@@ -143,29 +165,72 @@ export function RupantarSite() {
   };
 
   const handleLogout = async () => {
-    await signOutAdmin();
-    setIsAdmin(false);
-    setPage("home");
+    setAdminBusy(true);
+    try {
+      await deleteCloudinaryImages(draftImagePublicIds());
+      await signOutAdmin();
+      setEditingWorkId(null);
+      setWorkForm(emptyWork);
+      setIsAdmin(false);
+      setAdminStats({ queries: 0, estimates: 0 });
+      setPage("home");
+    } catch (error) {
+      window.alert(`Logout stopped: ${messageFrom(error)}`);
+    } finally {
+      setAdminBusy(false);
+    }
   };
 
   const handleSaveWork = async () => {
-    if (!workForm.title.trim() || !workForm.slug.trim()) {
+    const title = trimmed(workForm.title);
+    const slug = trimmed(workForm.slug);
+    if (!title || !slug) {
       window.alert("Title and Slug required");
       return;
     }
 
+    const previous = editingWorkId ? works.find((work) => work.id === editingWorkId) : undefined;
+    const newlyUploaded = draftImagePublicIds();
+    const retained = new Set((Array.isArray(workForm.images) ? workForm.images : []).map((image) => image.publicId));
+    const removed = previous?.images.filter((image) => !retained.has(image.publicId)).map((image) => image.publicId) ?? [];
+
     setAdminBusy(true);
     try {
-      const previous = editingWorkId ? works.find((work) => work.id === editingWorkId) : undefined;
-      await saveWork(workForm, editingWorkId);
-      const retained = new Set(workForm.images.map((image) => image.publicId));
-      const removed = previous?.images.filter((image) => !retained.has(image.publicId)).map((image) => image.publicId) ?? [];
-      if (removed.length) await deleteCloudinaryImages(removed);
+      try {
+        await saveWork(workForm, editingWorkId);
+      } catch (saveError) {
+        try {
+          await deleteCloudinaryImages(newlyUploaded);
+          const cleaned = new Set(newlyUploaded);
+          setWorkForm((current) => ({
+            ...current,
+            images: (Array.isArray(current.images) ? current.images : [])
+              .filter((image) => !cleaned.has(image.publicId))
+              .map((image, sortOrder) => ({ ...image, sortOrder })),
+          }));
+        } catch (cleanupError) {
+          console.error("Unable to clean up images after a failed work save", cleanupError);
+          window.alert(`${messageFrom(saveError)} The new images could not be cleaned up automatically; keep this form open and try saving again.`);
+          return;
+        }
+        window.alert(messageFrom(saveError));
+        return;
+      }
+
       setEditingWorkId(null);
       setWorkForm(emptyWork);
-      await refreshContent();
-    } catch (error) {
-      window.alert(messageFrom(error));
+      try {
+        await refreshContent();
+      } catch (refreshError) {
+        console.error("Work saved but content refresh failed", refreshError);
+        window.alert("The work was saved, but the page could not refresh. Reload the page to see the latest content.");
+      }
+      try {
+        await deleteCloudinaryImages(removed);
+      } catch (cleanupError) {
+        console.error("Work saved but removed Cloudinary images could not be cleaned up", cleanupError);
+        window.alert("The work was saved, but one or more removed images still need Cloudinary cleanup.");
+      }
     } finally {
       setAdminBusy(false);
     }
@@ -188,22 +253,43 @@ export function RupantarSite() {
 
   const handleDeleteWork = async (id: string) => {
     if (!window.confirm("Delete this work?")) return;
-    const work = works.find((item) => item.id === id);
     setAdminBusy(true);
     try {
-      await deleteCloudinaryImages(work?.images.map((image) => image.publicId) ?? []);
-      await deleteWork(id);
-      await refreshContent();
-    } catch (error) {
-      window.alert(messageFrom(error));
+      let deletedImagePublicIds: string[];
+      try {
+        deletedImagePublicIds = await deleteWork(id);
+      } catch (deleteError) {
+        window.alert(messageFrom(deleteError));
+        return;
+      }
+      try {
+        await refreshContent();
+      } catch (refreshError) {
+        console.error("Work deleted but content refresh failed", refreshError);
+        window.alert("The work was deleted, but the page could not refresh. Reload the page to update the list.");
+      }
+      try {
+        await deleteCloudinaryImages(deletedImagePublicIds);
+      } catch (cleanupError) {
+        console.error("Work deleted but Cloudinary cleanup failed", cleanupError);
+        window.alert("The work was deleted from the website, but one or more images still need Cloudinary cleanup.");
+      }
     } finally {
       setAdminBusy(false);
     }
   };
 
-  const cancelWork = () => {
-    setEditingWorkId(null);
-    setWorkForm(emptyWork);
+  const cancelWork = async () => {
+    setAdminBusy(true);
+    try {
+      await deleteCloudinaryImages(draftImagePublicIds());
+      setEditingWorkId(null);
+      setWorkForm(emptyWork);
+    } catch (error) {
+      window.alert(`Cancel stopped: ${messageFrom(error)}`);
+    } finally {
+      setAdminBusy(false);
+    }
   };
 
   const handleUploadImages = async (files: File[]) => {
@@ -213,7 +299,7 @@ export function RupantarSite() {
       const uploaded = await uploadWorkImages(files);
       setWorkForm((current) => ({
         ...current,
-        images: [...current.images, ...uploaded].map((image, index) => ({ ...image, sortOrder: index })),
+        images: [...(Array.isArray(current.images) ? current.images : []), ...uploaded].map((image, index) => ({ ...image, sortOrder: index })),
       }));
     } catch (error) {
       window.alert(messageFrom(error));
@@ -222,8 +308,30 @@ export function RupantarSite() {
     }
   };
 
+  const handleRemoveWorkImage = async (index: number) => {
+    const images = Array.isArray(workForm.images) ? workForm.images : [];
+    const image = images[index];
+    if (!image) return;
+
+    const persisted = persistedDraftImageIds().has(image.publicId);
+    setUploadingImages(true);
+    try {
+      if (!persisted) await deleteCloudinaryImages([image.publicId]);
+      setWorkForm((current) => ({
+        ...current,
+        images: (Array.isArray(current.images) ? current.images : [])
+          .filter((candidate) => candidate.publicId !== image.publicId)
+          .map((candidate, sortOrder) => ({ ...candidate, sortOrder })),
+      }));
+    } catch (error) {
+      window.alert(`Image removal stopped: ${messageFrom(error)}`);
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
   const handleSaveReview = async () => {
-    if (!reviewForm.name.trim() || !reviewForm.message.trim()) {
+    if (!trimmed(reviewForm.name) || !trimmed(reviewForm.message)) {
       window.alert("Name and message required");
       return;
     }
@@ -266,7 +374,7 @@ export function RupantarSite() {
   };
 
   const handleEstimate = async () => {
-    if (!estimate.name.trim() || !estimate.phone.trim()) {
+    if (!trimmed(estimate.name) || !trimmed(estimate.phone)) {
       window.alert("Name and phone required");
       return;
     }
@@ -274,6 +382,7 @@ export function RupantarSite() {
     try {
       await submitEstimate(estimate);
       setEstimate(emptyEstimate);
+      if (isAdmin) await refreshAdminStats();
       window.alert("Estimate request sent successfully.");
     } catch (error) {
       window.alert(messageFrom(error));
@@ -283,7 +392,7 @@ export function RupantarSite() {
   };
 
   const handleQuery = async () => {
-    if (!query.name.trim() || !query.phone.trim()) {
+    if (!trimmed(query.name) || !trimmed(query.phone)) {
       window.alert("Name and phone required");
       return;
     }
@@ -291,6 +400,7 @@ export function RupantarSite() {
     try {
       await submitQuery(query);
       setQuery(emptyQuery);
+      if (isAdmin) await refreshAdminStats();
       window.alert("Query sent successfully.");
     } catch (error) {
       window.alert(messageFrom(error));
@@ -330,6 +440,7 @@ export function RupantarSite() {
         onDeleteWork={handleDeleteWork}
         onCancelWork={cancelWork}
         onUploadImages={handleUploadImages}
+        onRemoveWorkImage={handleRemoveWorkImage}
         uploadingImages={uploadingImages}
         reviews={reviews}
         reviewForm={reviewForm}

@@ -1,4 +1,5 @@
-import { initialReviews, initialSettings, initialWorks } from "./data";
+import { categories, initialReviews, initialSettings, initialWorks } from "./data";
+import type { Tables, TablesInsert } from "./database.types";
 import { getSupabase, isSupabaseConfigured, type Session } from "./supabase";
 import type {
   AdminStats,
@@ -12,95 +13,125 @@ import type {
   WorkImage,
 } from "./types";
 
-type WorkRow = {
-  id: string;
-  title: string;
-  slug: string;
-  category: string;
-  location: string;
-  short_desc: string;
-  long_desc: string;
-  featured: boolean;
-};
+type WorkRow = Pick<
+  Tables<"works">,
+  "id" | "title" | "slug" | "category" | "location" | "short_description" | "long_description" | "featured"
+>;
+type WorkImageRow = Pick<
+  Tables<"work_images">,
+  "id" | "work_id" | "secure_url" | "cloudinary_public_id" | "alt_text" | "sort_order" | "width" | "height" | "byte_size"
+>;
+type ReviewRow = Pick<Tables<"reviews">, "id" | "name" | "location" | "message" | "rating" | "instagram_url">;
+type SettingsRow = Pick<
+  Tables<"site_settings">,
+  "id" | "slogan" | "phone" | "instagram_url" | "tiktok_url" | "address" | "workshop_note"
+>;
 
-type WorkImageRow = {
-  id: string;
-  work_id: string;
-  secure_url: string;
-  cloudinary_public_id: string;
-  alt_text: string | null;
-  sort_order: number;
-  width: number | null;
-  height: number | null;
-  bytes: number | null;
-};
+const allowedCategories = new Set(categories.map((category) => category.slug));
+const maximumPublicMessageLength = 4000;
 
-type ReviewRow = {
-  id: string;
-  name: string;
-  location: string;
-  message: string;
-  rating: number;
-  instagram_link: string | null;
-};
+function text(value: unknown): string {
+  return typeof value === "string" ? value : value == null ? "" : String(value);
+}
 
-type SettingsRow = {
-  slogan: string;
-  phone: string;
-  instagram: string;
-  tiktok: string;
-  address: string;
-  workshop_note: string;
-};
+function trimmed(value: unknown): string {
+  return text(value).trim();
+}
+
+function requiredText(value: unknown, label: string): string {
+  const normalized = trimmed(value);
+  if (!normalized) throw new Error(`${label} is required.`);
+  return normalized;
+}
+
+function publicMessage(value: unknown): string {
+  const normalized = trimmed(value);
+  if (normalized.length > maximumPublicMessageLength) {
+    throw new Error(`Message must be ${maximumPublicMessageLength.toLocaleString()} characters or fewer.`);
+  }
+  return normalized;
+}
+
+function categorySlug(value: unknown): string {
+  const normalized = trimmed(value) || "interior-designing";
+  if (!allowedCategories.has(normalized)) throw new Error("Please select a valid category.");
+  return normalized;
+}
+
+function httpsUrl(value: unknown, label: string, optional = false): string | null {
+  const normalized = trimmed(value);
+  if (!normalized && optional) return null;
+  if (!normalized) throw new Error(`${label} is required.`);
+
+  try {
+    const url = new URL(normalized);
+    if (url.protocol !== "https:" || !url.hostname) throw new Error();
+    return url.toString();
+  } catch {
+    throw new Error(`${label} must be a complete HTTPS URL.`);
+  }
+}
+
+function databaseId(value: unknown, label: string): number {
+  const id = Number(value);
+  if (!Number.isSafeInteger(id) || id <= 0) throw new Error(`Invalid ${label}.`);
+  return id;
+}
+
+function positiveInteger(value: unknown, label: string): number {
+  const number = Number(value);
+  if (!Number.isSafeInteger(number) || number <= 0) throw new Error(`Image ${label} is missing.`);
+  return number;
+}
 
 function mapImage(row: WorkImageRow): WorkImage {
   return {
-    id: row.id,
-    workId: row.work_id,
+    id: text(row.id),
+    workId: text(row.work_id),
     url: row.secure_url,
-    publicId: row.cloudinary_public_id,
-    altText: row.alt_text ?? "",
+    publicId: text(row.cloudinary_public_id),
+    altText: row.alt_text,
     sortOrder: row.sort_order,
-    width: row.width ?? undefined,
-    height: row.height ?? undefined,
-    bytes: row.bytes ?? undefined,
+    width: row.width,
+    height: row.height,
+    bytes: row.byte_size,
   };
 }
 
 function mapWork(row: WorkRow, images: WorkImage[]): Work {
   return {
-    id: row.id,
-    title: row.title,
-    slug: row.slug,
-    category: row.category,
-    location: row.location,
-    shortDesc: row.short_desc,
-    longDesc: row.long_desc,
-    featured: row.featured,
+    id: text(row.id),
+    title: text(row.title),
+    slug: text(row.slug),
+    category: text(row.category) || "interior-designing",
+    location: text(row.location),
+    shortDesc: row.short_description,
+    longDesc: row.long_description,
+    featured: Boolean(row.featured),
     images,
   };
 }
 
 function mapReview(row: ReviewRow): Review {
   return {
-    id: row.id,
+    id: text(row.id),
     name: row.name,
     location: row.location,
     message: row.message,
     rating: row.rating,
-    instagramLink: row.instagram_link ?? "",
+    instagramLink: row.instagram_url ?? "",
   };
 }
 
 function mapSettings(row: SettingsRow | null): SiteSettings {
   if (!row) return initialSettings;
   return {
-    slogan: row.slogan,
-    phone: row.phone,
-    instagram: row.instagram,
-    tiktok: row.tiktok,
-    address: row.address,
-    workshopNote: row.workshop_note,
+    slogan: text(row.slogan),
+    phone: text(row.phone),
+    instagram: text(row.instagram_url),
+    tiktok: text(row.tiktok_url),
+    address: text(row.address),
+    workshopNote: text(row.workshop_note),
   };
 }
 
@@ -115,10 +146,23 @@ export async function loadPublicContent(): Promise<{
 
   const supabase = getSupabase();
   const [worksResult, imagesResult, reviewsResult, settingsResult] = await Promise.all([
-    supabase.from("works").select("*").order("created_at", { ascending: false }),
-    supabase.from("work_images").select("*").order("sort_order", { ascending: true }),
-    supabase.from("reviews").select("*").order("created_at", { ascending: false }),
-    supabase.from("site_settings").select("*").eq("id", 1).maybeSingle(),
+    supabase
+      .from("works")
+      .select("id,title,slug,category,location,short_description,long_description,featured")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("work_images")
+      .select("id,work_id,secure_url,cloudinary_public_id,alt_text,sort_order,width,height,byte_size")
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("reviews")
+      .select("id,name,location,message,rating,instagram_url")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("site_settings")
+      .select("id,slogan,phone,instagram_url,tiktok_url,address,workshop_note")
+      .eq("id", 1)
+      .maybeSingle(),
   ]);
 
   const error = worksResult.error ?? imagesResult.error ?? reviewsResult.error ?? settingsResult.error;
@@ -127,13 +171,14 @@ export async function loadPublicContent(): Promise<{
   const imageRows = (imagesResult.data ?? []) as WorkImageRow[];
   const imagesByWork = new Map<string, WorkImage[]>();
   for (const row of imageRows) {
-    const images = imagesByWork.get(row.work_id) ?? [];
+    const workId = text(row.work_id);
+    const images = imagesByWork.get(workId) ?? [];
     images.push(mapImage(row));
-    imagesByWork.set(row.work_id, images);
+    imagesByWork.set(workId, images);
   }
 
   return {
-    works: ((worksResult.data ?? []) as WorkRow[]).map((row) => mapWork(row, imagesByWork.get(row.id) ?? [])),
+    works: ((worksResult.data ?? []) as WorkRow[]).map((row) => mapWork(row, imagesByWork.get(text(row.id)) ?? [])),
     reviews: ((reviewsResult.data ?? []) as ReviewRow[]).map(mapReview),
     settings: mapSettings((settingsResult.data as SettingsRow | null) ?? null),
   };
@@ -146,8 +191,9 @@ export async function signInAdmin(email: string, password: string): Promise<Sess
 
   const { data: admin, error: adminError } = await supabase
     .from("admin_users")
-    .select("user_id")
+    .select("user_id,is_active")
     .eq("user_id", data.user.id)
+    .eq("is_active", true)
     .maybeSingle();
 
   if (adminError || !admin) {
@@ -167,8 +213,9 @@ export async function getCurrentAdminSession(): Promise<Session | null> {
 
   const { data: admin } = await supabase
     .from("admin_users")
-    .select("user_id")
+    .select("user_id,is_active")
     .eq("user_id", session.user.id)
+    .eq("is_active", true)
     .maybeSingle();
 
   if (!admin) {
@@ -182,106 +229,125 @@ export async function signOutAdmin(): Promise<void> {
   if (isSupabaseConfigured) await getSupabase().auth.signOut();
 }
 
-export async function saveWork(form: WorkForm, editingId: string | null): Promise<void> {
+export async function saveWork(form: WorkForm, editingId: string | null): Promise<string> {
   const supabase = getSupabase();
-  const payload = {
-    title: form.title.trim(),
-    slug: form.slug.trim(),
-    category: form.category,
-    location: form.location.trim() || "Kathmandu",
-    short_desc: form.shortDesc.trim() || "Custom designed space",
-    long_desc: form.longDesc.trim() || "Detailed project description coming soon. Crafted at Rupantar workshop.",
-    featured: form.featured,
-    updated_at: new Date().toISOString(),
-  };
+  const title = trimmed(form.title);
+  const slug = trimmed(form.slug);
+  const images = Array.isArray(form.images) ? form.images : [];
+  const imagePayload = images.map((image) => {
+    const publicId = trimmed(image.publicId);
+    const secureUrl = trimmed(image.url);
+    if (!publicId || !secureUrl) throw new Error("An uploaded image is incomplete. Please upload it again.");
+    return {
+      cloudinary_public_id: publicId,
+      secure_url: secureUrl,
+      alt_text: trimmed(image.altText) || title,
+      width: positiveInteger(image.width, "width"),
+      height: positiveInteger(image.height, "height"),
+      byte_size: positiveInteger(image.bytes, "file size"),
+    };
+  });
 
-  let workId = editingId;
-  if (editingId) {
-    const { error } = await supabase.from("works").update(payload).eq("id", editingId);
-    if (error) throw new Error(error.message);
-  } else {
-    const { data, error } = await supabase.from("works").insert(payload).select("id").single();
-    if (error || !data) throw new Error(error?.message ?? "Unable to save work.");
-    workId = data.id as string;
-  }
-
-  if (!workId) throw new Error("Unable to identify the saved work.");
-  const { error: deleteImagesError } = await supabase.from("work_images").delete().eq("work_id", workId);
-  if (deleteImagesError) throw new Error(deleteImagesError.message);
-
-  if (form.images.length > 0) {
-    const imagePayload = form.images.map((image, index) => ({
-      work_id: workId,
-      cloudinary_public_id: image.publicId,
-      secure_url: image.url,
-      alt_text: image.altText || form.title,
-      sort_order: index,
-      width: image.width ?? null,
-      height: image.height ?? null,
-      bytes: image.bytes ?? null,
-      format: "webp",
-    }));
-    const { error } = await supabase.from("work_images").insert(imagePayload);
-    if (error) throw new Error(error.message);
-  }
+  const { data, error } = await supabase.rpc("save_work_with_images", {
+    p_title: title,
+    p_slug: slug,
+    p_category: trimmed(form.category) || "interior-designing",
+    p_location: trimmed(form.location) || "Kathmandu",
+    p_short_description: trimmed(form.shortDesc) || "Custom designed space",
+    p_long_description: trimmed(form.longDesc) || "Detailed project description coming soon. Crafted at Rupantar workshop.",
+    p_featured: Boolean(form.featured),
+    p_images: imagePayload,
+    p_work_id: editingId ? databaseId(editingId, "work ID") : null,
+  });
+  if (error || data == null) throw new Error(error?.message ?? "The work could not be saved.");
+  return text(data);
 }
 
-export async function deleteWork(id: string): Promise<void> {
-  const { error } = await getSupabase().from("works").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+export async function deleteWork(id: string): Promise<string[]> {
+  const { data, error } = await getSupabase().rpc("delete_work_with_images", {
+    p_work_id: databaseId(id, "work ID"),
+  });
+  if (error || !Array.isArray(data)) throw new Error(error?.message ?? "The work could not be deleted.");
+  return data.map(text).filter(Boolean);
 }
 
 export async function saveReview(form: ReviewForm): Promise<void> {
-  const { error } = await getSupabase().from("reviews").insert({
-    name: form.name.trim(),
-    location: form.location.trim(),
-    message: form.message.trim(),
-    rating: form.rating,
-    instagram_link: form.instagramLink?.trim() || null,
-  });
+  const rating = Number(form.rating);
+  const payload: TablesInsert<"reviews"> = {
+    name: requiredText(form.name, "Review name"),
+    location: trimmed(form.location) || "Kathmandu",
+    message: requiredText(form.message, "Review message"),
+    rating: Number.isInteger(rating) && rating >= 1 && rating <= 5 ? rating : 5,
+    instagram_url: httpsUrl(form.instagramLink, "Instagram link", true),
+  };
+  const { error } = await getSupabase().from("reviews").insert(payload);
   if (error) throw new Error(error.message);
 }
 
 export async function deleteReview(id: string): Promise<void> {
-  const { error } = await getSupabase().from("reviews").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  const { data, error } = await getSupabase().from("reviews").delete().eq("id", databaseId(id, "review ID")).select("id").maybeSingle();
+  if (error || !data) throw new Error(error?.message ?? "The review could not be deleted.");
 }
 
 export async function saveSettings(settings: SiteSettings): Promise<void> {
-  const { error } = await getSupabase().from("site_settings").upsert({
+  const payload: TablesInsert<"site_settings"> = {
     id: 1,
-    slogan: settings.slogan.trim(),
-    phone: settings.phone.trim(),
-    instagram: settings.instagram.trim(),
-    tiktok: settings.tiktok.trim(),
-    address: settings.address.trim(),
-    workshop_note: settings.workshopNote.trim(),
+    slogan: requiredText(settings.slogan, "Slogan"),
+    phone: requiredText(settings.phone, "Phone"),
+    instagram_url: httpsUrl(settings.instagram, "Instagram URL")!,
+    tiktok_url: httpsUrl(settings.tiktok, "TikTok URL")!,
+    address: trimmed(settings.address),
+    workshop_note: trimmed(settings.workshopNote),
     updated_at: new Date().toISOString(),
-  });
-  if (error) throw new Error(error.message);
+  };
+  const { data, error } = await getSupabase().from("site_settings").upsert(payload, { onConflict: "id" }).select("id").single();
+  if (error || !data) throw new Error(error?.message ?? "Settings could not be saved.");
 }
 
 export async function submitEstimate(form: EstimateForm): Promise<void> {
-  const { error } = await getSupabase().from("estimate_requests").insert({
-    name: form.name.trim(),
-    phone: form.phone.trim(),
-    location: form.location.trim(),
-    category: form.category,
-    size: form.size.trim(),
-    material: form.material.trim(),
-    message: form.message.trim(),
-  });
-  if (error) throw new Error(error.message);
+  const payload = {
+    name: requiredText(form.name, "Name"),
+    phone: requiredText(form.phone, "Phone"),
+    location: trimmed(form.location) || "Kathmandu",
+    category: categorySlug(form.category),
+    approximate_size: trimmed(form.size),
+    material_preference: trimmed(form.material),
+    message: publicMessage(form.message),
+  };
+  await submitPublicInquiry("estimate", payload, form.attachment);
 }
 
 export async function submitQuery(form: QueryForm): Promise<void> {
-  const { error } = await getSupabase().from("queries").insert({
-    name: form.name.trim(),
-    phone: form.phone.trim(),
-    category: form.category,
-    message: form.message.trim(),
-  });
-  if (error) throw new Error(error.message);
+  const payload = {
+    name: requiredText(form.name, "Name"),
+    phone: requiredText(form.phone, "Phone"),
+    category: categorySlug(form.category),
+    message: publicMessage(form.message),
+  };
+  await submitPublicInquiry("query", payload, form.attachment);
+}
+
+async function submitPublicInquiry(
+  kind: "query" | "estimate",
+  fields: Record<string, string>,
+  attachment: File | null,
+): Promise<void> {
+  const body = new FormData();
+  body.set("kind", kind);
+  for (const [name, value] of Object.entries(fields)) body.set(name, value);
+  if (attachment) body.set("attachment", attachment, attachment.name);
+
+  const response = await fetch("/api/inquiries", { method: "POST", body });
+  if (response.ok) return;
+
+  let message = "Your request could not be sent. Please try again.";
+  try {
+    const result = (await response.json()) as { error?: unknown };
+    if (typeof result.error === "string" && result.error.trim()) message = result.error;
+  } catch {
+    // Keep the stable public error when the server response is unreadable.
+  }
+  throw new Error(message);
 }
 
 export async function loadAdminStats(): Promise<AdminStats> {

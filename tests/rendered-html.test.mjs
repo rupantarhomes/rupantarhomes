@@ -34,10 +34,11 @@ test("keeps every locked public and admin surface in source components", async (
 });
 
 test("uses Supabase instead of browser-only storage or demo authentication", async () => {
-  const [site, repository, admin] = await Promise.all([
+  const [site, repository, admin, supabase] = await Promise.all([
     read("../app/rupantar/site.tsx"),
     read("../app/rupantar/repository.ts"),
     read("../app/rupantar/admin.tsx"),
+    read("../app/rupantar/supabase.ts"),
   ]);
 
   assert.doesNotMatch(site, /localStorage/);
@@ -46,35 +47,153 @@ test("uses Supabase instead of browser-only storage or demo authentication", asy
   assert.match(repository, /from\("admin_users"\)/);
   assert.match(repository, /from\("work_images"\)/);
   assert.match(repository, /from\("estimate_requests"\)/);
+  assert.match(supabase, /createClient<Database>/);
+});
+
+test("uses only the canonical production column contract", async () => {
+  const repository = await read("../app/rupantar/repository.ts");
+
+  for (const column of [
+    "short_description",
+    "long_description",
+    "byte_size",
+    "instagram_url",
+    "tiktok_url",
+    "approximate_size",
+    "material_preference",
+  ]) {
+    assert.match(repository, new RegExp(`\\b${column}\\b`));
+  }
+
+  assert.doesNotMatch(repository, /\bshort_desc\s*:/);
+  assert.doesNotMatch(repository, /\blong_desc\s*:/);
+  assert.doesNotMatch(repository, /\binstagram_link\s*:/);
+  assert.doesNotMatch(repository, /\bsize\s*:/);
+  assert.doesNotMatch(repository, /\bmaterial\s*:/);
 });
 
 test("keeps Cloudinary secrets server-side and requires admin authorization", async () => {
-  const [clientUpload, signature, deleteFunction, auth] = await Promise.all([
+  const [clientUpload, signature, deleteFunction, cloudinaryHelper, auth, site, admin] = await Promise.all([
     read("../app/rupantar/cloudinary.ts"),
     read("../functions/api/cloudinary-signature.ts"),
     read("../functions/api/cloudinary-delete.ts"),
+    read("../functions/_lib/cloudinary.ts"),
     read("../functions/_lib/admin-auth.ts"),
+    read("../app/rupantar/site.tsx"),
+    read("../app/rupantar/admin.tsx"),
   ]);
 
   assert.doesNotMatch(clientUpload, /CLOUDINARY_API_SECRET/);
+  assert.doesNotMatch(clientUpload, /Promise\.all\(\s*files\.map/);
+  assert.match(clientUpload, /for \(const \[index, file\] of files\.entries\(\)\)/);
+  assert.match(clientUpload, /deleteCloudinaryImages\(uploaded\.map/);
+  assert.match(clientUpload, /format !== "webp"/);
+  assert.match(clientUpload, /Math\.max\(width, height\) > 1920/);
+  assert.match(clientUpload, /index \+= deleteBatchSize/);
   assert.match(signature, /requireAdmin/);
   assert.match(deleteFunction, /requireAdmin/);
   assert.match(signature, /CLOUDINARY_API_SECRET/);
+  assert.match(deleteFunction, /destroyCloudinaryImage/);
+  assert.match(cloudinaryHelper, /body\?\.result === "ok"/);
+  assert.match(cloudinaryHelper, /body\?\.result === "not found"/);
   assert.match(auth, /\/auth\/v1\/user/);
   assert.match(auth, /admin_users/);
+  assert.match(site, /deletedImagePublicIds = await deleteWork\(id\)[\s\S]*await deleteCloudinaryImages\(deletedImagePublicIds\)/);
+  assert.match(site, /draftImagePublicIds/);
+  assert.match(site, /handleRemoveWorkImage/);
+  assert.match(admin, /Math\.max\(4, Array\.isArray\(workForm\.images\) \? workForm\.images\.length : 0\)/);
+  assert.match(admin, /multiple/);
 });
 
-test("defines normalized tables, explicit grants, and RLS", async () => {
-  const sql = await read("../supabase/migrations/20260809000000_rupantar_schema.sql");
+test("saves complete work aggregates through atomic Supabase RPCs", async () => {
+  const [repository, site, sql, databaseTypes] = await Promise.all([
+    read("../app/rupantar/repository.ts"),
+    read("../app/rupantar/site.tsx"),
+    read("../supabase/migrations/20260809200422_atomic_work_crud.sql"),
+    read("../app/rupantar/database.types.ts"),
+  ]);
+
+  const saveStart = repository.indexOf("export async function saveWork");
+  const deleteStart = repository.indexOf("export async function deleteWork");
+  const saveSource = repository.slice(saveStart, deleteStart);
+
+  assert.ok(saveStart >= 0 && deleteStart > saveStart);
+  assert.match(saveSource, /rpc\("save_work_with_images"/);
+  assert.doesNotMatch(saveSource, /\.from\("works"\)|\.from\("work_images"\)/);
+  assert.match(repository, /rpc\("delete_work_with_images"/);
+  assert.match(site, /await saveWork\(workForm, editingWorkId\)[\s\S]*await refreshContent\(\)/);
+  assert.match(site, /deletedImagePublicIds = await deleteWork\(id\)[\s\S]*await refreshContent\(\)/);
+
+  assert.match(sql, /create or replace function public\.save_work_with_images/i);
+  assert.match(sql, /security invoker[\s\S]*set search_path = ''/i);
+  assert.match(sql, /delete from public\.work_images[\s\S]*insert into public\.work_images/i);
+  assert.match(sql, /raise exception[\s\S]*Work was not found or is not writable/i);
+  assert.match(sql, /revoke all on function public\.save_work_with_images[\s\S]*from public, anon, authenticated, service_role/i);
+  assert.match(sql, /grant execute on function public\.save_work_with_images[\s\S]*to authenticated/i);
+  assert.match(sql, /create or replace function public\.delete_work_with_images/i);
+  assert.match(sql, /array_agg\(image\.cloudinary_public_id order by image\.sort_order, image\.id\)/i);
+  assert.match(databaseTypes, /save_work_with_images:/);
+  assert.match(databaseTypes, /delete_work_with_images:/);
+});
+
+test("keeps secondary content flows validated and synchronized", async () => {
+  const [repository, site, home, admin] = await Promise.all([
+    read("../app/rupantar/repository.ts"),
+    read("../app/rupantar/site.tsx"),
+    read("../app/rupantar/home-page.tsx"),
+    read("../app/rupantar/admin.tsx"),
+  ]);
+
+  assert.match(repository, /requiredText\(form\.name, "Review name"\)/);
+  assert.match(repository, /httpsUrl\(form\.instagramLink, "Instagram link", true\)/);
+  assert.match(repository, /httpsUrl\(settings\.instagram, "Instagram URL"\)/);
+  assert.match(repository, /categorySlug\(form\.category\)/);
+  assert.match(repository, /Message must be.*characters or fewer/);
+  assert.match(repository, /select\("id", \{ count: "exact", head: true \}\)/);
+
+  assert.match(site, /nextPage === "admin-dashboard"[\s\S]*refreshAdminStats/);
+  assert.match(site, /await submitEstimate\(estimate\)[\s\S]*if \(isAdmin\) await refreshAdminStats\(\)/);
+  assert.match(site, /await submitQuery\(query\)[\s\S]*if \(isAdmin\) await refreshAdminStats\(\)/);
+  assert.match(site, /await saveReview\(reviewForm\)[\s\S]*await refreshContent\(\)/);
+  assert.match(site, /await saveSettings\(settings\)[\s\S]*await refreshContent\(\)/);
+
+  assert.match(home, /maxLength=\{4000\}/);
+  assert.match(home, /type="file"/);
+  assert.match(home, /accept="image\/jpeg,image\/png,\.jpg,\.jpeg,\.png"/);
+  assert.match(home, /onDragOver/);
+  assert.match(repository, /fetch\("\/api\/inquiries"/);
+  assert.match(admin, /type="url"[\s\S]*Instagram Video Link/);
+  assert.match(admin, /SettingField label="Instagram URL" type="url"/);
+});
+
+test("defines normalized tables, explicit grants, RLS, and a server-only inquiry boundary", async () => {
+  const [sql, inquirySql, inquiryFunction, environment, wrangler] = await Promise.all([
+    read("../supabase/migrations/20260809130140_baseline_and_reconcile_schema.sql"),
+    read("../supabase/migrations/20260809224500_secure_public_inquiries.sql"),
+    read("../functions/api/inquiries.ts"),
+    read("../functions/_lib/env.ts"),
+    read("../wrangler.jsonc"),
+  ]);
 
   for (const table of ["admin_users", "works", "work_images", "reviews", "site_settings", "queries", "estimate_requests"]) {
     assert.match(sql, new RegExp(`alter table public\\.${table} enable row level security`, "i"));
   }
-  assert.match(sql, /work_id uuid not null references public\.works\(id\) on delete cascade/i);
-  assert.match(sql, /public_read_works/i);
-  assert.match(sql, /public_insert_estimate_requests/i);
+  assert.match(sql, /work_id bigint not null references public\.works\(id\) on delete cascade/i);
+  assert.match(sql, /works_public_read/i);
   assert.match(sql, /grant select on table public\.works/i);
-  assert.match(sql, /grant insert on table public\.queries/i);
+  assert.match(inquirySql, /drop policy if exists queries_public_insert/i);
+  assert.match(inquirySql, /revoke insert on table public\.queries, public\.estimate_requests/i);
+  assert.match(inquiryFunction, /requireSameOrigin/);
+  assert.match(inquiryFunction, /PUBLIC_INQUIRY_RATE_LIMITER\.limit/);
+  assert.match(inquiryFunction, /PUBLIC_INQUIRY_GLOBAL_RATE_LIMITER\.limit/);
+  assert.match(inquiryFunction, /verifyImageSignature/);
+  assert.match(inquiryFunction, /result\?\.format !== "webp"/);
+  assert.match(inquiryFunction, /destroyCloudinaryImage/);
+  assert.match(inquiryFunction, /apikey: runtime\.SUPABASE_SECRET_KEY/);
+  assert.doesNotMatch(inquiryFunction, /Authorization:\s*`Bearer \$\{runtime\.SUPABASE_SECRET_KEY/);
+  assert.match(environment, /SUPABASE_SECRET_KEY/);
+  assert.match(wrangler, /"ratelimits"/);
+  assert.match(wrangler, /"observability"/);
 });
 
 test("preserves the supplied HTML as an immutable visual reference", async () => {

@@ -1,18 +1,19 @@
 import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "./database.types";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
 const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabasePublishableKey);
 
-let client: SupabaseClient | null = null;
+let client: SupabaseClient<Database> | null = null;
 
-export function getSupabase(): SupabaseClient {
+export function getSupabase(): SupabaseClient<Database> {
   if (!isSupabaseConfigured) {
     throw new Error("Supabase is not configured for this deployment.");
   }
 
-  client ??= createClient(supabaseUrl!, supabasePublishableKey!, {
+  client ??= createClient<Database>(supabaseUrl!, supabasePublishableKey!, {
     auth: {
       autoRefreshToken: true,
       persistSession: true,

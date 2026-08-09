@@ -10,17 +10,47 @@ type SignatureResponse = {
 };
 
 type UploadResponse = {
-  secure_url?: string;
-  public_id?: string;
-  width?: number;
-  height?: number;
-  bytes?: number;
-  format?: string;
-  error?: { message?: string };
+  secure_url?: unknown;
+  public_id?: unknown;
+  width?: unknown;
+  height?: unknown;
+  bytes?: unknown;
+  format?: unknown;
+  error?: { message?: unknown };
 };
 
 const allowedTypes = new Set(["image/jpeg", "image/png"]);
-const maximumBytes = 15 * 1024 * 1024;
+const maximumBytes = 10 * 1024 * 1024;
+const deleteBatchSize = 20;
+const cloudinaryApiBase = (import.meta.env.VITE_CLOUDINARY_API_BASE || "https://api.cloudinary.com").replace(/\/$/, "");
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function nonEmptyString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function positiveInteger(value: unknown): number | null {
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0 ? value : null;
+}
+
+async function readJson(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+function responseError(body: unknown, fallback: string): string {
+  if (!isRecord(body)) return fallback;
+  const error = body.error;
+  if (typeof error === "string" && error.trim()) return error;
+  if (isRecord(error) && typeof error.message === "string" && error.message.trim()) return error.message;
+  return fallback;
+}
 
 async function adminRequest(path: string, init: RequestInit): Promise<Response> {
   const token = await getAccessToken();
@@ -34,62 +64,134 @@ async function adminRequest(path: string, init: RequestInit): Promise<Response> 
   });
 }
 
+function parseSignature(body: unknown): SignatureResponse {
+  if (!isRecord(body)) throw new Error("The image upload authorization was invalid.");
+  const signature = nonEmptyString(body.signature);
+  const apiKey = nonEmptyString(body.apiKey);
+  const cloudName = nonEmptyString(body.cloudName);
+  const uploadPreset = nonEmptyString(body.uploadPreset);
+  const timestamp = positiveInteger(body.timestamp);
+  if (!signature || !apiKey || !cloudName || !uploadPreset || !timestamp) {
+    throw new Error("The image upload authorization was incomplete.");
+  }
+  if (!/^[a-z0-9_-]+$/i.test(cloudName)) throw new Error("The Cloudinary cloud name was invalid.");
+  return { signature, timestamp, apiKey, cloudName, uploadPreset };
+}
+
+async function requestUploadSignature(): Promise<SignatureResponse> {
+  const response = await adminRequest("/api/cloudinary-signature", { method: "POST", body: "{}" });
+  const body = await readJson(response);
+  if (!response.ok) throw new Error(responseError(body, "Unable to authorize the image upload."));
+  return parseSignature(body);
+}
+
+function validateUploadedImage(uploaded: UploadResponse, signed: SignatureResponse, file: File, sortOrder: number): WorkImage {
+  const secureUrl = nonEmptyString(uploaded.secure_url);
+  const publicId = nonEmptyString(uploaded.public_id);
+  const format = nonEmptyString(uploaded.format)?.toLowerCase();
+  const width = positiveInteger(uploaded.width);
+  const height = positiveInteger(uploaded.height);
+  const bytes = positiveInteger(uploaded.bytes);
+  if (!secureUrl || !publicId) throw new Error(`Cloudinary did not store ${file.name} correctly.`);
+  if (format !== "webp") throw new Error(`${file.name} was not converted to WebP.`);
+  if (!width || !height || !bytes) throw new Error(`${file.name} returned incomplete image details.`);
+  if (Math.max(width, height) > 1920 || Math.min(width, height) > 1080) {
+    throw new Error(`${file.name} was not reduced to the approved 1080p dimensions.`);
+  }
+
+  let url: URL;
+  try {
+    url = new URL(secureUrl);
+  } catch {
+    throw new Error("Cloudinary returned an invalid image URL.");
+  }
+  const expectedPath = `/${signed.cloudName}/image/upload/`;
+  if (url.protocol !== "https:" || url.hostname !== "res.cloudinary.com" || !url.pathname.startsWith(expectedPath)) {
+    throw new Error("Cloudinary returned an image URL outside the approved account.");
+  }
+
+  return {
+    id: crypto.randomUUID(),
+    url: secureUrl,
+    publicId,
+    altText: file.name.replace(/\.[^.]+$/, ""),
+    sortOrder,
+    width,
+    height,
+    bytes,
+  };
+}
+
+async function uploadOne(file: File, sortOrder: number): Promise<WorkImage> {
+  const signed = await requestUploadSignature();
+  const body = new FormData();
+  body.set("file", file);
+  body.set("api_key", signed.apiKey);
+  body.set("timestamp", String(signed.timestamp));
+  body.set("signature", signed.signature);
+  body.set("upload_preset", signed.uploadPreset);
+
+  const response = await fetch(`${cloudinaryApiBase}/v1_1/${encodeURIComponent(signed.cloudName)}/image/upload`, {
+    method: "POST",
+    body,
+  });
+  const uploaded = (await readJson(response)) as UploadResponse | null;
+  if (!response.ok || !uploaded || uploaded.error) {
+    throw new Error(responseError(uploaded, `Unable to upload ${file.name}.`));
+  }
+
+  try {
+    return validateUploadedImage(uploaded, signed, file, sortOrder);
+  } catch (error) {
+    const publicId = nonEmptyString(uploaded.public_id);
+    if (publicId) {
+      try {
+        await deleteCloudinaryImages([publicId]);
+      } catch (cleanupError) {
+        console.error("Unable to clean up a rejected Cloudinary upload", cleanupError);
+      }
+    }
+    throw error;
+  }
+}
+
 export async function uploadWorkImages(files: File[]): Promise<WorkImage[]> {
   for (const file of files) {
     if (!allowedTypes.has(file.type)) throw new Error(`${file.name} must be a JPEG or PNG image.`);
-    if (file.size > maximumBytes) throw new Error(`${file.name} is larger than 15MB.`);
+    if (file.size <= 0) throw new Error(`${file.name} is empty.`);
+    if (file.size > maximumBytes) throw new Error(`${file.name} is larger than Cloudinary's 10MB image limit.`);
   }
 
-  const signatureResponse = await adminRequest("/api/cloudinary-signature", {
-    method: "POST",
-    body: "{}",
-  });
-  if (!signatureResponse.ok) throw new Error("Unable to authorize the image upload.");
-  const signed = (await signatureResponse.json()) as SignatureResponse;
-
-  return Promise.all(
-    files.map(async (file, index) => {
-      const body = new FormData();
-      body.set("file", file);
-      body.set("api_key", signed.apiKey);
-      body.set("timestamp", String(signed.timestamp));
-      body.set("signature", signed.signature);
-      body.set("upload_preset", signed.uploadPreset);
-
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${encodeURIComponent(signed.cloudName)}/image/upload`, {
-        method: "POST",
-        body,
-      });
-      const uploaded = (await response.json()) as UploadResponse;
-      if (!response.ok || uploaded.error || !uploaded.secure_url || !uploaded.public_id) {
-        throw new Error(uploaded.error?.message ?? `Unable to upload ${file.name}.`);
-      }
-      if (uploaded.format !== "webp") throw new Error(`${file.name} was not converted to WebP.`);
-
-      const url = new URL(uploaded.secure_url);
-      if (url.protocol !== "https:" || url.hostname !== "res.cloudinary.com") {
-        throw new Error("Cloudinary returned an invalid image URL.");
-      }
-
-      return {
-        id: crypto.randomUUID(),
-        url: uploaded.secure_url,
-        publicId: uploaded.public_id,
-        altText: file.name.replace(/\.[^.]+$/, ""),
-        sortOrder: index,
-        width: uploaded.width,
-        height: uploaded.height,
-        bytes: uploaded.bytes,
-      };
-    }),
-  );
+  const uploaded: WorkImage[] = [];
+  try {
+    for (const [index, file] of files.entries()) {
+      uploaded.push(await uploadOne(file, index));
+    }
+    return uploaded;
+  } catch (uploadError) {
+    try {
+      await deleteCloudinaryImages(uploaded.map((image) => image.publicId));
+    } catch (cleanupError) {
+      console.error("Unable to roll back a partially completed Cloudinary upload", cleanupError);
+      throw new Error(`${uploadError instanceof Error ? uploadError.message : "Image upload failed."} Some uploaded images may need manual cleanup.`);
+    }
+    throw uploadError;
+  }
 }
 
 export async function deleteCloudinaryImages(publicIds: string[]): Promise<void> {
-  if (publicIds.length === 0) return;
-  const response = await adminRequest("/api/cloudinary-delete", {
-    method: "POST",
-    body: JSON.stringify({ publicIds }),
-  });
-  if (!response.ok) throw new Error("The work was not deleted because its stored images could not be removed.");
+  const normalized = Array.from(
+    new Set(publicIds.map((publicId) => publicId.trim()).filter((publicId) => publicId.length > 0 && publicId.length <= 255)),
+  );
+  for (let index = 0; index < normalized.length; index += deleteBatchSize) {
+    const batch = normalized.slice(index, index + deleteBatchSize);
+    const response = await adminRequest("/api/cloudinary-delete", {
+      method: "POST",
+      body: JSON.stringify({ publicIds: batch }),
+    });
+    const body = await readJson(response);
+    if (!response.ok) {
+      throw new Error(responseError(body, "The stored images could not be removed from Cloudinary."));
+    }
+  }
 }

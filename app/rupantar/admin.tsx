@@ -98,11 +98,12 @@ type AdminPortalProps = {
   workForm: WorkForm;
   setWorkForm: Dispatch<SetStateAction<WorkForm>>;
   editingWorkId: string | null;
-  onSaveWork: () => void;
+  onSaveWork: () => void | Promise<void>;
   onEditWork: (work: Work) => void;
-  onDeleteWork: (id: string) => void;
-  onCancelWork: () => void;
+  onDeleteWork: (id: string) => void | Promise<void>;
+  onCancelWork: () => void | Promise<void>;
   onUploadImages: (files: File[]) => Promise<void>;
+  onRemoveWorkImage: (index: number) => Promise<void>;
   uploadingImages: boolean;
   reviews: Review[];
   reviewForm: ReviewForm;
@@ -271,11 +272,12 @@ function AdminWorks({
   onDeleteWork,
   onCancelWork,
   onUploadImages,
+  onRemoveWorkImage,
   uploadingImages,
   busy,
 }: AdminPortalProps) {
-  const slugify = (value: string) =>
-    value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  const slugify = (value: string | null | undefined) =>
+    (value ?? "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
   return (
     <>
@@ -325,18 +327,16 @@ function AdminWorks({
                 <span className="text-[11px]">{uploadingImages ? "Converting and uploading..." : "Upload JPEG / PNG Photos"}</span>
               </label>
               <div className="grid grid-cols-4 gap-2">
-                {Array.from({ length: Math.max(4, workForm.images.length) }, (_, index) => {
-                  const image = workForm.images[index];
+                {Array.from({ length: Math.max(4, Array.isArray(workForm.images) ? workForm.images.length : 0) }, (_, index) => {
+                  const image = Array.isArray(workForm.images) ? workForm.images[index] : undefined;
                   return image ? (
                     <div key={image.id} className="relative border border-zinc-200 rounded-xl aspect-square overflow-hidden">
                       <img src={image.url} alt={image.altText || workForm.title} className="w-full h-full object-cover" />
                       <button
                         type="button"
                         aria-label="Remove image"
-                        onClick={() => setWorkForm((current) => ({
-                          ...current,
-                          images: current.images.filter((_, imageIndex) => imageIndex !== index).map((item, sortOrder) => ({ ...item, sortOrder })),
-                        }))}
+                        disabled={busy || uploadingImages}
+                        onClick={() => void onRemoveWorkImage(index)}
                         className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/75 text-white text-[13px] leading-none"
                       >
                         ×
@@ -353,7 +353,7 @@ function AdminWorks({
             </label>
             <div className="flex gap-2">
               <button disabled={busy || uploadingImages} onClick={onSaveWork} className="flex-1 h-10 rounded-full bg-[#FF1A3D] text-white text-[13px] font-semibold disabled:opacity-60">{busy ? "Saving..." : editingWorkId ? "Update Work" : "Save Work"}</button>
-              {editingWorkId && <button onClick={onCancelWork} className="h-10 px-4 rounded-full border border-zinc-200 text-[13px]">Cancel</button>}
+              {editingWorkId && <button disabled={busy || uploadingImages} onClick={onCancelWork} className="h-10 px-4 rounded-full border border-zinc-200 text-[13px] disabled:opacity-60">Cancel</button>}
             </div>
           </div>
         </div>
@@ -404,7 +404,7 @@ function AdminReviews({ reviews, reviewForm, setReviewForm, onSaveReview, onDele
                 {[1, 2, 3, 4, 5].map((rating) => <option key={rating} value={rating}>{rating}</option>)}
               </select>
             </div>
-            <input value={reviewForm.instagramLink || ""} onChange={(event) => setReviewForm((value) => ({ ...value, instagramLink: event.target.value }))} placeholder="Instagram Video Link (paste URL)" className="w-full h-10 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]" />
+            <input type="url" value={reviewForm.instagramLink || ""} onChange={(event) => setReviewForm((value) => ({ ...value, instagramLink: event.target.value }))} placeholder="Instagram Video Link (paste URL)" className="w-full h-10 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]" />
             <button disabled={busy} onClick={onSaveReview} className="w-full h-10 rounded-full bg-[#FF1A3D] text-white text-[13px] font-semibold disabled:opacity-60">{busy ? "Saving..." : "Save Review"}</button>
           </div>
         </div>
@@ -434,10 +434,10 @@ function AdminSettings({ settings, setSettings, onSaveSettings, busy }: AdminPor
       <div className="mt-6 max-w-[720px] bg-white border border-zinc-100 rounded-[1.5rem] p-6">
         <div className="grid gap-4">
           <SettingField label="Slogan" value={settings.slogan} onChange={(slogan) => setSettings((value) => ({ ...value, slogan }))} />
-          <SettingField label="Phone" value={settings.phone} onChange={(phone) => setSettings((value) => ({ ...value, phone }))} />
+          <SettingField label="Phone" type="tel" value={settings.phone} onChange={(phone) => setSettings((value) => ({ ...value, phone }))} />
           <div className="grid sm:grid-cols-2 gap-4">
-            <SettingField label="Instagram URL" value={settings.instagram} onChange={(instagram) => setSettings((value) => ({ ...value, instagram }))} />
-            <SettingField label="TikTok URL" value={settings.tiktok} onChange={(tiktok) => setSettings((value) => ({ ...value, tiktok }))} />
+            <SettingField label="Instagram URL" type="url" value={settings.instagram} onChange={(instagram) => setSettings((value) => ({ ...value, instagram }))} />
+            <SettingField label="TikTok URL" type="url" value={settings.tiktok} onChange={(tiktok) => setSettings((value) => ({ ...value, tiktok }))} />
           </div>
           <SettingField label="Address" value={settings.address} onChange={(address) => setSettings((value) => ({ ...value, address }))} />
           <SettingField label="Workshop Note" value={settings.workshopNote} onChange={(workshopNote) => setSettings((value) => ({ ...value, workshopNote }))} />
@@ -448,11 +448,11 @@ function AdminSettings({ settings, setSettings, onSaveSettings, busy }: AdminPor
   );
 }
 
-function SettingField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+function SettingField({ label, type = "text", value, onChange }: { label: string; type?: "text" | "tel" | "url"; value: string; onChange: (value: string) => void }) {
   return (
     <div>
       <label className="text-[12px] font-medium text-zinc-700">{label}</label>
-      <input value={value} onChange={(event) => onChange(event.target.value)} className="mt-1 w-full h-10 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]" />
+      <input type={type} value={value} onChange={(event) => onChange(event.target.value)} className="mt-1 w-full h-10 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]" />
     </div>
   );
 }

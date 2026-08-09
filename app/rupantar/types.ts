@@ -71,6 +71,7 @@ export type EstimateForm = {
   size: string;
   material: string;
   message: string;
+  attachment: File | null;
 };
 
 export type QueryForm = {
@@ -78,6 +79,7 @@ export type QueryForm = {
   phone: string;
   category: string;
   message: string;
+  attachment: File | null;
 };
 
 export type WorkForm = Omit<Work, "id">;

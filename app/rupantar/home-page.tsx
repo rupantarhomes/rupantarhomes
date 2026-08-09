@@ -46,6 +46,21 @@ type HomePageProps = {
 };
 
 const morphWords = ["Spaces", "Kitchens", "Wardrobes", "Ceilings", "Homes", "Interiors"];
+const maximumAttachmentBytes = 10 * 1024 * 1024;
+const acceptedAttachmentTypes = new Set(["image/jpeg", "image/png"]);
+
+function acceptedPhoto(file: File | undefined): File | null {
+  if (!file) return null;
+  if (!acceptedAttachmentTypes.has(file.type)) {
+    window.alert("Please choose a JPG or PNG photo.");
+    return null;
+  }
+  if (file.size > maximumAttachmentBytes) {
+    window.alert("Photo must be 10MB or smaller.");
+    return null;
+  }
+  return file;
+}
 
 export function HomePage({
   works,
@@ -307,16 +322,36 @@ export function HomePage({
                 placeholder="Material Preference"
                 className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] sm:col-span-2"
               />
-              <div className="sm:col-span-2 border-2 border-dashed border-zinc-200 rounded-2xl p-5 flex flex-col items-center justify-center text-zinc-400 gap-2 hover:border-[#FF1A3D]/30 transition cursor-pointer">
+              <label
+                className="sm:col-span-2 border-2 border-dashed border-zinc-200 rounded-2xl p-5 flex flex-col items-center justify-center text-zinc-400 gap-2 hover:border-[#FF1A3D]/30 transition cursor-pointer"
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const attachment = acceptedPhoto(event.dataTransfer.files[0]);
+                  if (attachment) setEstimate((value) => ({ ...value, attachment }));
+                }}
+              >
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+                  className="sr-only"
+                  aria-label="Attach a JPG or PNG photo to the estimate request"
+                  onChange={(event) => {
+                    const attachment = acceptedPhoto(event.target.files?.[0]);
+                    if (attachment) setEstimate((value) => ({ ...value, attachment }));
+                    event.target.value = "";
+                  }}
+                />
                 <Upload className="w-6 h-6" />
                 <span className="text-[12px] font-medium">Drag &amp; Drop Photo or Click to Upload</span>
                 <span className="text-[11px]">JPG, PNG up to 10MB</span>
-              </div>
+              </label>
               <textarea
                 value={estimate.message}
                 onChange={(event) => setEstimate((value) => ({ ...value, message: event.target.value }))}
                 placeholder="Message / Requirements"
                 rows={3}
+                maxLength={4000}
                 className="sm:col-span-2 w-full px-4 py-3 rounded-2xl border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] resize-none"
               />
             </div>
@@ -435,8 +470,29 @@ export function HomePage({
               <select value={query.category} onChange={(event) => setQuery((value) => ({ ...value, category: event.target.value }))} className="sm:col-span-2 h-11 px-4 rounded-full border border-zinc-200 text-[13px] bg-white outline-none focus:border-[#FF1A3D]">
                 {categories.map((category) => <option key={category.slug} value={category.slug}>{category.name}</option>)}
               </select>
-              <textarea value={query.message} onChange={(event) => setQuery((value) => ({ ...value, message: event.target.value }))} placeholder="Your message..." rows={4} className="sm:col-span-2 w-full px-4 py-3 rounded-2xl border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] resize-none" />
-              <div className="sm:col-span-2 border border-dashed border-zinc-200 rounded-2xl p-4 flex items-center justify-center gap-2 text-[12px] text-zinc-500 cursor-pointer hover:border-[#FF1A3D]/30"><Upload className="w-4 h-4" /> Attach Photo (optional)</div>
+              <textarea value={query.message} onChange={(event) => setQuery((value) => ({ ...value, message: event.target.value }))} placeholder="Your message..." rows={4} maxLength={4000} className="sm:col-span-2 w-full px-4 py-3 rounded-2xl border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] resize-none" />
+              <label
+                className="sm:col-span-2 border border-dashed border-zinc-200 rounded-2xl p-4 flex items-center justify-center gap-2 text-[12px] text-zinc-500 cursor-pointer hover:border-[#FF1A3D]/30"
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const attachment = acceptedPhoto(event.dataTransfer.files[0]);
+                  if (attachment) setQuery((value) => ({ ...value, attachment }));
+                }}
+              >
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+                  className="sr-only"
+                  aria-label="Attach a JPG or PNG photo to the query"
+                  onChange={(event) => {
+                    const attachment = acceptedPhoto(event.target.files?.[0]);
+                    if (attachment) setQuery((value) => ({ ...value, attachment }));
+                    event.target.value = "";
+                  }}
+                />
+                <Upload className="w-4 h-4" /> Attach Photo (optional)
+              </label>
             </div>
             <button disabled={queryBusy} onClick={onSubmitQuery} className="mt-5 w-full h-12 rounded-full bg-[#FF1A3D] text-white font-semibold text-[14px] disabled:opacity-60">{queryBusy ? "Sending..." : "Send Query"}</button>
           </div>
