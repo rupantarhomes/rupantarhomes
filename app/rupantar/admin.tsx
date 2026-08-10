@@ -2,7 +2,6 @@
 
 import {
   ArrowLeft,
-  Bell,
   FileText,
   Image as ImageIcon,
   LayoutDashboard,
@@ -15,6 +14,7 @@ import {
 } from "lucide-react";
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { brandAssets, categories, emptyWork } from "./data";
+import { getSupabase } from "./supabase";
 import type {
   AdminStats,
   Lead,
@@ -282,10 +282,52 @@ function AdminDashboard({ works, leads, navigate, adminStats }: AdminPortalProps
   );
 }
 
-function AdminLeads({ leads, onUpdateLeadStatus, notificationPermission, onEnableNotifications, busy }: AdminPortalProps) {
+function normalizeWhatsAppNumber(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("977")) return digits;
+  if (digits.startsWith("0")) return `977${digits.slice(1)}`;
+  return `977${digits}`;
+}
+
+function leadWhatsAppUrl(lead: Lead): string {
+  const message = encodeURIComponent(`Hello ${lead.name}, thank you for contacting Rupantar Homes. We are reviewing your request.`);
+  return `https://wa.me/${normalizeWhatsAppNumber(lead.phone)}?text=${message}`;
+}
+
+function AdminLeads({ leads, onUpdateLeadStatus, busy }: AdminPortalProps) {
+  const [deletedLeadIds, setDeletedLeadIds] = useState<Set<string>>(() => new Set());
+  const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
+  const visibleLeads = leads.filter((lead) => !deletedLeadIds.has(lead.id));
+
   const formatDate = (value: string) => {
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+  };
+
+  const deleteLead = async (lead: Lead) => {
+    if (!window.confirm(`Delete the lead from ${lead.name}?`)) return;
+    setDeletingLeadId(lead.id);
+    try {
+      const supabase = getSupabase() as any;
+      const { data, error } = await supabase
+        .from("leads")
+        .delete()
+        .eq("id", lead.id)
+        .select("id")
+        .maybeSingle();
+      if (error || !data) throw new Error(error?.message ?? "The lead could not be deleted.");
+      setDeletedLeadIds((current) => {
+        const next = new Set(current);
+        next.add(lead.id);
+        return next;
+      });
+      const index = leads.findIndex((item) => item.id === lead.id);
+      if (index >= 0) leads.splice(index, 1);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "The lead could not be deleted.");
+    } finally {
+      setDeletingLeadId(null);
+    }
   };
 
   return (
@@ -295,18 +337,10 @@ function AdminLeads({ leads, onUpdateLeadStatus, notificationPermission, onEnabl
           <h1 className="font-heading text-[22px] font-bold">Leads</h1>
           <div className="text-[12px] text-zinc-500 mt-1">All submitted estimate requests, including customer photos.</div>
         </div>
-        {notificationPermission !== "granted" && notificationPermission !== "unsupported" && (
-          <button
-            onClick={() => void onEnableNotifications()}
-            className="h-10 px-5 rounded-full bg-zinc-900 text-white text-[12px] font-medium flex items-center gap-2"
-          >
-            <Bell className="w-4 h-4" /> Enable Lead Alerts
-          </button>
-        )}
       </div>
 
       <div className="mt-6 space-y-4">
-        {leads.map((lead) => (
+        {visibleLeads.map((lead) => (
           <article key={lead.id} className="bg-white border border-zinc-100 rounded-[1.5rem] p-5 sm:p-6 shadow-sm">
             <div className="grid lg:grid-cols-[0.7fr_1.3fr] gap-6">
               <div>
@@ -322,19 +356,29 @@ function AdminLeads({ leads, onUpdateLeadStatus, notificationPermission, onEnabl
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <div className="font-heading font-bold text-[18px]">{lead.name}</div>
-                    <a href={`https://wa.me/${lead.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="text-[13px] text-[#FF1A3D] font-semibold mt-1 inline-flex">{lead.phone}</a>
+                    <a href={leadWhatsAppUrl(lead)} target="_blank" rel="noopener noreferrer" className="text-[13px] text-[#FF1A3D] font-semibold mt-1 inline-flex">{lead.phone}</a>
                     <div className="text-[11px] text-zinc-500 mt-1">Submitted {formatDate(lead.createdAt)}</div>
                   </div>
-                  <select
-                    value={lead.status}
-                    disabled={busy}
-                    onChange={(event) => void onUpdateLeadStatus(lead.id, event.target.value as LeadStatus)}
-                    className="h-9 px-3 rounded-full border border-zinc-200 text-[12px] bg-white"
-                  >
-                    <option value="new">New</option>
-                    <option value="contacted">Contacted</option>
-                    <option value="closed">Closed</option>
-                  </select>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={lead.status}
+                      disabled={busy || deletingLeadId === lead.id}
+                      onChange={(event) => void onUpdateLeadStatus(lead.id, event.target.value as LeadStatus)}
+                      className="h-9 px-3 rounded-full border border-zinc-200 text-[12px] bg-white"
+                    >
+                      <option value="new">New</option>
+                      <option value="contacted">Contacted</option>
+                      <option value="closed">Closed</option>
+                    </select>
+                    <button
+                      type="button"
+                      disabled={busy || deletingLeadId === lead.id}
+                      onClick={() => void deleteLead(lead)}
+                      className="h-9 px-3 rounded-full border border-red-200 text-red-600 text-[12px] font-medium hover:bg-red-50 disabled:opacity-50"
+                    >
+                      {deletingLeadId === lead.id ? "Deleting..." : "Delete"}
+                    </button>
+                  </div>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-3 mt-5">
                   <LeadField label="Location" value={lead.location} />
@@ -350,7 +394,7 @@ function AdminLeads({ leads, onUpdateLeadStatus, notificationPermission, onEnabl
             </div>
           </article>
         ))}
-        {!leads.length && (
+        {!visibleLeads.length && (
           <div className="bg-white border border-zinc-100 rounded-[1.5rem] p-8 text-center text-[13px] text-zinc-500">No leads yet. New estimate requests will appear here automatically.</div>
         )}
       </div>
