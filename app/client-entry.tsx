@@ -17,6 +17,20 @@ createRoot(root).render(
   </StrictMode>,
 );
 
+function keepFounderLabelCurrent() {
+  const update = () => {
+    for (const element of document.querySelectorAll("span")) {
+      if (element.textContent?.trim() !== "Est. 2019") continue;
+      element.textContent = "GOKUL KUNWAR";
+      element.classList.add("font-heading", "founder-inline-name");
+    }
+  };
+
+  update();
+  const observer = new MutationObserver(update);
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
 function installBackgroundMusic() {
   const encoded = audioPart00 + audioPart01 + audioPart02 + audioPart03;
   const binary = window.atob(encoded);
@@ -67,8 +81,13 @@ function installBackgroundMusic() {
   window.addEventListener("beforeunload", () => URL.revokeObjectURL(audioUrl), { once: true });
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", installBackgroundMusic, { once: true });
-} else {
+const bootEnhancements = () => {
+  keepFounderLabelCurrent();
   installBackgroundMusic();
+};
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bootEnhancements, { once: true });
+} else {
+  bootEnhancements();
 }
