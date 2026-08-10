@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { CheckCircle2, X } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AdminLogin, AdminPortal } from "./admin";
 import { deleteCloudinaryImages, uploadWorkImages } from "./cloudinary";
 import {
@@ -19,6 +20,7 @@ import {
   deleteWork,
   getCurrentAdminSession,
   loadAdminStats,
+  loadLeads,
   loadPublicContent,
   saveReview,
   saveSettings,
@@ -27,9 +29,21 @@ import {
   signOutAdmin,
   submitEstimate,
   submitQuery,
+  updateLeadStatus,
 } from "./repository";
 import { PublicFooter, PublicHeader, TopBar } from "./shared";
-import type { AdminStats, Page, Review, ReviewForm, SiteSettings, Work, WorkForm } from "./types";
+import { getSupabase } from "./supabase";
+import type {
+  AdminStats,
+  Lead,
+  LeadStatus,
+  Page,
+  Review,
+  ReviewForm,
+  SiteSettings,
+  Work,
+  WorkForm,
+} from "./types";
 
 const publicPages: Page[] = ["home", "works", "work-detail", "about"];
 
@@ -41,6 +55,10 @@ function trimmed(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function notificationPermission(): NotificationPermission | "unsupported" {
+  return typeof window !== "undefined" && "Notification" in window ? Notification.permission : "unsupported";
+}
+
 export function RupantarSite() {
   const [page, setPage] = useState<Page>("home");
   const [filter, setFilter] = useState("all");
@@ -48,6 +66,7 @@ export function RupantarSite() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [works, setWorks] = useState<Work[]>(initialWorks);
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [estimate, setEstimate] = useState(emptyEstimate);
   const [query, setQuery] = useState(emptyQuery);
   const [workForm, setWorkForm] = useState<WorkForm>(emptyWork);
@@ -61,6 +80,9 @@ export function RupantarSite() {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [estimateBusy, setEstimateBusy] = useState(false);
   const [queryBusy, setQueryBusy] = useState(false);
+  const [estimateSaved, setEstimateSaved] = useState(false);
+  const [leadNotificationPermission, setLeadNotificationPermission] = useState<NotificationPermission | "unsupported">("unsupported");
+  const realtimeReady = useRef(false);
 
   const refreshContent = useCallback(async () => {
     const content = await loadPublicContent();
@@ -77,25 +99,65 @@ export function RupantarSite() {
     }
   }, []);
 
+  const refreshLeads = useCallback(async () => {
+    try {
+      setLeads(await loadLeads());
+    } catch (error) {
+      console.error("Unable to load leads", error);
+    }
+  }, []);
+
   useEffect(() => {
     document.title = "Rupantar Homes";
+    setLeadNotificationPermission(notificationPermission());
     let active = true;
 
-    // Initial remote hydration is the synchronization this effect is responsible for.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshContent().catch((error) => {
       if (active) console.error("Unable to load website content", error);
     });
     void getCurrentAdminSession().then((session) => {
       if (!active || !session) return;
       setIsAdmin(true);
-      void refreshAdminStats();
+      void Promise.all([refreshAdminStats(), refreshLeads()]);
     });
 
     return () => {
       active = false;
     };
-  }, [refreshAdminStats, refreshContent]);
+  }, [refreshAdminStats, refreshContent, refreshLeads]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const supabase = getSupabase();
+    const channel = supabase
+      .channel("rupantar-admin-leads")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "leads" },
+        () => {
+          void refreshLeads();
+          void refreshAdminStats();
+          if (realtimeReady.current && notificationPermission() === "granted") {
+            try {
+              new Notification("New Rupantar Homes lead", {
+                body: "A new estimate request has just been submitted. Open Leads to view the customer details.",
+                icon: "/assets/rupantar-favicon.png",
+              });
+            } catch (error) {
+              console.error("Unable to show lead notification", error);
+            }
+          }
+        },
+      )
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") realtimeReady.current = true;
+      });
+
+    return () => {
+      realtimeReady.current = false;
+      void supabase.removeChannel(channel);
+    };
+  }, [isAdmin, refreshAdminStats, refreshLeads]);
 
   const navigate = (nextPage: Page) => {
     if (nextPage.startsWith("admin-") && nextPage !== "admin-login" && !isAdmin) {
@@ -104,6 +166,7 @@ export function RupantarSite() {
       setPage(nextPage);
       if (nextPage.startsWith("admin-") && nextPage !== "admin-login") {
         void refreshContent().catch((error) => console.error("Unable to refresh admin content", error));
+        void refreshLeads();
         if (nextPage === "admin-dashboard") void refreshAdminStats();
       }
     }
@@ -154,7 +217,7 @@ export function RupantarSite() {
     try {
       await signInAdmin(email, password);
       setIsAdmin(true);
-      await Promise.all([refreshContent(), refreshAdminStats()]);
+      await Promise.all([refreshContent(), refreshAdminStats(), refreshLeads()]);
       setPage("admin-dashboard");
       window.scrollTo({ top: 0 });
     } catch (error) {
@@ -172,10 +235,39 @@ export function RupantarSite() {
       setEditingWorkId(null);
       setWorkForm(emptyWork);
       setIsAdmin(false);
+      setLeads([]);
       setAdminStats({ queries: 0, estimates: 0 });
       setPage("home");
     } catch (error) {
       window.alert(`Logout stopped: ${messageFrom(error)}`);
+    } finally {
+      setAdminBusy(false);
+    }
+  };
+
+  const handleEnableNotifications = async () => {
+    if (!("Notification" in window)) {
+      setLeadNotificationPermission("unsupported");
+      window.alert("Browser notifications are not supported on this device.");
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    setLeadNotificationPermission(permission);
+    if (permission === "granted") {
+      new Notification("Lead alerts enabled", {
+        body: "You will receive an alert while the Rupantar admin session is open when a new estimate arrives.",
+        icon: "/assets/rupantar-favicon.png",
+      });
+    }
+  };
+
+  const handleUpdateLeadStatus = async (id: string, status: LeadStatus) => {
+    setAdminBusy(true);
+    try {
+      await updateLeadStatus(id, status);
+      await refreshLeads();
+    } catch (error) {
+      window.alert(messageFrom(error));
     } finally {
       setAdminBusy(false);
     }
@@ -374,16 +466,12 @@ export function RupantarSite() {
   };
 
   const handleEstimate = async () => {
-    if (!trimmed(estimate.name) || !trimmed(estimate.phone)) {
-      window.alert("Name and phone required");
-      return;
-    }
     setEstimateBusy(true);
     try {
       await submitEstimate(estimate);
       setEstimate(emptyEstimate);
-      if (isAdmin) await refreshAdminStats();
-      window.alert("Estimate request sent successfully.");
+      setEstimateSaved(true);
+      if (isAdmin) await Promise.all([refreshAdminStats(), refreshLeads()]);
     } catch (error) {
       window.alert(messageFrom(error));
     } finally {
@@ -442,6 +530,10 @@ export function RupantarSite() {
         onUploadImages={handleUploadImages}
         onRemoveWorkImage={handleRemoveWorkImage}
         uploadingImages={uploadingImages}
+        leads={leads}
+        onUpdateLeadStatus={handleUpdateLeadStatus}
+        notificationPermission={leadNotificationPermission}
+        onEnableNotifications={handleEnableNotifications}
         reviews={reviews}
         reviewForm={reviewForm}
         setReviewForm={setReviewForm}
@@ -500,6 +592,35 @@ export function RupantarSite() {
 
       {publicPage && (
         <PublicFooter navigate={navigate} onCategory={openCategory} onEstimate={goToEstimate} settings={settings} />
+      )}
+
+      {estimateSaved && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4" role="dialog" aria-modal="true" aria-labelledby="estimate-success-title">
+          <div className="relative w-full max-w-[420px] rounded-[2rem] bg-white p-7 sm:p-8 text-center shadow-[0_24px_80px_rgba(0,0,0,0.18)]">
+            <button
+              type="button"
+              onClick={() => setEstimateSaved(false)}
+              className="absolute right-4 top-4 w-9 h-9 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-500 hover:bg-zinc-50"
+              aria-label="Close success message"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="mx-auto w-14 h-14 rounded-full bg-green-50 text-green-600 flex items-center justify-center">
+              <CheckCircle2 className="w-7 h-7" />
+            </div>
+            <h2 id="estimate-success-title" className="font-heading text-[22px] font-bold mt-5">Request Saved Successfully</h2>
+            <p className="text-[13px] text-zinc-600 leading-6 mt-3">
+              Thank you. Your estimate request and photo have been saved. Our team will review the details and reply to you soon on WhatsApp.
+            </p>
+            <button
+              type="button"
+              onClick={() => setEstimateSaved(false)}
+              className="mt-6 w-full h-11 rounded-full bg-[#FF1A3D] text-white text-[13px] font-semibold"
+            >
+              Done
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
