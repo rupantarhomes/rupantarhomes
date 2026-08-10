@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle2, X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AdminLogin, AdminPortal } from "./admin";
 import { deleteCloudinaryImages, uploadWorkImages } from "./cloudinary";
 import {
@@ -32,7 +32,6 @@ import {
   updateLeadStatus,
 } from "./repository";
 import { PublicFooter, PublicHeader, TopBar } from "./shared";
-import { getSupabase } from "./supabase";
 import type {
   AdminStats,
   Lead,
@@ -53,10 +52,6 @@ function messageFrom(error: unknown): string {
 
 function trimmed(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
-}
-
-function notificationPermission(): NotificationPermission | "unsupported" {
-  return typeof window !== "undefined" && "Notification" in window ? Notification.permission : "unsupported";
 }
 
 export function RupantarSite() {
@@ -81,8 +76,6 @@ export function RupantarSite() {
   const [estimateBusy, setEstimateBusy] = useState(false);
   const [queryBusy, setQueryBusy] = useState(false);
   const [estimateSaved, setEstimateSaved] = useState(false);
-  const [leadNotificationPermission, setLeadNotificationPermission] = useState<NotificationPermission | "unsupported">("unsupported");
-  const realtimeReady = useRef(false);
 
   const refreshContent = useCallback(async () => {
     const content = await loadPublicContent();
@@ -109,7 +102,6 @@ export function RupantarSite() {
 
   useEffect(() => {
     document.title = "Rupantar Homes";
-    setLeadNotificationPermission(notificationPermission());
     let active = true;
 
     void refreshContent().catch((error) => {
@@ -125,39 +117,6 @@ export function RupantarSite() {
       active = false;
     };
   }, [refreshAdminStats, refreshContent, refreshLeads]);
-
-  useEffect(() => {
-    if (!isAdmin) return;
-    const supabase = getSupabase();
-    const channel = supabase
-      .channel("rupantar-admin-leads")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "leads" },
-        () => {
-          void refreshLeads();
-          void refreshAdminStats();
-          if (realtimeReady.current && notificationPermission() === "granted") {
-            try {
-              new Notification("New Rupantar Homes lead", {
-                body: "A new estimate request has just been submitted. Open Leads to view the customer details.",
-                icon: "/assets/rupantar-favicon.png",
-              });
-            } catch (error) {
-              console.error("Unable to show lead notification", error);
-            }
-          }
-        },
-      )
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") realtimeReady.current = true;
-      });
-
-    return () => {
-      realtimeReady.current = false;
-      void supabase.removeChannel(channel);
-    };
-  }, [isAdmin, refreshAdminStats, refreshLeads]);
 
   const navigate = (nextPage: Page) => {
     if (nextPage.startsWith("admin-") && nextPage !== "admin-login" && !isAdmin) {
@@ -242,22 +201,6 @@ export function RupantarSite() {
       window.alert(`Logout stopped: ${messageFrom(error)}`);
     } finally {
       setAdminBusy(false);
-    }
-  };
-
-  const handleEnableNotifications = async () => {
-    if (!("Notification" in window)) {
-      setLeadNotificationPermission("unsupported");
-      window.alert("Browser notifications are not supported on this device.");
-      return;
-    }
-    const permission = await Notification.requestPermission();
-    setLeadNotificationPermission(permission);
-    if (permission === "granted") {
-      new Notification("Lead alerts enabled", {
-        body: "You will receive an alert while the Rupantar admin session is open when a new estimate arrives.",
-        icon: "/assets/rupantar-favicon.png",
-      });
     }
   };
 
@@ -480,10 +423,6 @@ export function RupantarSite() {
   };
 
   const handleQuery = async () => {
-    if (!trimmed(query.name) || !trimmed(query.phone)) {
-      window.alert("Name and phone required");
-      return;
-    }
     setQueryBusy(true);
     try {
       await submitQuery(query);
@@ -501,12 +440,7 @@ export function RupantarSite() {
 
   if (page === "admin-login") {
     return (
-      <AdminLogin
-        navigate={navigate}
-        onLogin={handleLogin}
-        error={loginError}
-        busy={loginBusy}
-      />
+      <AdminLogin navigate={navigate} onLogin={handleLogin} error={loginError} busy={loginBusy} />
     );
   }
 
@@ -532,8 +466,8 @@ export function RupantarSite() {
         uploadingImages={uploadingImages}
         leads={leads}
         onUpdateLeadStatus={handleUpdateLeadStatus}
-        notificationPermission={leadNotificationPermission}
-        onEnableNotifications={handleEnableNotifications}
+        notificationPermission="unsupported"
+        onEnableNotifications={async () => undefined}
         reviews={reviews}
         reviewForm={reviewForm}
         setReviewForm={setReviewForm}
