@@ -309,8 +309,13 @@ function AdminWorks({
             <input value={workForm.location} onChange={(event) => setWorkForm((value) => ({ ...value, location: event.target.value }))} placeholder="Location" className="w-full h-10 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]" />
             <input value={workForm.shortDesc} onChange={(event) => setWorkForm((value) => ({ ...value, shortDesc: event.target.value }))} placeholder="Short Description" className="w-full h-10 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]" />
             <textarea value={workForm.longDesc} onChange={(event) => setWorkForm((value) => ({ ...value, longDesc: event.target.value }))} placeholder="Long Description" rows={3} className="w-full px-4 py-3 rounded-2xl border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] resize-none" />
-            <div className="grid grid-cols-1 gap-3">
-              <label className="border border-dashed border-zinc-200 rounded-2xl p-4 flex flex-col items-center justify-center gap-1.5 text-zinc-400 cursor-pointer hover:border-[#FF1A3D]/40">
+            
+            {/* === ORGANIZED FILE UPLOAD BOX - START === */}
+            <div className="space-y-4 pt-2">
+              <label
+                className={`group relative flex flex-col items-center justify-center rounded-[1.25rem] border-2 border-dashed px-6 py-8 text-center cursor-pointer transition-all
+                ${uploadingImages ? 'border-[#FF1A3D]/30 bg-[#FFF0F2]' : 'border-zinc-200 bg-[#fcfcfc] hover:border-[#FF1A3D]/40 hover:bg-white hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)]'}`}
+              >
                 <input
                   type="file"
                   accept=".jpg,.jpeg,.png,image/jpeg,image/png"
@@ -323,31 +328,61 @@ function AdminWorks({
                     void onUploadImages(files);
                   }}
                 />
-                <Upload className="w-5 h-5" />
-                <span className="text-[11px]">{uploadingImages ? "Converting and uploading..." : "Upload JPEG / PNG Photos"}</span>
+                <div className="w-12 h-12 rounded-2xl bg-white border border-zinc-100 shadow-sm flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                  <Upload className="w-5 h-5 text-zinc-700" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[13px] font-semibold text-zinc-900">
+                    <span className="text-[#FF1A3D]">Choose file</span> or drag & drop
+                  </p>
+                  <p className="text-[11px] text-zinc-500 leading-[1.4]">
+                    JPG, PNG up to 10MB<br/>Auto converts to WebP (1920×1080)
+                  </p>
+                </div>
+                {uploadingImages ? (
+                  <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FF1A3D] text-white text-[11px] font-medium animate-pulse">
+                    <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Converting and uploading...
+                  </div>
+                ) : (
+                  <div className="mt-3 text-[10px] px-2.5 py-1 rounded-full bg-zinc-900 text-white font-medium">
+                    {Array.isArray(workForm.images) ? workForm.images.length : 0} photos added
+                  </div>
+                )}
               </label>
-              <div className="grid grid-cols-4 gap-2">
+
+              {/* Preview Grid */}
+              <div className="grid grid-cols-4 gap-2.5">
                 {Array.from({ length: Math.max(4, Array.isArray(workForm.images) ? workForm.images.length : 0) }, (_, index) => {
                   const image = Array.isArray(workForm.images) ? workForm.images[index] : undefined;
                   return image ? (
-                    <div key={image.id} className="relative border border-zinc-200 rounded-xl aspect-square overflow-hidden">
+                    <div key={image.id} className="group relative border border-zinc-200 rounded-xl aspect-square overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
                       <img src={image.url} alt={image.altText || workForm.title} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition" />
                       <button
                         type="button"
                         aria-label="Remove image"
                         disabled={busy || uploadingImages}
                         onClick={() => void onRemoveWorkImage(index)}
-                        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/75 text-white text-[13px] leading-none"
+                        className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/80 backdrop-blur text-white text-[14px] leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-[#FF1A3D] transition-all"
                       >
                         ×
                       </button>
+                      <div className="absolute bottom-1 left-1 right-1 text-[9px] px-1.5 py-0.5 rounded-full bg-black/60 text-white truncate text-center">
+                        #{index + 1}
+                      </div>
                     </div>
                   ) : (
-                    <div key={`slot-${index}`} className="border border-dashed border-zinc-200 rounded-xl aspect-square flex items-center justify-center text-zinc-300"><ImageIcon className="w-4 h-4" /></div>
+                    <div key={`slot-${index}`} className="border border-dashed border-zinc-200 rounded-xl aspect-square flex flex-col items-center justify-center gap-1 text-zinc-300 bg-zinc-50/50">
+                      <ImageIcon className="w-4 h-4" />
+                      <span className="text-[9px]">Empty</span>
+                    </div>
                   );
                 })}
               </div>
             </div>
+            {/* === ORGANIZED FILE UPLOAD BOX - END === */}
+
             <label className="flex items-center gap-2 text-[13px] mt-1">
               <input type="checkbox" checked={workForm.featured} onChange={(event) => setWorkForm((value) => ({ ...value, featured: event.target.checked }))} className="rounded" /> Featured on Home
             </label>
@@ -459,4 +494,3 @@ function SettingField({ label, type = "text", value, onChange }: { label: string
 
 export function resetWorkForm(setWorkForm: Dispatch<SetStateAction<WorkForm>>) {
   setWorkForm(emptyWork);
-}
