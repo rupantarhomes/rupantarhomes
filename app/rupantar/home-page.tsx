@@ -16,8 +16,8 @@ import {
   Upload,
 } from "lucide-react";
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
-import { categories } from "./data";
-import { categoryIcons, PhotoPlaceholder, WorkPhoto } from "./shared";
+import { brandAssets, categories } from "./data";
+import { categoryIcons, WorkPhoto } from "./shared";
 import type {
   EstimateForm,
   Page,
@@ -48,6 +48,7 @@ type HomePageProps = {
 const morphWords = ["Spaces", "Kitchens", "Wardrobes", "Ceilings", "Homes", "Interiors"];
 const maximumAttachmentBytes = 10 * 1024 * 1024;
 const acceptedAttachmentTypes = new Set(["image/jpeg", "image/png"]);
+const whatsappUrl = `https://wa.me/9779745941799?text=${encodeURIComponent("Hello Rupantar Homes, I would like to discuss my interior project.")}`;
 
 function acceptedPhoto(file: File | undefined): File | null {
   if (!file) return null;
@@ -139,7 +140,15 @@ export function HomePage({
           </div>
         </div>
         <div className="relative hidden sm:block">
-          <PhotoPlaceholder aspect="aspect-[16/9]" label="Hero Visual Coming Soon 16:9" />
+          <div className="aspect-[16/9] w-full rounded-[1.25rem] overflow-hidden bg-[#F8F8F8] border border-zinc-100">
+            <img
+              src={brandAssets.hero}
+              alt="Rupantar Homes interior design moodboard"
+              className="w-full h-full object-cover"
+              loading="eager"
+              decoding="async"
+            />
+          </div>
           <div className="absolute -bottom-4 -left-4 hidden sm:flex bg-white rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.08)] border border-zinc-100 p-4 gap-3 items-center">
             <div className="w-11 h-11 rounded-xl bg-[#FFF0F2] text-[#FF1A3D] flex items-center justify-center">
               <CircleDollarSign className="w-5 h-5" />
@@ -177,18 +186,14 @@ export function HomePage({
                     {work.category.replace("-", " ")}
                   </span>
                   {work.featured && (
-                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-[#FF1A3D] text-white font-semibold">
-                      Featured
-                    </span>
+                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-[#FF1A3D] text-white font-semibold">Featured</span>
                   )}
                 </div>
                 <div className="font-heading font-semibold text-[16px] leading-tight">{work.title}</div>
                 <div className="text-[12px] text-zinc-500 mt-1 flex items-center gap-1">
                   <MapPin className="w-3 h-3" /> {work.location}
                 </div>
-                <div className="text-[13px] text-zinc-600 mt-2.5 leading-5 line-clamp-2">
-                  {work.shortDesc}
-                </div>
+                <div className="text-[13px] text-zinc-600 mt-2.5 leading-5 line-clamp-2">{work.shortDesc}</div>
                 <button
                   onClick={() => onWork(work.id)}
                   className="mt-4 text-[13px] font-semibold flex items-center gap-1 hover:text-[#FF1A3D] transition"
@@ -204,12 +209,8 @@ export function HomePage({
       <section id="services" className="py-12 sm:py-16 border-t border-zinc-100">
         <div className="flex items-end justify-between gap-4 mb-8">
           <div>
-            <div className="text-[11px] tracking-[0.18em] uppercase font-semibold text-[#FF1A3D]">
-              What We Do
-            </div>
-            <h3 className="font-heading text-[28px] sm:text-[32px] font-bold mt-1">
-              Crafted for Nepali Homes
-            </h3>
+            <div className="text-[11px] tracking-[0.18em] uppercase font-semibold text-[#FF1A3D]">What We Do</div>
+            <h3 className="font-heading text-[28px] sm:text-[32px] font-bold mt-1">Crafted for Nepali Homes</h3>
           </div>
           <div className="hidden sm:block text-[13px] text-zinc-500 max-w-[320px] text-right">
             8 core services from our Kathmandu workshop. Click any card to see works.
@@ -228,9 +229,7 @@ export function HomePage({
                   <Icon className="w-5 h-5" />
                 </div>
                 <div className="font-heading font-semibold text-[15px] text-zinc-900">{category.name}</div>
-                <div className="text-[12.5px] leading-5 text-zinc-500 mt-1.5 line-clamp-2">
-                  {category.desc}
-                </div>
+                <div className="text-[12.5px] leading-5 text-zinc-500 mt-1.5 line-clamp-2">{category.desc}</div>
                 <div className="mt-4 text-[12px] font-medium text-zinc-900 flex items-center gap-1 group-hover:text-[#FF1A3D] transition">
                   View Works <ArrowRight className="w-3.5 h-3.5" />
                 </div>
@@ -243,9 +242,7 @@ export function HomePage({
       <section id="estimate" className="py-12 sm:py-20">
         <div className="rounded-[2rem] bg-zinc-900 text-white overflow-hidden grid lg:grid-cols-[0.9fr_1.1fr] relative">
           <div className="p-7 sm:p-10 lg:p-12">
-            <div className="inline-flex px-3 py-1 rounded-full bg-white/10 text-[11px] tracking-wide font-medium">
-              Dedicated Estimate
-            </div>
+            <div className="inline-flex px-3 py-1 rounded-full bg-white/10 text-[11px] tracking-wide font-medium">Dedicated Estimate</div>
             <h3 className="font-heading text-[28px] sm:text-[34px] font-bold leading-[1.05] mt-4">
               Why Upload Your <span className="text-[#FF1A3D]">Space Photo?</span>
             </h3>
@@ -256,9 +253,7 @@ export function HomePage({
                 { title: "Workshop Visit Sample", desc: "Touch laminates, ply and hardware at Kathmandu." },
               ].map((item) => (
                 <li key={item.title} className="flex gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#FF1A3D] flex items-center justify-center shrink-0 mt-0.5">
-                    <Check className="w-4 h-4" />
-                  </div>
+                  <div className="w-9 h-9 rounded-xl bg-[#FF1A3D] flex items-center justify-center shrink-0 mt-0.5"><Check className="w-4 h-4" /></div>
                   <div>
                     <div className="font-medium text-[14px]">{item.title}</div>
                     <div className="text-[12.5px] text-zinc-400 mt-1 leading-5">{item.desc}</div>
@@ -283,59 +278,17 @@ export function HomePage({
           >
             <div className="flex items-center justify-between mb-6">
               <h4 className="font-heading font-bold text-[18px]">Send Estimate Request</h4>
-              <span className="text-[11px] px-2.5 py-1 rounded-full bg-[#FFF0F2] text-[#FF1A3D] font-semibold">
-                WhatsApp Fast Reply
-              </span>
+              <span className="text-[11px] px-2.5 py-1 rounded-full bg-[#FFF0F2] text-[#FF1A3D] font-semibold">Fast Reply</span>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
-              <input
-                required
-                autoComplete="name"
-                value={estimate.name}
-                onChange={(event) => setEstimate((value) => ({ ...value, name: event.target.value }))}
-                placeholder="Full Name *"
-                className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] focus:ring-2 focus:ring-[#FF1A3D]/10"
-              />
-              <input
-                required
-                type="tel"
-                autoComplete="tel"
-                value={estimate.phone}
-                onChange={(event) => setEstimate((value) => ({ ...value, phone: event.target.value }))}
-                placeholder="Phone 9745xxxxxx *"
-                className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] focus:ring-2 focus:ring-[#FF1A3D]/10"
-              />
-              <input
-                required
-                value={estimate.location}
-                onChange={(event) => setEstimate((value) => ({ ...value, location: event.target.value }))}
-                placeholder="Location e.g. Kathmandu *"
-                className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] focus:ring-2 focus:ring-[#FF1A3D]/10 sm:col-span-2"
-              />
-              <select
-                required
-                value={estimate.category}
-                onChange={(event) => setEstimate((value) => ({ ...value, category: event.target.value }))}
-                className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] bg-white outline-none focus:border-[#FF1A3D]"
-              >
-                {categories.map((category) => (
-                  <option key={category.slug} value={category.slug}>{category.name}</option>
-                ))}
+              <input required autoComplete="name" value={estimate.name} onChange={(event) => setEstimate((value) => ({ ...value, name: event.target.value }))} placeholder="Full Name *" className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] focus:ring-2 focus:ring-[#FF1A3D]/10" />
+              <input required type="tel" autoComplete="tel" value={estimate.phone} onChange={(event) => setEstimate((value) => ({ ...value, phone: event.target.value }))} placeholder="Phone 9745xxxxxx *" className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] focus:ring-2 focus:ring-[#FF1A3D]/10" />
+              <input required value={estimate.location} onChange={(event) => setEstimate((value) => ({ ...value, location: event.target.value }))} placeholder="Location e.g. Kathmandu *" className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] focus:ring-2 focus:ring-[#FF1A3D]/10 sm:col-span-2" />
+              <select required value={estimate.category} onChange={(event) => setEstimate((value) => ({ ...value, category: event.target.value }))} className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] bg-white outline-none focus:border-[#FF1A3D]">
+                {categories.map((category) => <option key={category.slug} value={category.slug}>{category.name}</option>)}
               </select>
-              <input
-                required
-                value={estimate.size}
-                onChange={(event) => setEstimate((value) => ({ ...value, size: event.target.value }))}
-                placeholder="Approx Size (e.g. 10x12 ft) *"
-                className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]"
-              />
-              <input
-                required
-                value={estimate.material}
-                onChange={(event) => setEstimate((value) => ({ ...value, material: event.target.value }))}
-                placeholder="Material Preference *"
-                className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] sm:col-span-2"
-              />
+              <input required value={estimate.size} onChange={(event) => setEstimate((value) => ({ ...value, size: event.target.value }))} placeholder="Approx Size (e.g. 10x12 ft) *" className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]" />
+              <input required value={estimate.material} onChange={(event) => setEstimate((value) => ({ ...value, material: event.target.value }))} placeholder="Material Preference *" className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] sm:col-span-2" />
               <label
                 className="sm:col-span-2 relative border-2 border-dashed border-zinc-200 rounded-2xl p-5 flex flex-col items-center justify-center text-zinc-400 gap-2 hover:border-[#FF1A3D]/30 transition cursor-pointer overflow-hidden bg-[#FEFEFE]"
                 onDragOver={(event) => event.preventDefault()}
@@ -357,9 +310,7 @@ export function HomePage({
                     event.target.value = "";
                   }}
                 />
-                <div className="w-12 h-12 rounded-2xl bg-white border border-zinc-100 shadow-sm flex items-center justify-center">
-                  <Upload className="w-5 h-5 text-zinc-700" />
-                </div>
+                <div className="w-12 h-12 rounded-2xl bg-white border border-zinc-100 shadow-sm flex items-center justify-center"><Upload className="w-5 h-5 text-zinc-700" /></div>
                 {estimate.attachment ? (
                   <>
                     <span className="text-[12px] font-semibold text-green-600">✓ {estimate.attachment.name}</span>
@@ -372,24 +323,12 @@ export function HomePage({
                   </>
                 )}
               </label>
-              <textarea
-                required
-                value={estimate.message}
-                onChange={(event) => setEstimate((value) => ({ ...value, message: event.target.value }))}
-                placeholder="Message / Requirements *"
-                rows={3}
-                maxLength={4000}
-                className="sm:col-span-2 w-full px-4 py-3 rounded-2xl border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] resize-none"
-              />
+              <textarea required value={estimate.message} onChange={(event) => setEstimate((value) => ({ ...value, message: event.target.value }))} placeholder="Message / Requirements *" rows={3} maxLength={4000} className="sm:col-span-2 w-full px-4 py-3 rounded-2xl border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] resize-none" />
             </div>
-            <button
-              type="submit"
-              disabled={estimateBusy}
-              className="mt-6 w-full h-12 rounded-full bg-[#FF1A3D] text-white font-semibold text-[14px] flex items-center justify-center gap-2 hover:brightness-95 transition disabled:opacity-60"
-            >
+            <button type="submit" disabled={estimateBusy} className="mt-6 w-full h-12 rounded-full bg-[#FF1A3D] text-white font-semibold text-[14px] flex items-center justify-center gap-2 hover:brightness-95 transition disabled:opacity-60">
               {estimateBusy ? "Sending..." : "Send Estimate Request"} <ArrowRight className="w-4 h-4" />
             </button>
-            <div className="mt-3 text-[11px] text-zinc-500 text-center">All fields are required • We reply on WhatsApp • No spam</div>
+            <div className="mt-3 text-[11px] text-zinc-500 text-center">All fields are required • Fast response • No spam</div>
           </form>
         </div>
       </section>
@@ -433,35 +372,19 @@ export function HomePage({
             <div className="text-[11px] tracking-[0.18em] uppercase font-semibold text-[#FF1A3D]">Client Reviews</div>
             <h3 className="font-heading text-[26px] sm:text-[30px] font-bold mt-1">Real Homes, Real Reviews</h3>
           </div>
-          <div className="hidden sm:flex items-center gap-1 text-[12px] font-medium">
-            <Star className="w-4 h-4 fill-[#FF1A3D] text-[#FF1A3D]" /> 4.9 average from 80+ homes
-          </div>
+          <div className="hidden sm:flex items-center gap-1 text-[12px] font-medium"><Star className="w-4 h-4 fill-[#FF1A3D] text-[#FF1A3D]" /> 4.9 average from 80+ homes</div>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           {reviews.map((review) => (
             <div key={review.id} className="rounded-[1.5rem] border border-zinc-100 p-5 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
               <div className="hidden" />
-              <div className="flex gap-0.5 mb-2">
-                {Array.from({ length: review.rating }).map((_, index) => (
-                  <Star key={index} className="w-3.5 h-3.5 fill-[#FF1A3D] text-[#FF1A3D]" />
-                ))}
-              </div>
+              <div className="flex gap-0.5 mb-2">{Array.from({ length: review.rating }).map((_, index) => <Star key={index} className="w-3.5 h-3.5 fill-[#FF1A3D] text-[#FF1A3D]" />)}</div>
               <div className="text-[13px] leading-5 text-zinc-700 line-clamp-4">“{review.message}”</div>
               <div className="mt-4 flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-zinc-900 text-white flex items-center justify-center text-[11px] font-semibold">{review.name[0]}</div>
-                <div>
-                  <div className="text-[12px] font-semibold leading-none">{review.name}</div>
-                  <div className="text-[11px] text-zinc-500 mt-1">{review.location}</div>
-                </div>
+                <div><div className="text-[12px] font-semibold leading-none">{review.name}</div><div className="text-[11px] text-zinc-500 mt-1">{review.location}</div></div>
               </div>
-              <a
-                href={review.instagramLink || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 inline-flex h-7 px-3 rounded-full bg-[#FFF0F2] text-[#FF1A3D] text-[11px] font-medium items-center hover:bg-[#FF1A3D] hover:text-white transition"
-              >
-                View Review →
-              </a>
+              <a href={review.instagramLink || "#"} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex h-7 px-3 rounded-full bg-[#FFF0F2] text-[#FF1A3D] text-[11px] font-medium items-center hover:bg-[#FF1A3D] hover:text-white transition">View Review →</a>
             </div>
           ))}
         </div>
@@ -486,18 +409,27 @@ export function HomePage({
             <h3 className="font-heading text-[28px] font-bold leading-tight">Have a Query?</h3>
             <p className="text-[14px] text-zinc-600 mt-3 leading-6 max-w-[380px]">Tell us about your space, budget and timeline. We reply on WhatsApp within 2 hours during work hours.</p>
             <div className="mt-8 space-y-3">
-              <div className="flex gap-3 text-[13px]"><div className="w-8 h-8 rounded-full bg-[#FFF0F2] text-[#FF1A3D] flex items-center justify-center"><Phone className="w-4 h-4" /></div> {settings.phone} – Gokul Kunwar</div>
+              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex gap-3 text-[13px] hover:text-[#FF1A3D] transition">
+                <div className="w-8 h-8 rounded-full bg-[#FFF0F2] text-[#FF1A3D] flex items-center justify-center"><Phone className="w-4 h-4" /></div>
+                <span>{settings.phone} – Gokul Kunwar</span>
+              </a>
               <div className="flex gap-3 text-[13px]"><div className="w-8 h-8 rounded-full bg-zinc-900 text-white flex items-center justify-center"><MapPin className="w-4 h-4" /></div> {settings.address}</div>
             </div>
           </div>
-          <div className="bg-white border border-zinc-100 rounded-[1.75rem] p-6 sm:p-7 shadow-[0_12px_40px_rgba(0,0,0,0.05)]">
+          <form
+            className="bg-white border border-zinc-100 rounded-[1.75rem] p-6 sm:p-7 shadow-[0_12px_40px_rgba(0,0,0,0.05)]"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void onSubmitQuery();
+            }}
+          >
             <div className="grid sm:grid-cols-2 gap-4">
-              <input value={query.name} onChange={(event) => setQuery((value) => ({ ...value, name: event.target.value }))} placeholder="Your Name" className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]" />
-              <input value={query.phone} onChange={(event) => setQuery((value) => ({ ...value, phone: event.target.value }))} placeholder="Phone" className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]" />
-              <select value={query.category} onChange={(event) => setQuery((value) => ({ ...value, category: event.target.value }))} className="sm:col-span-2 h-11 px-4 rounded-full border border-zinc-200 text-[13px] bg-white outline-none focus:border-[#FF1A3D]">
+              <input required value={query.name} onChange={(event) => setQuery((value) => ({ ...value, name: event.target.value }))} placeholder="Your Name *" className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]" />
+              <input required type="tel" value={query.phone} onChange={(event) => setQuery((value) => ({ ...value, phone: event.target.value }))} placeholder="Phone *" className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]" />
+              <select required value={query.category} onChange={(event) => setQuery((value) => ({ ...value, category: event.target.value }))} className="sm:col-span-2 h-11 px-4 rounded-full border border-zinc-200 text-[13px] bg-white outline-none focus:border-[#FF1A3D]">
                 {categories.map((category) => <option key={category.slug} value={category.slug}>{category.name}</option>)}
               </select>
-              <textarea value={query.message} onChange={(event) => setQuery((value) => ({ ...value, message: event.target.value }))} placeholder="Your message..." rows={4} maxLength={4000} className="sm:col-span-2 w-full px-4 py-3 rounded-2xl border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] resize-none" />
+              <textarea required value={query.message} onChange={(event) => setQuery((value) => ({ ...value, message: event.target.value }))} placeholder="Your message... *" rows={4} maxLength={4000} className="sm:col-span-2 w-full px-4 py-3 rounded-2xl border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] resize-none" />
               <label
                 className="sm:col-span-2 relative border border-dashed border-zinc-200 rounded-2xl p-4 flex items-center justify-center gap-2 text-[12px] text-zinc-500 cursor-pointer hover:border-[#FF1A3D]/30 overflow-hidden"
                 onDragOver={(event) => event.preventDefault()}
@@ -508,10 +440,11 @@ export function HomePage({
                 }}
               >
                 <input
+                  required={!query.attachment}
                   type="file"
                   accept="image/jpeg,image/png,.jpg,.jpeg,.png"
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  aria-label="Attach a JPG or PNG photo to the query"
+                  aria-label="Upload a required JPG or PNG photo with the query"
                   onChange={(event) => {
                     const attachment = acceptedPhoto(event.target.files?.[0]);
                     if (attachment) setQuery((value) => ({ ...value, attachment }));
@@ -519,15 +452,12 @@ export function HomePage({
                   }}
                 />
                 <Upload className="w-4 h-4" />
-                {query.attachment ? (
-                  <span className="text-green-600">✓ {query.attachment.name}</span>
-                ) : (
-                  <span>Attach Photo (optional)</span>
-                )}
+                {query.attachment ? <span className="text-green-600">✓ {query.attachment.name}</span> : <span>Attach Photo *</span>}
               </label>
             </div>
-            <button disabled={queryBusy} onClick={onSubmitQuery} className="mt-5 w-full h-12 rounded-full bg-[#FF1A3D] text-white font-semibold text-[14px] disabled:opacity-60">{queryBusy ? "Sending..." : "Send Query"}</button>
-          </div>
+            <button type="submit" disabled={queryBusy} className="mt-5 w-full h-12 rounded-full bg-[#FF1A3D] text-white font-semibold text-[14px] disabled:opacity-60">{queryBusy ? "Sending..." : "Send Query"}</button>
+            <div className="mt-3 text-[11px] text-zinc-500 text-center">All fields are required • Fast response • No spam</div>
+          </form>
         </div>
       </section>
     </main>
