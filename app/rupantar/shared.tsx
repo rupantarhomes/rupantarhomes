@@ -25,6 +25,8 @@ import { useState } from "react";
 import { brandAssets, categories } from "./data";
 import type { Page, SiteSettings, WorkImage } from "./types";
 
+export const whatsappUrl = `https://wa.me/9779745941799?text=${encodeURIComponent("Hello Rupantar Homes, I would like to discuss my interior project.")}`;
+
 export const categoryIcons = {
   "interior-designing": PencilRuler,
   "modular-kitchen": ChefHat,
@@ -89,15 +91,15 @@ export function TopBar({ settings }: { settings: SiteSettings }) {
           <span className="hidden sm:flex items-center gap-1.5 opacity-80">
             <MapPin className="w-3.5 h-3.5" /> {settings.address}
           </span>
-          <span className="flex sm:hidden items-center gap-1.5 opacity-80">
-            Kathmandu Workshop
-          </span>
+          <span className="flex sm:hidden items-center gap-1.5 opacity-80">Kathmandu Workshop</span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="hidden" />
           <a
-            href={`tel:${settings.phone.replace(/[^+\d]/g, "")}`}
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center gap-1.5 font-medium hover:text-[#FF1A3D] transition"
+            aria-label="Contact Rupantar Homes on WhatsApp"
           >
             <Phone className="w-3.5 h-3.5" /> {settings.phone}
           </a>
@@ -128,78 +130,37 @@ export function PublicHeader({
   return (
     <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-zinc-100">
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 h-[72px] flex items-center justify-between">
-        <button
-          onClick={() => go("home")}
-          className="flex items-center gap-3"
-          aria-label="Rupantar Homes home"
-        >
-          <img
-            src={brandAssets.logo}
-            alt="Rupantar Homes"
-            className="w-11 h-11 rounded-xl object-cover shadow-sm"
-            style={{ borderRadius: "12px" }}
-          />
+        <button onClick={() => go("home")} className="flex items-center gap-3" aria-label="Rupantar Homes home">
+          <img src={brandAssets.logo} alt="Rupantar Homes" className="w-11 h-11 rounded-xl object-cover shadow-sm" style={{ borderRadius: "12px" }} />
           <div className="text-left leading-none">
-            <div className="font-['Space_Grotesk'] font-bold tracking-[-0.02em] text-[16px] text-zinc-900">
-              Rupantar Homes
-            </div>
-            <div className="text-[10px] tracking-[0.12em] uppercase text-zinc-500 mt-[2px] font-medium">
-              By Gokul Kunwar
-            </div>
+            <div className="font-['Space_Grotesk'] font-bold tracking-[-0.02em] text-[16px] text-zinc-900">Rupantar Homes</div>
+            <div className="text-[10px] tracking-[0.12em] uppercase text-zinc-500 mt-[2px] font-medium">By Gokul Kunwar</div>
           </div>
         </button>
 
         <div className="hidden lg:flex items-center gap-8">
-          <button
-            onClick={() => go("home")}
-            className={`text-[14px] font-medium transition ${page === "home" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}
-          >
-            Home
-          </button>
-          <button
-            onClick={() => go("works")}
-            className={`text-[14px] font-medium transition ${page === "works" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}
-          >
-            Works
-          </button>
+          <button onClick={() => go("home")} className={`text-[14px] font-medium transition ${page === "home" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>Home</button>
+          <button onClick={() => go("works")} className={`text-[14px] font-medium transition ${page === "works" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>Works</button>
           <button
             onClick={() => {
               go("home");
-              window.setTimeout(
-                () => document.getElementById("services")?.scrollIntoView({ behavior: "smooth" }),
-                100,
-              );
+              window.setTimeout(() => document.getElementById("services")?.scrollIntoView({ behavior: "smooth" }), 100);
             }}
             className="text-[14px] font-medium text-zinc-700 hover:text-[#FF1A3D] transition"
           >
             Services
           </button>
-          <button
-            onClick={() => go("about")}
-            className={`text-[14px] font-medium transition ${page === "about" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}
-          >
-            About
-          </button>
-          <button
-            onClick={() => go(isAdmin ? "admin-dashboard" : "admin-login")}
-            className="text-[14px] font-medium text-zinc-700 hover:text-[#FF1A3D] transition flex items-center gap-1"
-          >
+          <button onClick={() => go("about")} className={`text-[14px] font-medium transition ${page === "about" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>About</button>
+          <button onClick={() => go(isAdmin ? "admin-dashboard" : "admin-login")} className="text-[14px] font-medium text-zinc-700 hover:text-[#FF1A3D] transition flex items-center gap-1">
             <CircleUserRound className="w-4 h-4" /> Admin
           </button>
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={onEstimate}
-            className="hidden sm:inline-flex h-10 px-6 rounded-full bg-[#FF1A3D] text-white text-[13px] font-semibold tracking-wide items-center gap-2 shadow-[0_8px_24px_rgba(255,26,61,0.24)] hover:brightness-[0.95] transition"
-          >
+          <button onClick={onEstimate} className="hidden sm:inline-flex h-10 px-6 rounded-full bg-[#FF1A3D] text-white text-[13px] font-semibold tracking-wide items-center gap-2 shadow-[0_8px_24px_rgba(255,26,61,0.24)] hover:brightness-[0.95] transition">
             Get Estimate <ArrowRight className="w-4 h-4" />
           </button>
-          <button
-            onClick={() => setOpen((value) => !value)}
-            className="lg:hidden w-10 h-10 rounded-full bg-zinc-900 text-white flex items-center justify-center"
-            aria-label={open ? "Close menu" : "Open menu"}
-          >
+          <button onClick={() => setOpen((value) => !value)} className="lg:hidden w-10 h-10 rounded-full bg-zinc-900 text-white flex items-center justify-center" aria-label={open ? "Close menu" : "Open menu"}>
             {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
@@ -211,18 +172,9 @@ export function PublicHeader({
             { label: "Home", page: "home" as Page },
             { label: "Works", page: "works" as Page },
             { label: "About", page: "about" as Page },
-            {
-              label: isAdmin ? "Dashboard" : "Admin Login",
-              page: (isAdmin ? "admin-dashboard" : "admin-login") as Page,
-            },
+            { label: isAdmin ? "Dashboard" : "Admin Login", page: (isAdmin ? "admin-dashboard" : "admin-login") as Page },
           ].map((item) => (
-            <button
-              key={item.page}
-              onClick={() => go(item.page)}
-              className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50"
-            >
-              {item.label}
-            </button>
+            <button key={item.page} onClick={() => go(item.page)} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">{item.label}</button>
           ))}
           <button
             onClick={() => {
@@ -255,93 +207,46 @@ export function PublicFooter({
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-14 grid sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10">
         <div>
           <div className="flex items-center gap-3">
-            <img
-              src={brandAssets.logo}
-              alt="Rupantar Homes"
-              className="w-14 h-14 rounded-xl object-cover shadow-sm ring-1 ring-white/10"
-              style={{ borderRadius: "12px" }}
-            />
+            <img src={brandAssets.logo} alt="Rupantar Homes" className="w-14 h-14 rounded-xl object-cover shadow-sm ring-1 ring-white/10" style={{ borderRadius: "12px" }} />
             <div>
-              <div className="font-heading font-bold text-[15px] leading-none text-[#FEFEFE]">
-                Rupantar Homes
-              </div>
-              <div className="text-[11px] text-zinc-400 mt-1 leading-4">
-                {settings.slogan}
-              </div>
+              <div className="font-heading font-bold text-[15px] leading-none text-[#FEFEFE]">Rupantar Homes</div>
+              <div className="text-[11px] text-zinc-400 mt-1 leading-4">{settings.slogan}</div>
             </div>
           </div>
-          <div className="mt-5 text-[13px] text-zinc-300 flex items-center gap-2">
+          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="mt-5 text-[13px] text-zinc-300 flex items-center gap-2 hover:text-[#FF1A3D] transition">
             <Phone className="w-4 h-4 text-[#FF1A3D]" /> {settings.phone}
-          </div>
+          </a>
           <div className="mt-2 text-[12px] text-zinc-400 leading-5">{settings.address}</div>
         </div>
 
         <div>
-          <div className="font-heading font-semibold text-[13px] uppercase tracking-wide text-[#FEFEFE]">
-            Categories
-          </div>
+          <div className="font-heading font-semibold text-[13px] uppercase tracking-wide text-[#FEFEFE]">Categories</div>
           <div className="mt-4 grid grid-cols-1 gap-2.5">
             {categories.map((category) => (
-              <button
-                key={category.slug}
-                onClick={() => onCategory(category.slug)}
-                className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D] transition"
-              >
-                {category.name}
-              </button>
+              <button key={category.slug} onClick={() => onCategory(category.slug)} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D] transition">{category.name}</button>
             ))}
           </div>
         </div>
 
         <div>
-          <div className="font-heading font-semibold text-[13px] uppercase tracking-wide text-[#FEFEFE]">
-            Quick Links
-          </div>
+          <div className="font-heading font-semibold text-[13px] uppercase tracking-wide text-[#FEFEFE]">Quick Links</div>
           <div className="mt-4 flex flex-col gap-2.5">
-            <button onClick={() => navigate("home")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">
-              Home
-            </button>
-            <button onClick={() => navigate("works")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">
-              All Works
-            </button>
-            <button onClick={() => navigate("about")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">
-              About Us
-            </button>
-            <button onClick={onEstimate} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">
-              Get Estimate
-            </button>
-            <button onClick={() => navigate("admin-login")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">
-              Admin Login
-            </button>
+            <button onClick={() => navigate("home")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Home</button>
+            <button onClick={() => navigate("works")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">All Works</button>
+            <button onClick={() => navigate("about")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">About Us</button>
+            <button onClick={onEstimate} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Get Estimate</button>
+            <button onClick={() => navigate("admin-login")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Admin Login</button>
           </div>
         </div>
 
         <div>
-          <div className="font-heading font-semibold text-[13px] uppercase tracking-wide text-[#FEFEFE]">
-            Contact
-          </div>
+          <div className="font-heading font-semibold text-[13px] uppercase tracking-wide text-[#FEFEFE]">Contact</div>
           <div className="mt-4 space-y-2 text-[13px] text-zinc-400">
-            <div>Phone: {settings.phone}</div>
+            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="block hover:text-[#FF1A3D] transition">WhatsApp: {settings.phone}</a>
             <div>Address: {settings.address}</div>
             <div className="flex gap-2 mt-3">
-              <a
-                href={settings.instagram}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram"
-                className="w-9 h-9 rounded-full bg-white/10 border border-white/10 text-white flex items-center justify-center hover:border-[#FF1A3D]/50 transition"
-              >
-                <Instagram className="w-4 h-4" />
-              </a>
-              <a
-                href={settings.tiktok}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="TikTok"
-                className="w-9 h-9 rounded-full bg-[#FEFEFE] text-[#111111] flex items-center justify-center hover:bg-white transition"
-              >
-                <Music2 className="w-4 h-4" />
-              </a>
+              <a href={settings.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="w-9 h-9 rounded-full bg-white/10 border border-white/10 text-white flex items-center justify-center hover:border-[#FF1A3D]/50 transition"><Instagram className="w-4 h-4" /></a>
+              <a href={settings.tiktok} target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="w-9 h-9 rounded-full bg-[#FEFEFE] text-[#111111] flex items-center justify-center hover:bg-white transition"><Music2 className="w-4 h-4" /></a>
             </div>
             <div className="mt-5 rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900">
               <iframe
