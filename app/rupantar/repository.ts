@@ -4,6 +4,8 @@ import { getSupabase, isSupabaseConfigured, type Session } from "./supabase";
 import type {
   AdminStats,
   EstimateForm,
+  Lead,
+  LeadStatus,
   QueryForm,
   Review,
   ReviewForm,
@@ -27,7 +29,23 @@ type SettingsRow = Pick<
   "id" | "slogan" | "phone" | "instagram_url" | "tiktok_url" | "address" | "workshop_note"
 >;
 
+type LeadRow = {
+  id: string;
+  name: string;
+  phone: string;
+  location: string | null;
+  service_required: string | null;
+  approximate_area: string | null;
+  material_preference: string | null;
+  message: string | null;
+  reference_image_url: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
 const allowedCategories = new Set(categories.map((category) => category.slug));
+const allowedLeadStatuses = new Set<LeadStatus>(["new", "contacted", "closed"]);
 const maximumPublicMessageLength = 4000;
 
 function text(value: unknown): string {
@@ -44,8 +62,9 @@ function requiredText(value: unknown, label: string): string {
   return normalized;
 }
 
-function publicMessage(value: unknown): string {
+function publicMessage(value: unknown, required = false): string {
   const normalized = trimmed(value);
+  if (required && !normalized) throw new Error("Message / Requirements is required.");
   if (normalized.length > maximumPublicMessageLength) {
     throw new Error(`Message must be ${maximumPublicMessageLength.toLocaleString()} characters or fewer.`);
   }
@@ -132,6 +151,24 @@ function mapSettings(row: SettingsRow | null): SiteSettings {
     tiktok: text(row.tiktok_url),
     address: text(row.address),
     workshopNote: text(row.workshop_note),
+  };
+}
+
+function mapLead(row: LeadRow): Lead {
+  const status = allowedLeadStatuses.has(row.status as LeadStatus) ? (row.status as LeadStatus) : "new";
+  return {
+    id: row.id,
+    name: row.name,
+    phone: row.phone,
+    location: row.location ?? "",
+    serviceRequired: row.service_required ?? "",
+    approximateArea: row.approximate_area ?? "",
+    materialPreference: row.material_preference ?? "",
+    message: row.message ?? "",
+    referenceImageUrl: row.reference_image_url,
+    status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -305,14 +342,15 @@ export async function saveSettings(settings: SiteSettings): Promise<void> {
 }
 
 export async function submitEstimate(form: EstimateForm): Promise<void> {
+  if (!form.attachment) throw new Error("Please upload a space photo.");
   const payload = {
-    name: requiredText(form.name, "Name"),
+    name: requiredText(form.name, "Full name"),
     phone: requiredText(form.phone, "Phone"),
-    location: trimmed(form.location) || "Kathmandu",
+    location: requiredText(form.location, "Location"),
     category: categorySlug(form.category),
-    approximate_size: trimmed(form.size),
-    material_preference: trimmed(form.material),
-    message: publicMessage(form.message),
+    approximate_size: requiredText(form.size, "Approximate size"),
+    material_preference: requiredText(form.material, "Material preference"),
+    message: publicMessage(form.message, true),
   };
   await submitPublicInquiry("estimate", payload, form.attachment);
 }
@@ -348,6 +386,28 @@ async function submitPublicInquiry(
     // Keep the stable public error when the server response is unreadable.
   }
   throw new Error(message);
+}
+
+export async function loadLeads(): Promise<Lead[]> {
+  const supabase = getSupabase() as any;
+  const { data, error } = await supabase
+    .from("leads")
+    .select("id,name,phone,location,service_required,approximate_area,material_preference,message,reference_image_url,status,created_at,updated_at")
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as LeadRow[]).map(mapLead);
+}
+
+export async function updateLeadStatus(id: string, status: LeadStatus): Promise<void> {
+  if (!allowedLeadStatuses.has(status)) throw new Error("Invalid lead status.");
+  const supabase = getSupabase() as any;
+  const { data, error } = await supabase
+    .from("leads")
+    .update({ status })
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+  if (error || !data) throw new Error(error?.message ?? "The lead could not be updated.");
 }
 
 export async function loadAdminStats(): Promise<AdminStats> {
