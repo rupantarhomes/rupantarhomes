@@ -39,22 +39,29 @@ function installBackgroundMusic() {
     for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
 
     const audioUrl = URL.createObjectURL(new Blob([bytes], { type: "audio/webm" }));
-    const audio = new Audio(audioUrl);
+    const audio = document.createElement("audio");
+    audio.src = audioUrl;
     audio.loop = true;
     audio.preload = "auto";
-    audio.volume = 0.45;
-    audio.muted = false;
+    audio.volume = 0.5;
+    audio.muted = true;
+    audio.setAttribute("playsinline", "");
+    audio.setAttribute("aria-hidden", "true");
+    audio.style.display = "none";
+    document.body.appendChild(audio);
 
     const button = document.createElement("button");
     button.type = "button";
     button.className = "site-music-toggle";
 
-    const speakerIcon = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Zm4.5 3.5a5 5 0 0 1 0 7M17.8 6a8 8 0 0 1 0 12"/></svg>`;
+    const soundIcon = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Zm4.5 3.5a5 5 0 0 1 0 7M17.8 6a8 8 0 0 1 0 12"/></svg>`;
     const mutedIcon = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Zm4.5 4.5 5 5m0-5-5 5"/></svg>`;
     const playIcon = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7-11-7Z"/></svg>`;
 
+    let unlocked = false;
+
     const updateButton = () => {
-      if (audio.paused) {
+      if (!unlocked || audio.paused) {
         button.setAttribute("aria-label", "Play background music");
         button.setAttribute("title", "Play music");
         button.innerHTML = `${playIcon}<span>Play Music</span>`;
@@ -64,60 +71,93 @@ function installBackgroundMusic() {
       if (audio.muted) {
         button.setAttribute("aria-label", "Unmute background music");
         button.setAttribute("title", "Unmute music");
-        button.innerHTML = `${mutedIcon}<span>Music</span>`;
+        button.innerHTML = `${mutedIcon}<span>Sound Off</span>`;
         return;
       }
 
       button.setAttribute("aria-label", "Mute background music");
       button.setAttribute("title", "Mute music");
-      button.innerHTML = `${speakerIcon}<span>Mute</span>`;
+      button.innerHTML = `${soundIcon}<span>Mute</span>`;
     };
 
-    const playAudibly = async () => {
+    const unlockSound = () => {
       audio.muted = false;
-      try {
-        await audio.play();
-      } finally {
-        updateButton();
+      const playPromise = audio.play();
+      if (playPromise) {
+        void playPromise.then(() => {
+          unlocked = true;
+          updateButton();
+          removeUnlockListeners();
+        }).catch((error) => {
+          console.warn("Background music could not start after interaction", error);
+          audio.muted = true;
+          unlocked = false;
+          updateButton();
+        });
       }
     };
 
-    button.addEventListener("click", () => {
-      if (audio.paused) {
-        void playAudibly();
+    const unlockFromGesture = () => {
+      if (unlocked && !audio.paused) return;
+      unlockSound();
+    };
+
+    const removeUnlockListeners = () => {
+      document.removeEventListener("pointerdown", unlockFromGesture, true);
+      document.removeEventListener("click", unlockFromGesture, true);
+      document.removeEventListener("touchend", unlockFromGesture, true);
+      document.removeEventListener("keydown", unlockFromGesture, true);
+    };
+
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+
+      if (!unlocked || audio.paused) {
+        unlockSound();
         return;
       }
+
       audio.muted = !audio.muted;
       updateButton();
     });
 
-    audio.addEventListener("play", updateButton);
+    audio.addEventListener("playing", updateButton);
     audio.addEventListener("pause", updateButton);
     audio.addEventListener("volumechange", updateButton);
     audio.addEventListener("error", () => {
+      button.disabled = true;
       button.setAttribute("aria-label", "Music unavailable");
       button.setAttribute("title", "Music unavailable");
       button.innerHTML = `${playIcon}<span>Music unavailable</span>`;
+      console.error("Background music media error", audio.error);
     });
 
     document.body.appendChild(button);
     updateButton();
 
-    const startOnFirstInteraction = () => {
-      if (!audio.paused) return;
-      void playAudibly().then(() => {
-        document.removeEventListener("pointerdown", startOnFirstInteraction);
-        document.removeEventListener("keydown", startOnFirstInteraction);
-      }).catch(() => undefined);
-    };
-
-    void playAudibly().catch(() => {
+    // Browsers consistently allow muted autoplay. Keep the track running muted,
+    // then reveal the sound on the first genuine user gesture.
+    void audio.play().then(() => {
       updateButton();
-      document.addEventListener("pointerdown", startOnFirstInteraction, { once: true });
-      document.addEventListener("keydown", startOnFirstInteraction, { once: true });
+    }).catch((error) => {
+      console.warn("Muted background music autoplay was blocked", error);
+      updateButton();
     });
 
-    window.addEventListener("beforeunload", () => URL.revokeObjectURL(audioUrl), { once: true });
+    document.addEventListener("pointerdown", unlockFromGesture, true);
+    document.addEventListener("click", unlockFromGesture, true);
+    document.addEventListener("touchend", unlockFromGesture, true);
+    document.addEventListener("keydown", unlockFromGesture, true);
+
+    window.addEventListener(
+      "beforeunload",
+      () => {
+        removeUnlockListeners();
+        audio.pause();
+        URL.revokeObjectURL(audioUrl);
+      },
+      { once: true },
+    );
   } catch (error) {
     console.error("Unable to initialize background music", error);
   }
