@@ -8,6 +8,7 @@ import { errorMessage, json } from "../_lib/http";
 
 const maximumAttachmentBytes = 10 * 1024 * 1024;
 const maximumRequestBytes = 11 * 1024 * 1024;
+const web3FormsAccessKey = "9cb63466-337d-4480-80f1-2ee7a00f25a3";
 const acceptedAttachmentTypes = new Set(["image/jpeg", "image/png"]);
 const allowedCategories = new Set([
   "interior-designing",
@@ -21,6 +22,7 @@ const allowedCategories = new Set([
 ]);
 
 type InquiryKind = "query" | "estimate";
+type InquiryPayload = Record<string, string | null>;
 type CloudinaryUpload = {
   secure_url?: unknown;
   public_id?: unknown;
@@ -37,19 +39,11 @@ class PublicRequestError extends Error {
   }
 }
 
-function textField(
-  form: FormData,
-  name: string,
-  label: string,
-  maximumLength: number,
-  required = false,
-): string {
+function textField(form: FormData, name: string, label: string, maximumLength: number): string {
   const value = form.get(name);
   const normalized = typeof value === "string" ? value.trim() : "";
-  if (required && !normalized) throw new PublicRequestError(`${label} is required.`);
-  if (normalized.length > maximumLength) {
-    throw new PublicRequestError(`${label} is too long.`);
-  }
+  if (!normalized) throw new PublicRequestError(`${label} is required.`);
+  if (normalized.length > maximumLength) throw new PublicRequestError(`${label} is too long.`);
   return normalized;
 }
 
@@ -60,25 +54,20 @@ function inquiryKind(form: FormData): InquiryKind {
 }
 
 function category(form: FormData): string {
-  const value = textField(form, "category", "Category", 64, true);
+  const value = textField(form, "category", "Category", 64);
   if (!allowedCategories.has(value)) throw new PublicRequestError("Please select a valid category.");
   return value;
 }
 
-function attachment(form: FormData, required = false): File | null {
+function attachment(form: FormData): File {
   const values = form.getAll("attachment");
   if (values.length > 1) throw new PublicRequestError("Attach only one photo.");
   const value = values[0];
   if (!(value instanceof File) || value.size === 0) {
-    if (required) throw new PublicRequestError("Please upload a space photo.");
-    return null;
+    throw new PublicRequestError("Please upload a space photo.");
   }
-  if (!acceptedAttachmentTypes.has(value.type)) {
-    throw new PublicRequestError("Please choose a JPG or PNG photo.");
-  }
-  if (value.size > maximumAttachmentBytes) {
-    throw new PublicRequestError("Photo must be 10MB or smaller.");
-  }
+  if (!acceptedAttachmentTypes.has(value.type)) throw new PublicRequestError("Please choose a JPG or PNG photo.");
+  if (value.size > maximumAttachmentBytes) throw new PublicRequestError("Photo must be 10MB or smaller.");
   return value;
 }
 
@@ -108,17 +97,12 @@ async function rateLimitKey(phone: string): Promise<string> {
 
 async function enforceGlobalRateLimit(runtime: InquiryRuntimeEnv): Promise<void> {
   const outcome = await runtime.PUBLIC_INQUIRY_GLOBAL_RATE_LIMITER.limit({ key: "public-inquiries" });
-  if (!outcome.success) {
-    throw new PublicRequestError("Too many requests. Please wait a minute and try again.", 429);
-  }
+  if (!outcome.success) throw new PublicRequestError("Too many requests. Please wait a minute and try again.", 429);
 }
 
 async function enforceActorRateLimit(phone: string, runtime: InquiryRuntimeEnv): Promise<void> {
-  const actorKey = await rateLimitKey(phone);
-  const outcome = await runtime.PUBLIC_INQUIRY_RATE_LIMITER.limit({ key: actorKey });
-  if (!outcome.success) {
-    throw new PublicRequestError("Too many requests. Please wait a minute and try again.", 429);
-  }
+  const outcome = await runtime.PUBLIC_INQUIRY_RATE_LIMITER.limit({ key: await rateLimitKey(phone) });
+  if (!outcome.success) throw new PublicRequestError("Too many requests. Please wait a minute and try again.", 429);
 }
 
 function cloudinaryUrl(value: unknown, cloudName: string): string {
@@ -166,12 +150,13 @@ async function uploadAttachment(
   try {
     result = (await response.json()) as CloudinaryUpload;
   } catch {
-    // Status and field validation below handles an unreadable response.
+    // Validation below handles an unreadable response.
   }
   if (!response.ok) {
     const detail = typeof result?.error?.message === "string" ? result.error.message : `status ${response.status}`;
     throw new Error(`Cloudinary upload failed: ${detail}`);
   }
+
   try {
     const width = Number(result?.width);
     const height = Number(result?.height);
@@ -188,20 +173,13 @@ async function uploadAttachment(
     try {
       await destroyCloudinaryImage(publicId, runtime);
     } catch (cleanupError) {
-      console.error(JSON.stringify({
-        message: "invalid public inquiry upload cleanup failed",
-        error: errorMessage(cleanupError),
-      }));
+      console.error(JSON.stringify({ message: "invalid public inquiry upload cleanup failed", error: errorMessage(cleanupError) }));
     }
     throw error;
   }
 }
 
-async function insertInquiry(
-  kind: InquiryKind,
-  payload: Record<string, string | null>,
-  runtime: InquiryRuntimeEnv,
-): Promise<void> {
+async function insertInquiry(kind: InquiryKind, payload: InquiryPayload, runtime: InquiryRuntimeEnv): Promise<void> {
   const table = kind === "query" ? "queries" : "estimate_requests";
   const response = await fetch(`${runtime.SUPABASE_URL}/rest/v1/${table}`, {
     method: "POST",
@@ -221,9 +199,35 @@ async function insertInquiry(
   }
 }
 
+async function sendWeb3FormsNotification(kind: InquiryKind, payload: InquiryPayload): Promise<void> {
+  const response = await fetch("https://api.web3forms.com/submit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      access_key: web3FormsAccessKey,
+      subject: kind === "estimate" ? "New Rupantar Homes Estimate Lead" : "New Rupantar Homes Website Query",
+      from_name: "Rupantar Homes Website",
+      form_type: kind === "estimate" ? "Estimate Request" : "Website Query",
+      name: payload.name ?? "",
+      phone: payload.phone ?? "",
+      location: payload.location ?? "",
+      service: payload.category ?? "",
+      approximate_size: payload.approximate_size ?? "",
+      material_preference: payload.material_preference ?? "",
+      message: payload.message ?? "",
+      photo_url: payload.attachment_url ?? "",
+    }),
+  });
+  if (!response.ok) {
+    const responseBody = await response.text();
+    throw new Error(`Web3Forms notification failed with status ${response.status}: ${responseBody.slice(0, 300)}`);
+  }
+}
+
 export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env }) => {
   const requestId = crypto.randomUUID();
   let uploadedPublicId: string | null = null;
+
   try {
     requireSameOrigin(request);
     const contentLengthHeader = request.headers.get("Content-Length");
@@ -237,6 +241,7 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
 
     const runtime = requireInquiryRuntimeEnv(env);
     await enforceGlobalRateLimit(runtime);
+
     let form: FormData;
     try {
       form = await request.formData();
@@ -245,35 +250,48 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
     }
 
     const kind = inquiryKind(form);
-    const name = textField(form, "name", "Name", 150, true);
-    const phone = textField(form, "phone", "Phone", 40, true);
+    const name = textField(form, "name", "Name", 150);
+    const phone = textField(form, "phone", "Phone", 40);
     const normalizedCategory = category(form);
-    const message = textField(form, "message", "Message / Requirements", 4000, kind === "estimate");
+    const message = textField(form, "message", "Message / Requirements", 4000);
     if (!/^[0-9+()\-\s]{5,40}$/.test(phone)) throw new PublicRequestError("Please enter a valid phone number.");
     await enforceActorRateLimit(phone, runtime);
 
-    const photo = attachment(form, kind === "estimate");
-    const uploaded = photo ? await uploadAttachment(photo, kind, runtime) : null;
-    uploadedPublicId = uploaded?.publicId ?? null;
-    const common = {
+    const photo = attachment(form);
+    const uploaded = await uploadAttachment(photo, kind, runtime);
+    uploadedPublicId = uploaded.publicId;
+
+    const common: InquiryPayload = {
       name,
       phone,
       category: normalizedCategory,
       message,
-      attachment_public_id: uploaded?.publicId ?? null,
-      attachment_url: uploaded?.url ?? null,
+      attachment_public_id: uploaded.publicId,
+      attachment_url: uploaded.url,
     };
-    const payload = kind === "query"
+    const payload: InquiryPayload = kind === "query"
       ? common
       : {
           ...common,
-          location: textField(form, "location", "Location", 200, true),
-          approximate_size: textField(form, "approximate_size", "Approximate size", 100, true),
-          material_preference: textField(form, "material_preference", "Material preference", 200, true),
+          location: textField(form, "location", "Location", 200),
+          approximate_size: textField(form, "approximate_size", "Approximate size", 100),
+          material_preference: textField(form, "material_preference", "Material preference", 200),
         };
+
     await insertInquiry(kind, payload, runtime);
 
-    console.log(JSON.stringify({ message: "public inquiry accepted", requestId, kind, attachment: Boolean(photo) }));
+    try {
+      await sendWeb3FormsNotification(kind, payload);
+    } catch (notificationError) {
+      console.error(JSON.stringify({
+        message: "Web3Forms notification failed after inquiry save",
+        requestId,
+        kind,
+        error: errorMessage(notificationError),
+      }));
+    }
+
+    console.log(JSON.stringify({ message: "public inquiry accepted", requestId, kind, attachment: true }));
     return json({ ok: true }, 201);
   } catch (error) {
     const message = errorMessage(error);
