@@ -269,13 +269,18 @@ export function HomePage({
             <div className="mt-10 p-4 rounded-2xl bg-white/5 border border-white/10 flex gap-3 items-start">
               <ImageUp className="w-5 h-5 text-[#FF1A3D] mt-0.5" />
               <div className="text-[12px] leading-5 text-zinc-300">
-                Tip: Upload 3-4 photos – wide angle, close-up of wall, floor measurement if possible. We
-                respond on WhatsApp same day.
+                Tip: Upload a clear wide-angle photo of your space and include the approximate measurement below. We respond on WhatsApp same day.
               </div>
             </div>
           </div>
 
-          <div className="bg-white text-zinc-900 p-6 sm:p-8 lg:p-10 rounded-t-[2rem] lg:rounded-l-none lg:rounded-r-[2rem] rounded-b-[2rem] lg:rounded-bl-none m-2 lg:m-0">
+          <form
+            className="bg-white text-zinc-900 p-6 sm:p-8 lg:p-10 rounded-t-[2rem] lg:rounded-l-none lg:rounded-r-[2rem] rounded-b-[2rem] lg:rounded-bl-none m-2 lg:m-0"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void onSubmitEstimate();
+            }}
+          >
             <div className="flex items-center justify-between mb-6">
               <h4 className="font-heading font-bold text-[18px]">Send Estimate Request</h4>
               <span className="text-[11px] px-2.5 py-1 rounded-full bg-[#FFF0F2] text-[#FF1A3D] font-semibold">
@@ -284,24 +289,31 @@ export function HomePage({
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <input
+                required
+                autoComplete="name"
                 value={estimate.name}
                 onChange={(event) => setEstimate((value) => ({ ...value, name: event.target.value }))}
-                placeholder="Full Name"
+                placeholder="Full Name *"
                 className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] focus:ring-2 focus:ring-[#FF1A3D]/10"
               />
               <input
+                required
+                type="tel"
+                autoComplete="tel"
                 value={estimate.phone}
                 onChange={(event) => setEstimate((value) => ({ ...value, phone: event.target.value }))}
-                placeholder="Phone 9745xxxxxx"
+                placeholder="Phone 9745xxxxxx *"
                 className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] focus:ring-2 focus:ring-[#FF1A3D]/10"
               />
               <input
+                required
                 value={estimate.location}
                 onChange={(event) => setEstimate((value) => ({ ...value, location: event.target.value }))}
-                placeholder="Location e.g. Kathmandu"
+                placeholder="Location e.g. Kathmandu *"
                 className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] focus:ring-2 focus:ring-[#FF1A3D]/10 sm:col-span-2"
               />
               <select
+                required
                 value={estimate.category}
                 onChange={(event) => setEstimate((value) => ({ ...value, category: event.target.value }))}
                 className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] bg-white outline-none focus:border-[#FF1A3D]"
@@ -311,19 +323,21 @@ export function HomePage({
                 ))}
               </select>
               <input
+                required
                 value={estimate.size}
                 onChange={(event) => setEstimate((value) => ({ ...value, size: event.target.value }))}
-                placeholder="Approx Size (e.g. 10x12 ft)"
+                placeholder="Approx Size (e.g. 10x12 ft) *"
                 className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]"
               />
               <input
+                required
                 value={estimate.material}
                 onChange={(event) => setEstimate((value) => ({ ...value, material: event.target.value }))}
-                placeholder="Material Preference"
+                placeholder="Material Preference *"
                 className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] sm:col-span-2"
               />
               <label
-                className="sm:col-span-2 relative border-2 border-dashed border-zinc-200 rounded-2xl p-5 flex flex-col items-center justify-center text-zinc-400 gap-2 hover:border-[#FF1A3D]/30 transition cursor-pointer overflow-hidden"
+                className="sm:col-span-2 relative border-2 border-dashed border-zinc-200 rounded-2xl p-5 flex flex-col items-center justify-center text-zinc-400 gap-2 hover:border-[#FF1A3D]/30 transition cursor-pointer overflow-hidden bg-[#FEFEFE]"
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={(event) => {
                   event.preventDefault();
@@ -332,47 +346,51 @@ export function HomePage({
                 }}
               >
                 <input
+                  required={!estimate.attachment}
                   type="file"
                   accept="image/jpeg,image/png,.jpg,.jpeg,.png"
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  aria-label="Attach a JPG or PNG photo to the estimate request"
+                  aria-label="Upload a required JPG or PNG space photo"
                   onChange={(event) => {
                     const attachment = acceptedPhoto(event.target.files?.[0]);
                     if (attachment) setEstimate((value) => ({ ...value, attachment }));
                     event.target.value = "";
                   }}
                 />
+                <div className="w-12 h-12 rounded-2xl bg-white border border-zinc-100 shadow-sm flex items-center justify-center">
+                  <Upload className="w-5 h-5 text-zinc-700" />
+                </div>
                 {estimate.attachment ? (
                   <>
-                    <span className="text-[12px] font-medium text-green-600">✓ {estimate.attachment.name}</span>
-                    <span className="text-[11px] text-green-600">{(estimate.attachment.size / 1024).toFixed(0)}KB - Click to change</span>
+                    <span className="text-[12px] font-semibold text-green-600">✓ {estimate.attachment.name}</span>
+                    <span className="text-[11px] text-green-600">{(estimate.attachment.size / 1024).toFixed(0)}KB • Click to change</span>
                   </>
                 ) : (
                   <>
-                    <Upload className="w-6 h-6" />
-                    <span className="text-[12px] font-medium">Drag & Drop Photo or Click to Upload</span>
+                    <span className="text-[12px] font-semibold text-zinc-700">Drag &amp; Drop Photo or <span className="text-[#FF1A3D]">Click to Upload</span> *</span>
                     <span className="text-[11px]">JPG, PNG up to 10MB</span>
                   </>
                 )}
               </label>
               <textarea
+                required
                 value={estimate.message}
                 onChange={(event) => setEstimate((value) => ({ ...value, message: event.target.value }))}
-                placeholder="Message / Requirements"
+                placeholder="Message / Requirements *"
                 rows={3}
                 maxLength={4000}
                 className="sm:col-span-2 w-full px-4 py-3 rounded-2xl border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] resize-none"
               />
             </div>
             <button
-              onClick={onSubmitEstimate}
+              type="submit"
               disabled={estimateBusy}
               className="mt-6 w-full h-12 rounded-full bg-[#FF1A3D] text-white font-semibold text-[14px] flex items-center justify-center gap-2 hover:brightness-95 transition disabled:opacity-60"
             >
               {estimateBusy ? "Sending..." : "Send Estimate Request"} <ArrowRight className="w-4 h-4" />
             </button>
-            <div className="mt-3 text-[11px] text-zinc-500 text-center">We reply within 2 hours • No spam</div>
-          </div>
+            <div className="mt-3 text-[11px] text-zinc-500 text-center">All fields are required • We reply on WhatsApp • No spam</div>
+          </form>
         </div>
       </section>
 
