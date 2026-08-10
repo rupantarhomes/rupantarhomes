@@ -65,11 +65,14 @@ function category(form: FormData): string {
   return value;
 }
 
-function attachment(form: FormData): File | null {
+function attachment(form: FormData, required = false): File | null {
   const values = form.getAll("attachment");
   if (values.length > 1) throw new PublicRequestError("Attach only one photo.");
   const value = values[0];
-  if (!(value instanceof File) || value.size === 0) return null;
+  if (!(value instanceof File) || value.size === 0) {
+    if (required) throw new PublicRequestError("Please upload a space photo.");
+    return null;
+  }
   if (!acceptedAttachmentTypes.has(value.type)) {
     throw new PublicRequestError("Please choose a JPG or PNG photo.");
   }
@@ -204,14 +207,18 @@ async function insertInquiry(
     method: "POST",
     headers: {
       apikey: runtime.SUPABASE_SECRET_KEY,
+      Authorization: `Bearer ${runtime.SUPABASE_SECRET_KEY}`,
       "Content-Type": "application/json",
       "Content-Profile": "public",
       Prefer: "return=minimal",
     },
     body: JSON.stringify(payload),
   });
-  await response.text();
-  if (!response.ok) throw new Error(`Supabase inquiry insert failed with status ${response.status}`);
+  const responseBody = await response.text();
+  if (!response.ok) {
+    console.error(JSON.stringify({ message: "Supabase inquiry insert failed", status: response.status, responseBody }));
+    throw new Error(`Supabase inquiry insert failed with status ${response.status}`);
+  }
 }
 
 export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env }) => {
@@ -241,11 +248,11 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
     const name = textField(form, "name", "Name", 150, true);
     const phone = textField(form, "phone", "Phone", 40, true);
     const normalizedCategory = category(form);
-    const message = textField(form, "message", "Message", 4000);
+    const message = textField(form, "message", "Message / Requirements", 4000, kind === "estimate");
     if (!/^[0-9+()\-\s]{5,40}$/.test(phone)) throw new PublicRequestError("Please enter a valid phone number.");
     await enforceActorRateLimit(phone, runtime);
 
-    const photo = attachment(form);
+    const photo = attachment(form, kind === "estimate");
     const uploaded = photo ? await uploadAttachment(photo, kind, runtime) : null;
     uploadedPublicId = uploaded?.publicId ?? null;
     const common = {
@@ -260,9 +267,9 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
       ? common
       : {
           ...common,
-          location: textField(form, "location", "Location", 200) || "Kathmandu",
-          approximate_size: textField(form, "approximate_size", "Approximate size", 100),
-          material_preference: textField(form, "material_preference", "Material preference", 200),
+          location: textField(form, "location", "Location", 200, true),
+          approximate_size: textField(form, "approximate_size", "Approximate size", 100, true),
+          material_preference: textField(form, "material_preference", "Material preference", 200, true),
         };
     await insertInquiry(kind, payload, runtime);
 
