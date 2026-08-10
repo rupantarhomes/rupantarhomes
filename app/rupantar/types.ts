@@ -4,6 +4,7 @@ export type AdminPage =
   | "admin-login"
   | "admin-dashboard"
   | "admin-works"
+  | "admin-leads"
   | "admin-reviews"
   | "admin-settings";
 
@@ -61,6 +62,23 @@ export type SiteSettings = {
 export type AdminStats = {
   queries: number;
   estimates: number;
+};
+
+export type LeadStatus = "new" | "contacted" | "closed";
+
+export type Lead = {
+  id: string;
+  name: string;
+  phone: string;
+  location: string;
+  serviceRequired: string;
+  approximateArea: string;
+  materialPreference: string;
+  message: string;
+  referenceImageUrl: string | null;
+  status: LeadStatus;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type EstimateForm = {
