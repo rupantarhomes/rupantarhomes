@@ -1,5 +1,5 @@
-import { founderImage, heroImage } from "./locked-assets";
-import { heroImageTail } from "./locked-hero-tail";
+import { founderImage } from "./locked-assets";
+import { hero2026 } from "./hero-2026";
 import type {
   Category,
   EstimateForm,
@@ -101,8 +101,8 @@ export const initialReviews: Review[] = [
 export const initialSettings: SiteSettings = {
   slogan: "Transforming Spaces Inspiring Lives",
   phone: "9745941799",
-  instagram: "https://instagram.com/",
-  tiktok: "https://tiktok.com/",
+  instagram: "https://www.instagram.com/rupantarhomes_by_gokulkunwar/?hl=en",
+  tiktok: "https://www.tiktok.com/@rupantarhomes_by_gokul",
   address: "Kathmandu, Nepal",
   workshopNote: "Workshop visit by appointment only",
 };
@@ -148,6 +148,6 @@ export const emptyReview: ReviewForm = {
 export const brandAssets = {
   logo: "/assets/rupantar-logo.jpg",
   founder: founderImage,
-  hero: heroImage + heroImageTail,
+  hero: hero2026,
   favicon: "/assets/rupantar-favicon.png",
 } as const;
