@@ -323,7 +323,7 @@ export function HomePage({
                 className="h-11 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] sm:col-span-2"
               />
               <label
-                className="sm:col-span-2 border-2 border-dashed border-zinc-200 rounded-2xl p-5 flex flex-col items-center justify-center text-zinc-400 gap-2 hover:border-[#FF1A3D]/30 transition cursor-pointer"
+                className="sm:col-span-2 relative border-2 border-dashed border-zinc-200 rounded-2xl p-5 flex flex-col items-center justify-center text-zinc-400 gap-2 hover:border-[#FF1A3D]/30 transition cursor-pointer overflow-hidden"
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={(event) => {
                   event.preventDefault();
@@ -334,7 +334,7 @@ export function HomePage({
                 <input
                   type="file"
                   accept="image/jpeg,image/png,.jpg,.jpeg,.png"
-                  className="sr-only"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   aria-label="Attach a JPG or PNG photo to the estimate request"
                   onChange={(event) => {
                     const attachment = acceptedPhoto(event.target.files?.[0]);
@@ -342,9 +342,18 @@ export function HomePage({
                     event.target.value = "";
                   }}
                 />
-                <Upload className="w-6 h-6" />
-                <span className="text-[12px] font-medium">Drag &amp; Drop Photo or Click to Upload</span>
-                <span className="text-[11px]">JPG, PNG up to 10MB</span>
+                {estimate.attachment ? (
+                  <>
+                    <span className="text-[12px] font-medium text-green-600">✓ {estimate.attachment.name}</span>
+                    <span className="text-[11px] text-green-600">{(estimate.attachment.size / 1024).toFixed(0)}KB - Click to change</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-6 h-6" />
+                    <span className="text-[12px] font-medium">Drag & Drop Photo or Click to Upload</span>
+                    <span className="text-[11px]">JPG, PNG up to 10MB</span>
+                  </>
+                )}
               </label>
               <textarea
                 value={estimate.message}
@@ -472,7 +481,7 @@ export function HomePage({
               </select>
               <textarea value={query.message} onChange={(event) => setQuery((value) => ({ ...value, message: event.target.value }))} placeholder="Your message..." rows={4} maxLength={4000} className="sm:col-span-2 w-full px-4 py-3 rounded-2xl border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] resize-none" />
               <label
-                className="sm:col-span-2 border border-dashed border-zinc-200 rounded-2xl p-4 flex items-center justify-center gap-2 text-[12px] text-zinc-500 cursor-pointer hover:border-[#FF1A3D]/30"
+                className="sm:col-span-2 relative border border-dashed border-zinc-200 rounded-2xl p-4 flex items-center justify-center gap-2 text-[12px] text-zinc-500 cursor-pointer hover:border-[#FF1A3D]/30 overflow-hidden"
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={(event) => {
                   event.preventDefault();
@@ -483,7 +492,7 @@ export function HomePage({
                 <input
                   type="file"
                   accept="image/jpeg,image/png,.jpg,.jpeg,.png"
-                  className="sr-only"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   aria-label="Attach a JPG or PNG photo to the query"
                   onChange={(event) => {
                     const attachment = acceptedPhoto(event.target.files?.[0]);
@@ -491,7 +500,12 @@ export function HomePage({
                     event.target.value = "";
                   }}
                 />
-                <Upload className="w-4 h-4" /> Attach Photo (optional)
+                <Upload className="w-4 h-4" />
+                {query.attachment ? (
+                  <span className="text-green-600">✓ {query.attachment.name}</span>
+                ) : (
+                  <span>Attach Photo (optional)</span>
+                )}
               </label>
             </div>
             <button disabled={queryBusy} onClick={onSubmitQuery} className="mt-5 w-full h-12 rounded-full bg-[#FF1A3D] text-white font-semibold text-[14px] disabled:opacity-60">{queryBusy ? "Sending..." : "Send Query"}</button>
