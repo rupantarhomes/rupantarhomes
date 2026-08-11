@@ -7,12 +7,13 @@ import {
   LayoutDashboard,
   LogOut,
   MessageCircle,
+  Phone,
   Settings,
   Star,
   Upload,
   Users,
 } from "lucide-react";
-import { useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { brandAssets, categories, emptyWork } from "./data";
 import { getSupabase } from "./supabase";
 import type {
@@ -294,15 +295,40 @@ function leadWhatsAppUrl(lead: Lead): string {
   return `https://wa.me/${normalizeWhatsAppNumber(lead.phone)}?text=${message}`;
 }
 
+const seenLeadsStorageKey = "rupantar-admin-seen-leads";
+
 function AdminLeads({ leads, onUpdateLeadStatus, busy }: AdminPortalProps) {
   const [deletedLeadIds, setDeletedLeadIds] = useState<Set<string>>(() => new Set());
   const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
+  const [firstViewLeadIds] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(seenLeadsStorageKey) ?? "[]");
+      const seen = new Set<string>(Array.isArray(stored) ? stored.filter((id): id is string => typeof id === "string") : []);
+      return new Set(leads.filter((lead) => lead.status === "new" && !seen.has(lead.id)).map((lead) => lead.id));
+    } catch {
+      return new Set(leads.filter((lead) => lead.status === "new").map((lead) => lead.id));
+    }
+  });
   const visibleLeads = leads.filter((lead) => !deletedLeadIds.has(lead.id));
+  const visibleLeadIdsKey = visibleLeads.map((lead) => lead.id).join("|");
   const isEstimateLead = (lead: Lead) => Boolean(
     lead.referenceImageUrl || lead.location || lead.approximateArea || lead.materialPreference,
   );
   const estimateLeads = visibleLeads.filter(isEstimateLead);
   const websiteQueries = visibleLeads.filter((lead) => !isEstimateLead(lead));
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !visibleLeads.length) return;
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(seenLeadsStorageKey) ?? "[]");
+      const seen = new Set<string>(Array.isArray(stored) ? stored.filter((id): id is string => typeof id === "string") : []);
+      visibleLeads.forEach((lead) => seen.add(lead.id));
+      window.localStorage.setItem(seenLeadsStorageKey, JSON.stringify(Array.from(seen)));
+    } catch {
+      // The NEW marker is optional if browser storage is unavailable.
+    }
+  }, [visibleLeadIdsKey]);
 
   const formatDate = (value: string) => {
     const date = new Date(value);
@@ -335,26 +361,85 @@ function AdminLeads({ leads, onUpdateLeadStatus, busy }: AdminPortalProps) {
     }
   };
 
-  const leadActions = (lead: Lead) => (
-    <div className="flex items-center gap-2 shrink-0">
-      <select
-        value={lead.status}
-        disabled={busy || deletingLeadId === lead.id}
-        onChange={(event) => void onUpdateLeadStatus(lead.id, event.target.value as LeadStatus)}
-        className="h-9 px-3 rounded-full border border-zinc-200 text-[12px] bg-white"
+  const contactLinks = (lead: Lead) => (
+    <div className="mt-4 flex flex-wrap items-center gap-2.5">
+      <a
+        href={leadWhatsAppUrl(lead)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="min-h-10 px-4 py-2 rounded-full border border-zinc-200 bg-white text-[12px] font-semibold text-zinc-800 inline-flex items-center gap-2.5 hover:border-zinc-300 hover:bg-zinc-50 transition"
       >
-        <option value="new">New</option>
-        <option value="contacted">Contacted</option>
-        <option value="closed">Closed</option>
-      </select>
+        <svg viewBox="0 0 32 32" aria-hidden="true" className="w-4.5 h-4.5 shrink-0 fill-[#25D366]">
+          <path d="M19.11 17.35c-.28-.14-1.65-.81-1.91-.91-.26-.1-.45-.14-.64.14-.19.28-.73.91-.89 1.1-.16.19-.33.21-.61.07-.28-.14-1.18-.43-2.24-1.38-.83-.74-1.39-1.65-1.55-1.93-.16-.28-.02-.43.12-.57.13-.13.28-.33.42-.49.14-.16.19-.28.28-.47.09-.19.05-.35-.02-.49-.07-.14-.64-1.54-.87-2.11-.23-.55-.47-.48-.64-.49h-.55c-.19 0-.49.07-.75.35-.26.28-.99.97-.99 2.36 0 1.39 1.02 2.74 1.16 2.93.14.19 2 3.05 4.85 4.28.68.29 1.21.47 1.62.6.68.22 1.3.19 1.79.12.55-.08 1.65-.68 1.88-1.33.23-.65.23-1.21.16-1.33-.07-.12-.26-.19-.54-.33Z" />
+          <path d="M16.02 3.2c-7.09 0-12.85 5.72-12.85 12.78 0 2.25.59 4.45 1.7 6.39L3.08 28.8l6.61-1.73a12.93 12.93 0 0 0 6.33 1.62h.01c7.08 0 12.84-5.73 12.84-12.79 0-3.41-1.34-6.62-3.76-9.03A12.77 12.77 0 0 0 16.02 3.2Zm0 23.33h-.01a10.76 10.76 0 0 1-5.48-1.5l-.39-.23-3.92 1.03 1.05-3.81-.25-.39a10.62 10.62 0 0 1-1.68-5.73c0-5.88 4.8-10.66 10.7-10.66 2.86 0 5.54 1.11 7.56 3.12a10.57 10.57 0 0 1 3.14 7.54c0 5.88-4.8 10.66-10.72 10.66Z" />
+        </svg>
+        <span>WhatsApp</span>
+        <span className="text-zinc-500 font-medium">{lead.phone}</span>
+      </a>
+      <a
+        href={`tel:${lead.phone}`}
+        className="min-h-10 px-4 py-2 rounded-full border border-zinc-200 bg-white text-[12px] font-semibold text-zinc-800 inline-flex items-center gap-2.5 hover:border-[#FF1A3D]/40 hover:bg-[#FFF7F8] transition"
+      >
+        <Phone className="w-4 h-4 shrink-0 text-[#FF1A3D]" />
+        <span>Call</span>
+        <span className="text-zinc-500 font-medium">{lead.phone}</span>
+      </a>
+    </div>
+  );
+
+  const leadActions = (lead: Lead) => (
+    <div className="flex flex-wrap items-center gap-2.5">
+      <div className="inline-flex items-center gap-1 rounded-full border border-[#FF1A3D]/20 bg-[#FFF5F6] p-1">
+        <button
+          type="button"
+          disabled={busy || deletingLeadId === lead.id}
+          onClick={() => void onUpdateLeadStatus(lead.id, "contacted")}
+          className={`h-8 px-3.5 rounded-full text-[11px] font-semibold transition disabled:opacity-50 ${
+            lead.status === "contacted"
+              ? "bg-[#FF1A3D] text-white shadow-sm"
+              : "text-[#FF1A3D] hover:bg-white"
+          }`}
+        >
+          Contacted
+        </button>
+        <button
+          type="button"
+          disabled={busy || deletingLeadId === lead.id}
+          onClick={() => void onUpdateLeadStatus(lead.id, "closed")}
+          className={`h-8 px-3.5 rounded-full text-[11px] font-semibold transition disabled:opacity-50 ${
+            lead.status === "closed"
+              ? "bg-[#FF1A3D] text-white shadow-sm"
+              : "text-[#FF1A3D] hover:bg-white"
+          }`}
+        >
+          Closed
+        </button>
+      </div>
       <button
         type="button"
         disabled={busy || deletingLeadId === lead.id}
         onClick={() => void deleteLead(lead)}
-        className="h-9 px-3 rounded-full border border-red-200 text-red-600 text-[12px] font-medium hover:bg-red-50 disabled:opacity-50"
+        className="h-10 px-4 rounded-full border border-red-200 text-red-600 text-[12px] font-medium hover:bg-red-50 disabled:opacity-50"
       >
         {deletingLeadId === lead.id ? "Deleting..." : "Delete"}
       </button>
+    </div>
+  );
+
+  const leadHeader = (lead: Lead, kind: "Estimate Lead" | "Website Query") => (
+    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className={`text-[10px] uppercase tracking-[0.12em] font-bold ${kind === "Estimate Lead" ? "text-[#FF1A3D]" : "text-zinc-500"}`}>{kind}</div>
+          {firstViewLeadIds.has(lead.id) && (
+            <span className="h-6 px-2.5 rounded-full bg-[#FF1A3D] text-white text-[10px] font-bold tracking-wide inline-flex items-center">NEW</span>
+          )}
+        </div>
+        <div className="font-heading font-bold text-[18px] mt-1">{lead.name}</div>
+        <div className="text-[11px] text-zinc-500 mt-1">Submitted {formatDate(lead.createdAt)}</div>
+        {contactLinks(lead)}
+      </div>
+      {leadActions(lead)}
     </div>
   );
 
@@ -373,49 +458,27 @@ function AdminLeads({ leads, onUpdateLeadStatus, busy }: AdminPortalProps) {
         <div className="space-y-4">
           {estimateLeads.map((lead) => (
             <article key={lead.id} className="bg-white border border-zinc-100 rounded-[1.5rem] p-5 sm:p-6 shadow-sm">
-              <div className="grid lg:grid-cols-[0.72fr_1.28fr] gap-6">
-                <div>
-                  {lead.referenceImageUrl ? (
-                    <a href={lead.referenceImageUrl} target="_blank" rel="noopener noreferrer" className="block">
-                      <img src={lead.referenceImageUrl} alt={`Space submitted by ${lead.name}`} className="w-full aspect-[16/10] object-cover rounded-2xl border border-zinc-100" />
-                    </a>
-                  ) : (
-                    <div className="w-full aspect-[16/10] rounded-2xl border border-dashed border-zinc-200 flex items-center justify-center text-zinc-400 text-[12px]">No photo</div>
-                  )}
-                  <div className="mt-3 p-3 rounded-xl bg-zinc-50 border border-zinc-100">
-                    <div className="text-[10px] uppercase tracking-wide text-zinc-400 font-semibold">Image URL</div>
-                    {lead.referenceImageUrl ? (
-                      <a href={lead.referenceImageUrl} target="_blank" rel="noopener noreferrer" className="mt-1 block text-[11px] leading-4 text-[#FF1A3D] break-all hover:underline">
-                        {lead.referenceImageUrl}
-                      </a>
-                    ) : (
-                      <div className="mt-1 text-[12px] text-zinc-500">—</div>
-                    )}
-                  </div>
-                </div>
+              {leadHeader(lead, "Estimate Lead")}
 
-                <div>
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                    <div>
-                      <div className="text-[10px] uppercase tracking-[0.12em] text-[#FF1A3D] font-bold">Estimate Lead</div>
-                      <div className="font-heading font-bold text-[18px] mt-1">{lead.name}</div>
-                      <a href={leadWhatsAppUrl(lead)} target="_blank" rel="noopener noreferrer" className="text-[13px] text-[#FF1A3D] font-semibold mt-1 inline-flex">{lead.phone}</a>
-                      <div className="text-[11px] text-zinc-500 mt-1">Submitted {formatDate(lead.createdAt)}</div>
-                    </div>
-                    {leadActions(lead)}
-                  </div>
-
-                  <div className="grid sm:grid-cols-2 gap-3 mt-5">
-                    <LeadField label="Service" value={lead.serviceRequired.replace(/-/g, " ")} />
-                    <LeadField label="Location" value={lead.location} />
-                    <LeadField label="Approx. Size" value={lead.approximateArea} />
-                    <LeadField label="Material Preference" value={lead.materialPreference} />
-                  </div>
-                  <div className="mt-4 p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
-                    <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wide">Message / Requirements</div>
-                    <div className="text-[13px] text-zinc-700 mt-2 leading-5 whitespace-pre-wrap">{lead.message || "—"}</div>
-                  </div>
-                </div>
+              <div className="grid sm:grid-cols-2 gap-3 mt-5">
+                <LeadField label="Service" value={lead.serviceRequired.replace(/-/g, " ")} />
+                <LeadField label="Location" value={lead.location} />
+                <LeadField label="Approx. Size" value={lead.approximateArea} />
+                <LeadField label="Material Preference" value={lead.materialPreference} />
+              </div>
+              <div className="mt-4 p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
+                <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wide">Message / Requirements</div>
+                <div className="text-[13px] text-zinc-700 mt-2 leading-5 whitespace-pre-wrap">{lead.message || "—"}</div>
+              </div>
+              <div className="mt-4 p-4 rounded-2xl border border-zinc-100">
+                <div className="text-[10px] uppercase tracking-wide text-zinc-400 font-semibold">Image URL</div>
+                {lead.referenceImageUrl ? (
+                  <a href={lead.referenceImageUrl} target="_blank" rel="noopener noreferrer" className="mt-1.5 block text-[12px] leading-5 text-[#FF1A3D] break-all hover:underline">
+                    {lead.referenceImageUrl}
+                  </a>
+                ) : (
+                  <div className="mt-1.5 text-[12px] text-zinc-500">—</div>
+                )}
               </div>
             </article>
           ))}
@@ -433,15 +496,7 @@ function AdminLeads({ leads, onUpdateLeadStatus, busy }: AdminPortalProps) {
         <div className="space-y-4">
           {websiteQueries.map((lead) => (
             <article key={lead.id} className="bg-white border border-zinc-100 rounded-[1.5rem] p-5 sm:p-6 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                <div>
-                  <div className="text-[10px] uppercase tracking-[0.12em] text-zinc-500 font-bold">Website Query</div>
-                  <div className="font-heading font-bold text-[18px] mt-1">{lead.name}</div>
-                  <a href={leadWhatsAppUrl(lead)} target="_blank" rel="noopener noreferrer" className="text-[13px] text-[#FF1A3D] font-semibold mt-1 inline-flex">{lead.phone}</a>
-                  <div className="text-[11px] text-zinc-500 mt-1">Submitted {formatDate(lead.createdAt)}</div>
-                </div>
-                {leadActions(lead)}
-              </div>
+              {leadHeader(lead, "Website Query")}
 
               <div className="mt-5">
                 <LeadField label="Service" value={lead.serviceRequired.replace(/-/g, " ")} />
