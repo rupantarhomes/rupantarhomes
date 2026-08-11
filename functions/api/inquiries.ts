@@ -1,9 +1,5 @@
 import { cloudinarySignature, destroyCloudinaryImage } from "../_lib/cloudinary";
-import {
-  requireInquiryRuntimeEnv,
-  type InquiryRuntimeEnv,
-  type RuntimeEnv,
-} from "../_lib/env";
+import { type RuntimeEnv } from "../_lib/env";
 import { errorMessage, json } from "../_lib/http";
 
 const maximumAttachmentBytes = 10 * 1024 * 1024;
@@ -41,6 +37,12 @@ class PublicRequestError extends Error {
   constructor(message: string, readonly status = 400) {
     super(message);
   }
+}
+
+function requiredEnv(env: RuntimeEnv, name: keyof RuntimeEnv): string {
+  const value = env[name];
+  if (typeof value !== "string" || !value.trim()) throw new Error(`Missing Cloudflare environment variable: ${String(name)}`);
+  return value.trim();
 }
 
 function textField(form: FormData, name: string, label: string, maximumLength: number): string {
@@ -100,14 +102,15 @@ async function rateLimitKey(phone: string): Promise<string> {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-async function enforceGlobalRateLimit(runtime: InquiryRuntimeEnv): Promise<void> {
-  const outcome = await runtime.PUBLIC_INQUIRY_GLOBAL_RATE_LIMITER.limit({ key: "public-inquiries" });
-  if (!outcome.success) throw new PublicRequestError("Too many requests. Please wait a minute and try again.", 429);
-}
-
-async function enforceActorRateLimit(phone: string, runtime: InquiryRuntimeEnv): Promise<void> {
-  const outcome = await runtime.PUBLIC_INQUIRY_RATE_LIMITER.limit({ key: await rateLimitKey(phone) });
-  if (!outcome.success) throw new PublicRequestError("Too many requests. Please wait a minute and try again.", 429);
+async function enforceOptionalRateLimits(phone: string, env: RuntimeEnv): Promise<void> {
+  if (env.PUBLIC_INQUIRY_GLOBAL_RATE_LIMITER) {
+    const outcome = await env.PUBLIC_INQUIRY_GLOBAL_RATE_LIMITER.limit({ key: "public-inquiries" });
+    if (!outcome.success) throw new PublicRequestError("Too many requests. Please wait a minute and try again.", 429);
+  }
+  if (env.PUBLIC_INQUIRY_RATE_LIMITER) {
+    const outcome = await env.PUBLIC_INQUIRY_RATE_LIMITER.limit({ key: await rateLimitKey(phone) });
+    if (!outcome.success) throw new PublicRequestError("Too many requests. Please wait a minute and try again.", 429);
+  }
 }
 
 function cloudinaryUrl(value: unknown, cloudName: string): string {
@@ -126,29 +129,33 @@ function cloudinaryUrl(value: unknown, cloudName: string): string {
 async function uploadAttachment(
   file: File,
   kind: InquiryKind,
-  runtime: InquiryRuntimeEnv,
+  env: RuntimeEnv,
 ): Promise<{ publicId: string; url: string }> {
   await verifyImageSignature(file);
+  const cloudName = requiredEnv(env, "CLOUDINARY_CLOUD_NAME");
+  const apiKey = requiredEnv(env, "CLOUDINARY_API_KEY");
+  const apiSecret = requiredEnv(env, "CLOUDINARY_API_SECRET");
+  const uploadPreset = requiredEnv(env, "CLOUDINARY_UPLOAD_PRESET");
   const timestamp = Math.floor(Date.now() / 1000);
   const publicId = `rupantar-homes/inquiries/${kind}-${crypto.randomUUID()}`;
   const parameters = {
     overwrite: "false",
     public_id: publicId,
     timestamp,
-    upload_preset: runtime.CLOUDINARY_UPLOAD_PRESET,
+    upload_preset: uploadPreset,
   };
-  const signature = await cloudinarySignature(parameters, runtime.CLOUDINARY_API_SECRET);
+  const signature = await cloudinarySignature(parameters, apiSecret);
   const body = new FormData();
-  body.set("api_key", runtime.CLOUDINARY_API_KEY);
+  body.set("api_key", apiKey);
   body.set("file", file, file.name);
   body.set("overwrite", "false");
   body.set("public_id", publicId);
   body.set("signature", signature);
   body.set("timestamp", String(timestamp));
-  body.set("upload_preset", runtime.CLOUDINARY_UPLOAD_PRESET);
+  body.set("upload_preset", uploadPreset);
 
   const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${encodeURIComponent(runtime.CLOUDINARY_CLOUD_NAME)}/image/upload`,
+    `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/image/upload`,
     { method: "POST", body },
   );
   let result: CloudinaryUpload | null = null;
@@ -173,10 +180,10 @@ async function uploadAttachment(
       throw new Error("Cloudinary did not create the required 1080p WebP image");
     }
     if (result?.public_id !== publicId) throw new Error("Cloudinary returned an unexpected public ID");
-    return { publicId, url: cloudinaryUrl(result.secure_url, runtime.CLOUDINARY_CLOUD_NAME) };
+    return { publicId, url: cloudinaryUrl(result.secure_url, cloudName) };
   } catch (error) {
     try {
-      await destroyCloudinaryImage(publicId, runtime);
+      await destroyCloudinaryImage(publicId, env);
     } catch (cleanupError) {
       console.error(JSON.stringify({ message: "invalid public inquiry upload cleanup failed", error: errorMessage(cleanupError) }));
     }
@@ -184,23 +191,33 @@ async function uploadAttachment(
   }
 }
 
-async function insertInquiry(kind: InquiryKind, payload: InquiryPayload, runtime: InquiryRuntimeEnv): Promise<void> {
-  const table = kind === "query" ? "queries" : "estimate_requests";
-  const response = await fetch(`${runtime.SUPABASE_URL}/rest/v1/${table}`, {
+async function insertInquiry(kind: InquiryKind, payload: InquiryPayload, env: RuntimeEnv): Promise<void> {
+  const supabaseUrl = requiredEnv(env, "SUPABASE_URL");
+  const publishableKey = requiredEnv(env, "SUPABASE_PUBLISHABLE_KEY");
+  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/submit_public_inquiry`, {
     method: "POST",
     headers: {
-      apikey: runtime.SUPABASE_SECRET_KEY,
-      Authorization: `Bearer ${runtime.SUPABASE_SECRET_KEY}`,
+      apikey: publishableKey,
       "Content-Type": "application/json",
-      "Content-Profile": "public",
-      Prefer: "return=minimal",
+      Accept: "application/json",
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      p_kind: kind,
+      p_name: payload.name,
+      p_phone: payload.phone,
+      p_category: payload.category,
+      p_message: payload.message,
+      p_attachment_public_id: payload.attachment_public_id,
+      p_attachment_url: payload.attachment_url,
+      p_location: payload.location,
+      p_approximate_size: payload.approximate_size,
+      p_material_preference: payload.material_preference,
+    }),
   });
   const responseBody = await response.text();
   if (!response.ok) {
-    console.error(JSON.stringify({ message: "Supabase inquiry insert failed", status: response.status, responseBody }));
-    throw new Error(`Supabase inquiry insert failed with status ${response.status}`);
+    console.error(JSON.stringify({ message: "Supabase inquiry RPC failed", status: response.status, responseBody }));
+    throw new Error(`Supabase inquiry RPC failed with status ${response.status}`);
   }
 }
 
@@ -257,9 +274,6 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
       throw new PublicRequestError("Invalid request format.");
     }
 
-    const runtime = requireInquiryRuntimeEnv(env);
-    await enforceGlobalRateLimit(runtime);
-
     let form: FormData;
     try {
       form = await request.formData();
@@ -273,10 +287,10 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
     const normalizedCategory = category(form);
     const message = textField(form, "message", "Message / Requirements", 4000);
     if (!/^[0-9+()\-\s]{5,40}$/.test(phone)) throw new PublicRequestError("Please enter a valid phone number.");
-    await enforceActorRateLimit(phone, runtime);
+    await enforceOptionalRateLimits(phone, env);
 
     const photo = attachment(form, kind === "estimate");
-    const uploaded = photo ? await uploadAttachment(photo, kind, runtime) : null;
+    const uploaded = photo ? await uploadAttachment(photo, kind, env) : null;
     uploadedPublicId = uploaded?.publicId ?? null;
 
     const common: InquiryPayload = {
@@ -296,7 +310,7 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
           material_preference: textField(form, "material_preference", "Material preference", 200),
         };
 
-    await insertInquiry(kind, payload, runtime);
+    await insertInquiry(kind, payload, env);
 
     try {
       await sendWeb3FormsNotification(kind, payload);
