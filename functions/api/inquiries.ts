@@ -5,6 +5,8 @@ import { errorMessage, json } from "../_lib/http";
 const maximumAttachmentBytes = 10 * 1024 * 1024;
 const maximumRequestBytes = 11 * 1024 * 1024;
 const web3FormsAccessKey = "9cb63466-337d-4480-80f1-2ee7a00f25a3";
+const supabaseUrl = "https://gmtdqeskyvdvyibccxwt.supabase.co";
+const supabasePublishableKey = "sb_publishable_RdT2JC1U6Im3VKobzFzTjg_hy-SWjJo";
 const acceptedAttachmentTypes = new Set(["image/jpeg", "image/png"]);
 const allowedCategories = new Set([
   "interior-designing",
@@ -191,13 +193,12 @@ async function uploadAttachment(
   }
 }
 
-async function insertInquiry(kind: InquiryKind, payload: InquiryPayload, env: RuntimeEnv): Promise<void> {
-  const supabaseUrl = requiredEnv(env, "SUPABASE_URL");
-  const publishableKey = requiredEnv(env, "SUPABASE_PUBLISHABLE_KEY");
+async function insertInquiry(kind: InquiryKind, payload: InquiryPayload): Promise<void> {
   const response = await fetch(`${supabaseUrl}/rest/v1/rpc/submit_public_inquiry`, {
     method: "POST",
     headers: {
-      apikey: publishableKey,
+      apikey: supabasePublishableKey,
+      Authorization: `Bearer ${supabasePublishableKey}`,
       "Content-Type": "application/json",
       Accept: "application/json",
     },
@@ -310,7 +311,7 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
           material_preference: textField(form, "material_preference", "Material preference", 200),
         };
 
-    await insertInquiry(kind, payload, env);
+    await insertInquiry(kind, payload);
 
     try {
       await sendWeb3FormsNotification(kind, payload);
