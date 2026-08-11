@@ -47,6 +47,7 @@ type LeadRow = {
 const allowedCategories = new Set(categories.map((category) => category.slug));
 const allowedLeadStatuses = new Set<LeadStatus>(["new", "contacted", "closed"]);
 const maximumPublicMessageLength = 4000;
+const web3FormsAccessKey = "9cb63466-337d-4480-80f1-2ee7a00f25a3";
 
 function text(value: unknown): string {
   return typeof value === "string" ? value : value == null ? "" : String(value);
@@ -360,9 +361,48 @@ export async function submitQuery(form: QueryForm): Promise<void> {
     name: requiredText(form.name, "Name"),
     phone: requiredText(form.phone, "Phone"),
     category: categorySlug(form.category),
-    message: publicMessage(form.message),
+    message: publicMessage(form.message, true),
   };
-  await submitPublicInquiry("query", payload, form.attachment);
+
+  const { error } = await (getSupabase() as any).rpc("submit_public_inquiry", {
+    p_kind: "query",
+    p_name: payload.name,
+    p_phone: payload.phone,
+    p_category: payload.category,
+    p_message: payload.message,
+    p_attachment_public_id: null,
+    p_attachment_url: null,
+    p_location: null,
+    p_approximate_size: null,
+    p_material_preference: null,
+  });
+  if (error) throw new Error(error.message || "Your query could not be saved. Please try again.");
+
+  const response = await fetch("https://api.web3forms.com/submit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      access_key: web3FormsAccessKey,
+      subject: "New Rupantar Homes Website Query",
+      from_name: "Rupantar Homes Website",
+      form_type: "Website Query",
+      name: payload.name,
+      phone: payload.phone,
+      service: payload.category,
+      message: payload.message,
+    }),
+  });
+
+  let result: { success?: unknown; message?: unknown } | null = null;
+  try {
+    result = (await response.json()) as { success?: unknown; message?: unknown };
+  } catch {
+    // The status check below handles an unreadable response.
+  }
+  if (!response.ok || result?.success !== true) {
+    const detail = typeof result?.message === "string" ? result.message : "Email notification failed.";
+    throw new Error(`Your query was saved, but the email notification failed: ${detail}`);
+  }
 }
 
 async function submitPublicInquiry(
