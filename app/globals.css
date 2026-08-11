@@ -115,6 +115,7 @@ main > section:first-child > div.relative.hidden {
 @media (min-width: 1024px) {
   main > section:first-child > div.relative.hidden {
     display: block !important;
+    margin-top: 12px;
   }
 }
 
