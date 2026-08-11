@@ -148,6 +148,6 @@ export const emptyReview: ReviewForm = {
 export const brandAssets = {
   logo: "/assets/rupantar-logo.jpg",
   founder: founderImage,
-  hero: "/assets/rupantar-hero.svg",
+  hero: hero2026,
   favicon: "/assets/rupantar-favicon.png",
 } as const;
