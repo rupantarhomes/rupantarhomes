@@ -47,6 +47,7 @@ type LeadRow = {
 const allowedCategories = new Set(categories.map((category) => category.slug));
 const allowedLeadStatuses = new Set<LeadStatus>(["new", "contacted", "closed"]);
 const maximumPublicMessageLength = 4000;
+const maximumEstimatePhotoBytes = 10 * 1024 * 1024;
 const web3FormsAccessKey = "9cb63466-337d-4480-80f1-2ee7a00f25a3";
 
 function text(value: unknown): string {
@@ -343,7 +344,13 @@ export async function saveSettings(settings: SiteSettings): Promise<void> {
 }
 
 export async function submitEstimate(form: EstimateForm): Promise<void> {
-  if (!form.attachment) throw new Error("Please upload a space photo.");
+  const attachment = form.attachment;
+  if (!attachment) throw new Error("Please upload a space photo.");
+  if (attachment.type !== "image/jpeg" && attachment.type !== "image/png") {
+    throw new Error("Please choose a JPG or PNG photo.");
+  }
+  if (attachment.size > maximumEstimatePhotoBytes) throw new Error("Photo must be 10MB or smaller.");
+
   const payload = {
     name: requiredText(form.name, "Full name"),
     phone: requiredText(form.phone, "Phone"),
@@ -353,7 +360,67 @@ export async function submitEstimate(form: EstimateForm): Promise<void> {
     material_preference: requiredText(form.material, "Material preference"),
     message: publicMessage(form.message, true),
   };
-  await submitPublicInquiry("estimate", payload, form.attachment);
+
+  const supabase = getSupabase() as any;
+  const extension = attachment.type === "image/png" ? "png" : "jpg";
+  const objectPath = `estimates/${crypto.randomUUID()}.${extension}`;
+  const { error: uploadError } = await supabase.storage
+    .from("estimate-uploads")
+    .upload(objectPath, attachment, {
+      cacheControl: "3600",
+      contentType: attachment.type,
+      upsert: false,
+    });
+  if (uploadError) throw new Error(uploadError.message || "Your photo could not be uploaded. Please try again.");
+
+  const { data: publicUrlData } = supabase.storage.from("estimate-uploads").getPublicUrl(objectPath);
+  const photoUrl = publicUrlData?.publicUrl;
+  if (!photoUrl) throw new Error("Your photo uploaded, but its URL could not be created. Please try again.");
+  const photoPublicId = `estimate-uploads/${objectPath}`;
+
+  const { error: saveError } = await supabase.rpc("submit_public_inquiry", {
+    p_kind: "estimate",
+    p_name: payload.name,
+    p_phone: payload.phone,
+    p_category: payload.category,
+    p_message: payload.message,
+    p_attachment_public_id: photoPublicId,
+    p_attachment_url: photoUrl,
+    p_location: payload.location,
+    p_approximate_size: payload.approximate_size,
+    p_material_preference: payload.material_preference,
+  });
+  if (saveError) throw new Error(saveError.message || "Your estimate request could not be saved. Please try again.");
+
+  const response = await fetch("https://api.web3forms.com/submit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      access_key: web3FormsAccessKey,
+      subject: "New Rupantar Homes Estimate Lead",
+      from_name: "Rupantar Homes Website",
+      form_type: "Estimate Request",
+      name: payload.name,
+      phone: payload.phone,
+      service: payload.category,
+      location: payload.location,
+      approximate_size: payload.approximate_size,
+      material_preference: payload.material_preference,
+      message: payload.message,
+      photo_url: photoUrl,
+    }),
+  });
+
+  let result: { success?: unknown; message?: unknown } | null = null;
+  try {
+    result = (await response.json()) as { success?: unknown; message?: unknown };
+  } catch {
+    // The status check below handles an unreadable response.
+  }
+  if (!response.ok || result?.success !== true) {
+    const detail = typeof result?.message === "string" ? result.message : "Email notification failed.";
+    throw new Error(`Your estimate was saved, but the email notification failed: ${detail}`);
+  }
 }
 
 export async function submitQuery(form: QueryForm): Promise<void> {
@@ -403,29 +470,6 @@ export async function submitQuery(form: QueryForm): Promise<void> {
     const detail = typeof result?.message === "string" ? result.message : "Email notification failed.";
     throw new Error(`Your query was saved, but the email notification failed: ${detail}`);
   }
-}
-
-async function submitPublicInquiry(
-  kind: "query" | "estimate",
-  fields: Record<string, string>,
-  attachment: File | null,
-): Promise<void> {
-  const body = new FormData();
-  body.set("kind", kind);
-  for (const [name, value] of Object.entries(fields)) body.set(name, value);
-  if (attachment) body.set("attachment", attachment, attachment.name);
-
-  const response = await fetch("/api/inquiries", { method: "POST", body });
-  if (response.ok) return;
-
-  let message = "Your request could not be sent. Please try again.";
-  try {
-    const result = (await response.json()) as { error?: unknown };
-    if (typeof result.error === "string" && result.error.trim()) message = result.error;
-  } catch {
-    // Keep the stable public error when the server response is unreadable.
-  }
-  throw new Error(message);
 }
 
 export async function loadLeads(): Promise<Lead[]> {
