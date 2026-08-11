@@ -10,8 +10,8 @@ export function BrandIntro({ enabled }: { enabled: boolean }) {
     if (!enabled) return;
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const revealDelay = reduceMotion ? 180 : 920;
-    const removeDelay = reduceMotion ? 320 : 1500;
+    const revealDelay = reduceMotion ? 180 : 1500;
+    const removeDelay = reduceMotion ? 320 : 2500;
 
     const revealTimer = window.setTimeout(() => setLeaving(true), revealDelay);
     const removeTimer = window.setTimeout(() => setVisible(false), removeDelay);
@@ -29,6 +29,7 @@ export function BrandIntro({ enabled }: { enabled: boolean }) {
       className={`brand-intro${leaving ? " brand-intro--leaving" : ""}`}
       aria-hidden="true"
     >
+      <div className="brand-intro__glow" />
       <div className="brand-intro__content">
         <div className="brand-intro__mark-wrap">
           <img
@@ -40,6 +41,7 @@ export function BrandIntro({ enabled }: { enabled: boolean }) {
         <div className="brand-intro__name">Rupantar Homes</div>
         <div className="brand-intro__slogan">Transforming Spaces Inspiring Lives</div>
       </div>
+      <div className="brand-intro__edge" />
     </div>
   );
 }
