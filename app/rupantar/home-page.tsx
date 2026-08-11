@@ -430,30 +430,6 @@ export function HomePage({
                 {categories.map((category) => <option key={category.slug} value={category.slug}>{category.name}</option>)}
               </select>
               <textarea required value={query.message} onChange={(event) => setQuery((value) => ({ ...value, message: event.target.value }))} placeholder="Your message... *" rows={4} maxLength={4000} className="sm:col-span-2 w-full px-4 py-3 rounded-2xl border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] resize-none" />
-              <label
-                className="sm:col-span-2 relative border border-dashed border-zinc-200 rounded-2xl p-4 flex items-center justify-center gap-2 text-[12px] text-zinc-500 cursor-pointer hover:border-[#FF1A3D]/30 overflow-hidden"
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  const attachment = acceptedPhoto(event.dataTransfer.files[0]);
-                  if (attachment) setQuery((value) => ({ ...value, attachment }));
-                }}
-              >
-                <input
-                  required={!query.attachment}
-                  type="file"
-                  accept="image/jpeg,image/png,.jpg,.jpeg,.png"
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  aria-label="Upload a required JPG or PNG photo with the query"
-                  onChange={(event) => {
-                    const attachment = acceptedPhoto(event.target.files?.[0]);
-                    if (attachment) setQuery((value) => ({ ...value, attachment }));
-                    event.target.value = "";
-                  }}
-                />
-                <Upload className="w-4 h-4" />
-                {query.attachment ? <span className="text-green-600">✓ {query.attachment.name}</span> : <span>Attach Photo *</span>}
-              </label>
             </div>
             <button type="submit" disabled={queryBusy} className="mt-5 w-full h-12 rounded-full bg-[#FF1A3D] text-white font-semibold text-[14px] disabled:opacity-60">{queryBusy ? "Sending..." : "Send Query"}</button>
             <div className="mt-3 text-[11px] text-zinc-500 text-center">All fields are required • Fast response • No spam</div>
