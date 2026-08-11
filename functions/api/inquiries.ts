@@ -198,7 +198,6 @@ async function insertInquiry(kind: InquiryKind, payload: InquiryPayload): Promis
     method: "POST",
     headers: {
       apikey: supabasePublishableKey,
-      Authorization: `Bearer ${supabasePublishableKey}`,
       "Content-Type": "application/json",
       Accept: "application/json",
     },
