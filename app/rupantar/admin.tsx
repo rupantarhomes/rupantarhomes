@@ -388,16 +388,16 @@ function AdminLeads({ leads, onUpdateLeadStatus, busy }: AdminPortalProps) {
   );
 
   const leadActions = (lead: Lead) => (
-    <div className="flex flex-wrap items-center gap-2.5">
-      <div className="inline-flex items-center gap-1 rounded-full border border-[#FF1A3D]/20 bg-[#FFF5F6] p-1">
+    <div className="flex flex-wrap items-center gap-3">
+      <div className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white p-1 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
         <button
           type="button"
           disabled={busy || deletingLeadId === lead.id}
           onClick={() => void onUpdateLeadStatus(lead.id, "contacted")}
-          className={`h-8 px-3.5 rounded-full text-[11px] font-semibold transition disabled:opacity-50 ${
+          className={`h-8 px-3.5 rounded-full text-[11px] font-semibold transition-all disabled:opacity-50 ${
             lead.status === "contacted"
-              ? "bg-[#FF1A3D] text-white shadow-sm"
-              : "text-[#FF1A3D] hover:bg-white"
+              ? "bg-[#FF1A3D] text-white shadow-[0_4px_12px_rgba(255,26,61,0.22)]"
+              : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
           }`}
         >
           Contacted
@@ -406,10 +406,10 @@ function AdminLeads({ leads, onUpdateLeadStatus, busy }: AdminPortalProps) {
           type="button"
           disabled={busy || deletingLeadId === lead.id}
           onClick={() => void onUpdateLeadStatus(lead.id, "closed")}
-          className={`h-8 px-3.5 rounded-full text-[11px] font-semibold transition disabled:opacity-50 ${
+          className={`h-8 px-3.5 rounded-full text-[11px] font-semibold transition-all disabled:opacity-50 ${
             lead.status === "closed"
-              ? "bg-[#FF1A3D] text-white shadow-sm"
-              : "text-[#FF1A3D] hover:bg-white"
+              ? "bg-[#FF1A3D] text-white shadow-[0_4px_12px_rgba(255,26,61,0.22)]"
+              : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
           }`}
         >
           Closed
@@ -419,7 +419,7 @@ function AdminLeads({ leads, onUpdateLeadStatus, busy }: AdminPortalProps) {
         type="button"
         disabled={busy || deletingLeadId === lead.id}
         onClick={() => void deleteLead(lead)}
-        className="h-10 px-4 rounded-full border border-red-200 text-red-600 text-[12px] font-medium hover:bg-red-50 disabled:opacity-50"
+        className="h-10 px-4 rounded-full border border-red-200 bg-white text-red-600 text-[12px] font-medium hover:bg-red-50 disabled:opacity-50 transition"
       >
         {deletingLeadId === lead.id ? "Deleting..." : "Delete"}
       </button>
@@ -427,19 +427,21 @@ function AdminLeads({ leads, onUpdateLeadStatus, busy }: AdminPortalProps) {
   );
 
   const leadHeader = (lead: Lead, kind: "Estimate Lead" | "Website Query") => (
-    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className={`text-[10px] uppercase tracking-[0.12em] font-bold ${kind === "Estimate Lead" ? "text-[#FF1A3D]" : "text-zinc-500"}`}>{kind}</div>
+    <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-5 pb-6 border-b border-zinc-100">
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span className={`h-7 px-3 rounded-full inline-flex items-center text-[10px] uppercase tracking-[0.12em] font-bold ${
+            kind === "Estimate Lead" ? "bg-[#FFF0F2] text-[#FF1A3D]" : "bg-zinc-100 text-zinc-600"
+          }`}>{kind}</span>
           {firstViewLeadIds.has(lead.id) && (
-            <span className="h-6 px-2.5 rounded-full bg-[#FF1A3D] text-white text-[10px] font-bold tracking-wide inline-flex items-center">NEW</span>
+            <span className="h-7 px-3 rounded-full bg-[#FF1A3D] text-white text-[10px] font-bold tracking-wide inline-flex items-center shadow-[0_4px_12px_rgba(255,26,61,0.2)]">NEW</span>
           )}
         </div>
-        <div className="font-heading font-bold text-[18px] mt-1">{lead.name}</div>
-        <div className="text-[11px] text-zinc-500 mt-1">Submitted {formatDate(lead.createdAt)}</div>
+        <div className="font-heading font-bold text-[20px] sm:text-[21px] mt-4 tracking-[-0.01em]">{lead.name}</div>
+        <div className="text-[11px] text-zinc-500 mt-1.5">Submitted {formatDate(lead.createdAt)}</div>
         {contactLinks(lead)}
       </div>
-      {leadActions(lead)}
+      <div className="xl:pt-1">{leadActions(lead)}</div>
     </div>
   );
 
@@ -450,65 +452,70 @@ function AdminLeads({ leads, onUpdateLeadStatus, busy }: AdminPortalProps) {
         <div className="text-[12px] text-zinc-500 mt-1">Estimate requests and website queries are organized separately below.</div>
       </div>
 
-      <section className="mt-7">
-        <div className="flex items-center gap-3 mb-4">
+      <section className="mt-8">
+        <div className="flex items-center gap-3 mb-4 px-1">
           <h2 className="font-heading font-bold text-[17px]">Estimate Leads</h2>
-          <span className="min-w-6 h-6 px-2 rounded-full bg-[#FFF0F2] text-[#FF1A3D] text-[11px] font-bold flex items-center justify-center">{estimateLeads.length}</span>
+          <span className="min-w-7 h-7 px-2 rounded-full bg-[#FFF0F2] text-[#FF1A3D] text-[11px] font-bold flex items-center justify-center">{estimateLeads.length}</span>
         </div>
-        <div className="space-y-4">
+        <div className="space-y-5">
           {estimateLeads.map((lead) => (
-            <article key={lead.id} className="bg-white border border-zinc-100 rounded-[1.5rem] p-5 sm:p-6 shadow-sm">
+            <article key={lead.id} className="bg-white border border-zinc-100 rounded-[1.75rem] p-5 sm:p-7 lg:p-8 shadow-[0_12px_36px_rgba(0,0,0,0.035)]">
               {leadHeader(lead, "Estimate Lead")}
 
-              <div className="grid sm:grid-cols-2 gap-3 mt-5">
+              <div className="mt-6 grid sm:grid-cols-2 xl:grid-cols-4 gap-3.5">
                 <LeadField label="Service" value={lead.serviceRequired.replace(/-/g, " ")} />
                 <LeadField label="Location" value={lead.location} />
                 <LeadField label="Approx. Size" value={lead.approximateArea} />
                 <LeadField label="Material Preference" value={lead.materialPreference} />
               </div>
-              <div className="mt-4 p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
-                <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wide">Message / Requirements</div>
-                <div className="text-[13px] text-zinc-700 mt-2 leading-5 whitespace-pre-wrap">{lead.message || "—"}</div>
+
+              <div className="mt-5 rounded-2xl bg-zinc-50/80 border border-zinc-100 p-5 sm:p-6">
+                <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.12em]">Message / Requirements</div>
+                <div className="text-[13px] text-zinc-700 mt-2.5 leading-6 whitespace-pre-wrap">{lead.message || "—"}</div>
               </div>
-              <div className="mt-4 p-4 rounded-2xl border border-zinc-100">
-                <div className="text-[10px] uppercase tracking-wide text-zinc-400 font-semibold">Image URL</div>
-                {lead.referenceImageUrl ? (
-                  <a href={lead.referenceImageUrl} target="_blank" rel="noopener noreferrer" className="mt-1.5 block text-[12px] leading-5 text-[#FF1A3D] break-all hover:underline">
-                    {lead.referenceImageUrl}
+
+              {lead.referenceImageUrl && (
+                <div className="mt-5 flex justify-start">
+                  <a
+                    href={lead.referenceImageUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-10 px-4 rounded-full bg-zinc-900 text-white text-[12px] font-semibold inline-flex items-center gap-2.5 hover:bg-zinc-800 transition shadow-sm"
+                  >
+                    <ImageIcon className="w-4 h-4" /> View Photo
                   </a>
-                ) : (
-                  <div className="mt-1.5 text-[12px] text-zinc-500">—</div>
-                )}
-              </div>
+                </div>
+              )}
             </article>
           ))}
           {!estimateLeads.length && (
-            <div className="bg-white border border-zinc-100 rounded-[1.5rem] p-7 text-center text-[13px] text-zinc-500">No estimate leads yet.</div>
+            <div className="bg-white border border-zinc-100 rounded-[1.75rem] p-8 text-center text-[13px] text-zinc-500">No estimate leads yet.</div>
           )}
         </div>
       </section>
 
-      <section className="mt-9">
-        <div className="flex items-center gap-3 mb-4">
+      <section className="mt-10">
+        <div className="flex items-center gap-3 mb-4 px-1">
           <h2 className="font-heading font-bold text-[17px]">Website Queries</h2>
-          <span className="min-w-6 h-6 px-2 rounded-full bg-zinc-900 text-white text-[11px] font-bold flex items-center justify-center">{websiteQueries.length}</span>
+          <span className="min-w-7 h-7 px-2 rounded-full bg-zinc-900 text-white text-[11px] font-bold flex items-center justify-center">{websiteQueries.length}</span>
         </div>
-        <div className="space-y-4">
+        <div className="space-y-5">
           {websiteQueries.map((lead) => (
-            <article key={lead.id} className="bg-white border border-zinc-100 rounded-[1.5rem] p-5 sm:p-6 shadow-sm">
+            <article key={lead.id} className="bg-white border border-zinc-100 rounded-[1.75rem] p-5 sm:p-7 lg:p-8 shadow-[0_12px_36px_rgba(0,0,0,0.035)]">
               {leadHeader(lead, "Website Query")}
 
-              <div className="mt-5">
+              <div className="mt-6 max-w-[420px]">
                 <LeadField label="Service" value={lead.serviceRequired.replace(/-/g, " ")} />
               </div>
-              <div className="mt-4 p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
-                <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wide">Message</div>
-                <div className="text-[13px] text-zinc-700 mt-2 leading-5 whitespace-pre-wrap">{lead.message || "—"}</div>
+
+              <div className="mt-5 rounded-2xl bg-zinc-50/80 border border-zinc-100 p-5 sm:p-6">
+                <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.12em]">Message</div>
+                <div className="text-[13px] text-zinc-700 mt-2.5 leading-6 whitespace-pre-wrap">{lead.message || "—"}</div>
               </div>
             </article>
           ))}
           {!websiteQueries.length && (
-            <div className="bg-white border border-zinc-100 rounded-[1.5rem] p-7 text-center text-[13px] text-zinc-500">No website queries yet.</div>
+            <div className="bg-white border border-zinc-100 rounded-[1.75rem] p-8 text-center text-[13px] text-zinc-500">No website queries yet.</div>
           )}
         </div>
       </section>
@@ -518,9 +525,9 @@ function AdminLeads({ leads, onUpdateLeadStatus, busy }: AdminPortalProps) {
 
 function LeadField({ label, value }: { label: string; value: string }) {
   return (
-    <div className="p-3 rounded-xl border border-zinc-100">
-      <div className="text-[10px] uppercase tracking-wide text-zinc-400 font-semibold">{label}</div>
-      <div className="text-[13px] text-zinc-800 mt-1 capitalize">{value || "—"}</div>
+    <div className="min-h-[78px] p-4 rounded-2xl border border-zinc-100 bg-white flex flex-col justify-center">
+      <div className="text-[10px] uppercase tracking-[0.1em] text-zinc-400 font-bold">{label}</div>
+      <div className="text-[13px] text-zinc-800 mt-1.5 capitalize leading-5">{value || "—"}</div>
     </div>
   );
 }
