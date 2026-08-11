@@ -32,6 +32,10 @@ type CloudinaryUpload = {
   format?: unknown;
   error?: { message?: unknown };
 };
+type Web3FormsResult = {
+  success?: unknown;
+  message?: unknown;
+};
 
 class PublicRequestError extends Error {
   constructor(message: string, readonly status = 400) {
@@ -59,12 +63,13 @@ function category(form: FormData): string {
   return value;
 }
 
-function attachment(form: FormData): File {
+function attachment(form: FormData, required: boolean): File | null {
   const values = form.getAll("attachment");
   if (values.length > 1) throw new PublicRequestError("Attach only one photo.");
   const value = values[0];
   if (!(value instanceof File) || value.size === 0) {
-    throw new PublicRequestError("Please upload a space photo.");
+    if (required) throw new PublicRequestError("Please upload a space photo.");
+    return null;
   }
   if (!acceptedAttachmentTypes.has(value.type)) throw new PublicRequestError("Please choose a JPG or PNG photo.");
   if (value.size > maximumAttachmentBytes) throw new PublicRequestError("Photo must be 10MB or smaller.");
@@ -200,27 +205,40 @@ async function insertInquiry(kind: InquiryKind, payload: InquiryPayload, runtime
 }
 
 async function sendWeb3FormsNotification(kind: InquiryKind, payload: InquiryPayload): Promise<void> {
+  const notification: Record<string, string> = {
+    access_key: web3FormsAccessKey,
+    subject: kind === "estimate" ? "New Rupantar Homes Estimate Lead" : "New Rupantar Homes Website Query",
+    from_name: "Rupantar Homes Website",
+    form_type: kind === "estimate" ? "Estimate Request" : "Website Query",
+    name: payload.name ?? "",
+    phone: payload.phone ?? "",
+    service: payload.category ?? "",
+    message: payload.message ?? "",
+  };
+
+  if (kind === "estimate") {
+    notification.location = payload.location ?? "";
+    notification.approximate_size = payload.approximate_size ?? "";
+    notification.material_preference = payload.material_preference ?? "";
+    notification.photo_url = payload.attachment_url ?? "";
+  }
+
   const response = await fetch("https://api.web3forms.com/submit", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({
-      access_key: web3FormsAccessKey,
-      subject: kind === "estimate" ? "New Rupantar Homes Estimate Lead" : "New Rupantar Homes Website Query",
-      from_name: "Rupantar Homes Website",
-      form_type: kind === "estimate" ? "Estimate Request" : "Website Query",
-      name: payload.name ?? "",
-      phone: payload.phone ?? "",
-      location: payload.location ?? "",
-      service: payload.category ?? "",
-      approximate_size: payload.approximate_size ?? "",
-      material_preference: payload.material_preference ?? "",
-      message: payload.message ?? "",
-      photo_url: payload.attachment_url ?? "",
-    }),
+    body: JSON.stringify(notification),
   });
-  if (!response.ok) {
-    const responseBody = await response.text();
-    throw new Error(`Web3Forms notification failed with status ${response.status}: ${responseBody.slice(0, 300)}`);
+
+  let result: Web3FormsResult | null = null;
+  try {
+    result = (await response.json()) as Web3FormsResult;
+  } catch {
+    // The status check below still handles an unreadable response.
+  }
+
+  if (!response.ok || result?.success !== true) {
+    const detail = typeof result?.message === "string" ? result.message : `status ${response.status}`;
+    throw new Error(`Web3Forms notification failed: ${detail}`);
   }
 }
 
@@ -257,17 +275,17 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
     if (!/^[0-9+()\-\s]{5,40}$/.test(phone)) throw new PublicRequestError("Please enter a valid phone number.");
     await enforceActorRateLimit(phone, runtime);
 
-    const photo = attachment(form);
-    const uploaded = await uploadAttachment(photo, kind, runtime);
-    uploadedPublicId = uploaded.publicId;
+    const photo = attachment(form, kind === "estimate");
+    const uploaded = photo ? await uploadAttachment(photo, kind, runtime) : null;
+    uploadedPublicId = uploaded?.publicId ?? null;
 
     const common: InquiryPayload = {
       name,
       phone,
       category: normalizedCategory,
       message,
-      attachment_public_id: uploaded.publicId,
-      attachment_url: uploaded.url,
+      attachment_public_id: uploaded?.publicId ?? null,
+      attachment_url: uploaded?.url ?? null,
     };
     const payload: InquiryPayload = kind === "query"
       ? common
@@ -291,7 +309,7 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
       }));
     }
 
-    console.log(JSON.stringify({ message: "public inquiry accepted", requestId, kind, attachment: true }));
+    console.log(JSON.stringify({ message: "public inquiry accepted", requestId, kind, attachment: Boolean(uploaded) }));
     return json({ ok: true }, 201);
   } catch (error) {
     const message = errorMessage(error);
