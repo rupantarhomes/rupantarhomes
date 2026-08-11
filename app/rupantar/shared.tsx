@@ -26,6 +26,7 @@ import { brandAssets, categories } from "./data";
 import type { Page, SiteSettings, WorkImage } from "./types";
 
 export const whatsappUrl = `https://wa.me/9779745941799?text=${encodeURIComponent("Hello Rupantar Homes, I would like to discuss my interior project.")}`;
+export const callUrl = "tel:+9779745941799";
 
 export const categoryIcons = {
   "interior-designing": PencilRuler,
@@ -91,17 +92,15 @@ export function TopBar({ settings }: { settings: SiteSettings }) {
           <span className="hidden sm:flex items-center gap-1.5 opacity-80">
             <MapPin className="w-3.5 h-3.5" /> {settings.address}
           </span>
-          <span className="flex sm:hidden items-center gap-1.5 opacity-80">Kathmandu Workshop</span>
+          <span className="flex sm:hidden items-center gap-1.5 opacity-80">Kathmandu</span>
         </div>
         <div className="flex items-center gap-4">
           <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={callUrl}
             className="flex items-center gap-1.5 font-medium hover:text-[#FF1A3D] transition"
-            aria-label="Contact Rupantar Homes on WhatsApp"
+            aria-label={`Call Rupantar Homes at ${settings.phone}`}
           >
-            <Phone className="w-3.5 h-3.5" /> {settings.phone}
+            <Phone className="w-3.5 h-3.5 text-[#FF1A3D]" /> {settings.phone}
           </a>
         </div>
       </div>
@@ -213,8 +212,11 @@ export function PublicFooter({
               <div className="text-[11px] text-zinc-400 mt-1 leading-4">{settings.slogan}</div>
             </div>
           </div>
-          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="mt-5 text-[13px] text-zinc-300 flex items-center gap-2 hover:text-[#FF1A3D] transition">
-            <Phone className="w-4 h-4 text-[#FF1A3D]" /> {settings.phone}
+          <a href={callUrl} className="mt-5 text-[13px] text-zinc-300 flex items-center gap-2 hover:text-white transition" aria-label={`Call Rupantar Homes at ${settings.phone}`}>
+            <span className="w-8 h-8 rounded-lg bg-[#FF1A3D] text-white inline-flex items-center justify-center shrink-0">
+              <Phone className="w-4 h-4" />
+            </span>
+            {settings.phone}
           </a>
           <div className="mt-2 text-[12px] text-zinc-400 leading-5">{settings.address}</div>
         </div>
@@ -242,7 +244,6 @@ export function PublicFooter({
         <div>
           <div className="font-heading font-semibold text-[13px] uppercase tracking-wide text-[#FEFEFE]">Contact</div>
           <div className="mt-4 space-y-2 text-[13px] text-zinc-400">
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="block hover:text-[#FF1A3D] transition">WhatsApp: {settings.phone}</a>
             <div>Address: {settings.address}</div>
             <div className="flex gap-2 mt-3">
               <a href={settings.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="w-9 h-9 rounded-full bg-white/10 border border-white/10 text-white flex items-center justify-center hover:border-[#FF1A3D]/50 transition"><Instagram className="w-4 h-4" /></a>
