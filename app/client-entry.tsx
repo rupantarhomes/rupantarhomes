@@ -1,15 +1,27 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./globals.css";
+import { BrandIntro } from "./rupantar/brand-intro";
 import { RupantarSite } from "./rupantar/site";
 
 const root = document.getElementById("root");
 
 if (!root) throw new Error("Rupantar Homes root element was not found.");
 
+const brandIntroSessionKey = "rupantar-brand-intro-seen";
+let showBrandIntro = false;
+
+try {
+  showBrandIntro = window.sessionStorage.getItem(brandIntroSessionKey) !== "1";
+  if (showBrandIntro) window.sessionStorage.setItem(brandIntroSessionKey, "1");
+} catch {
+  showBrandIntro = true;
+}
+
 createRoot(root).render(
   <StrictMode>
     <RupantarSite />
+    <BrandIntro enabled={showBrandIntro} />
   </StrictMode>,
 );
 
