@@ -298,6 +298,11 @@ function AdminLeads({ leads, onUpdateLeadStatus, busy }: AdminPortalProps) {
   const [deletedLeadIds, setDeletedLeadIds] = useState<Set<string>>(() => new Set());
   const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
   const visibleLeads = leads.filter((lead) => !deletedLeadIds.has(lead.id));
+  const isEstimateLead = (lead: Lead) => Boolean(
+    lead.referenceImageUrl || lead.location || lead.approximateArea || lead.materialPreference,
+  );
+  const estimateLeads = visibleLeads.filter(isEstimateLead);
+  const websiteQueries = visibleLeads.filter((lead) => !isEstimateLead(lead));
 
   const formatDate = (value: string) => {
     const date = new Date(value);
@@ -330,74 +335,128 @@ function AdminLeads({ leads, onUpdateLeadStatus, busy }: AdminPortalProps) {
     }
   };
 
+  const leadActions = (lead: Lead) => (
+    <div className="flex items-center gap-2 shrink-0">
+      <select
+        value={lead.status}
+        disabled={busy || deletingLeadId === lead.id}
+        onChange={(event) => void onUpdateLeadStatus(lead.id, event.target.value as LeadStatus)}
+        className="h-9 px-3 rounded-full border border-zinc-200 text-[12px] bg-white"
+      >
+        <option value="new">New</option>
+        <option value="contacted">Contacted</option>
+        <option value="closed">Closed</option>
+      </select>
+      <button
+        type="button"
+        disabled={busy || deletingLeadId === lead.id}
+        onClick={() => void deleteLead(lead)}
+        className="h-9 px-3 rounded-full border border-red-200 text-red-600 text-[12px] font-medium hover:bg-red-50 disabled:opacity-50"
+      >
+        {deletingLeadId === lead.id ? "Deleting..." : "Delete"}
+      </button>
+    </div>
+  );
+
   return (
     <>
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="font-heading text-[22px] font-bold">Leads</h1>
-          <div className="text-[12px] text-zinc-500 mt-1">All submitted estimate requests, including customer photos.</div>
-        </div>
+      <div>
+        <h1 className="font-heading text-[22px] font-bold">Leads</h1>
+        <div className="text-[12px] text-zinc-500 mt-1">Estimate requests and website queries are organized separately below.</div>
       </div>
 
-      <div className="mt-6 space-y-4">
-        {visibleLeads.map((lead) => (
-          <article key={lead.id} className="bg-white border border-zinc-100 rounded-[1.5rem] p-5 sm:p-6 shadow-sm">
-            <div className="grid lg:grid-cols-[0.7fr_1.3fr] gap-6">
-              <div>
-                {lead.referenceImageUrl ? (
-                  <a href={lead.referenceImageUrl} target="_blank" rel="noopener noreferrer" className="block">
-                    <img src={lead.referenceImageUrl} alt={`Space submitted by ${lead.name}`} className="w-full aspect-[16/10] object-cover rounded-2xl border border-zinc-100" />
-                  </a>
-                ) : (
-                  <div className="w-full aspect-[16/10] rounded-2xl border border-dashed border-zinc-200 flex items-center justify-center text-zinc-400 text-[12px]">No photo</div>
-                )}
-              </div>
-              <div>
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="font-heading font-bold text-[18px]">{lead.name}</div>
-                    <a href={leadWhatsAppUrl(lead)} target="_blank" rel="noopener noreferrer" className="text-[13px] text-[#FF1A3D] font-semibold mt-1 inline-flex">{lead.phone}</a>
-                    <div className="text-[11px] text-zinc-500 mt-1">Submitted {formatDate(lead.createdAt)}</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={lead.status}
-                      disabled={busy || deletingLeadId === lead.id}
-                      onChange={(event) => void onUpdateLeadStatus(lead.id, event.target.value as LeadStatus)}
-                      className="h-9 px-3 rounded-full border border-zinc-200 text-[12px] bg-white"
-                    >
-                      <option value="new">New</option>
-                      <option value="contacted">Contacted</option>
-                      <option value="closed">Closed</option>
-                    </select>
-                    <button
-                      type="button"
-                      disabled={busy || deletingLeadId === lead.id}
-                      onClick={() => void deleteLead(lead)}
-                      className="h-9 px-3 rounded-full border border-red-200 text-red-600 text-[12px] font-medium hover:bg-red-50 disabled:opacity-50"
-                    >
-                      {deletingLeadId === lead.id ? "Deleting..." : "Delete"}
-                    </button>
+      <section className="mt-7">
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="font-heading font-bold text-[17px]">Estimate Leads</h2>
+          <span className="min-w-6 h-6 px-2 rounded-full bg-[#FFF0F2] text-[#FF1A3D] text-[11px] font-bold flex items-center justify-center">{estimateLeads.length}</span>
+        </div>
+        <div className="space-y-4">
+          {estimateLeads.map((lead) => (
+            <article key={lead.id} className="bg-white border border-zinc-100 rounded-[1.5rem] p-5 sm:p-6 shadow-sm">
+              <div className="grid lg:grid-cols-[0.72fr_1.28fr] gap-6">
+                <div>
+                  {lead.referenceImageUrl ? (
+                    <a href={lead.referenceImageUrl} target="_blank" rel="noopener noreferrer" className="block">
+                      <img src={lead.referenceImageUrl} alt={`Space submitted by ${lead.name}`} className="w-full aspect-[16/10] object-cover rounded-2xl border border-zinc-100" />
+                    </a>
+                  ) : (
+                    <div className="w-full aspect-[16/10] rounded-2xl border border-dashed border-zinc-200 flex items-center justify-center text-zinc-400 text-[12px]">No photo</div>
+                  )}
+                  <div className="mt-3 p-3 rounded-xl bg-zinc-50 border border-zinc-100">
+                    <div className="text-[10px] uppercase tracking-wide text-zinc-400 font-semibold">Image URL</div>
+                    {lead.referenceImageUrl ? (
+                      <a href={lead.referenceImageUrl} target="_blank" rel="noopener noreferrer" className="mt-1 block text-[11px] leading-4 text-[#FF1A3D] break-all hover:underline">
+                        {lead.referenceImageUrl}
+                      </a>
+                    ) : (
+                      <div className="mt-1 text-[12px] text-zinc-500">—</div>
+                    )}
                   </div>
                 </div>
-                <div className="grid sm:grid-cols-2 gap-3 mt-5">
-                  <LeadField label="Location" value={lead.location} />
-                  <LeadField label="Service" value={lead.serviceRequired.replace(/-/g, " ")} />
-                  <LeadField label="Approx. Size" value={lead.approximateArea} />
-                  <LeadField label="Material Preference" value={lead.materialPreference} />
-                </div>
-                <div className="mt-4 p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
-                  <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wide">Message / Requirements</div>
-                  <div className="text-[13px] text-zinc-700 mt-2 leading-5">{lead.message}</div>
+
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-[0.12em] text-[#FF1A3D] font-bold">Estimate Lead</div>
+                      <div className="font-heading font-bold text-[18px] mt-1">{lead.name}</div>
+                      <a href={leadWhatsAppUrl(lead)} target="_blank" rel="noopener noreferrer" className="text-[13px] text-[#FF1A3D] font-semibold mt-1 inline-flex">{lead.phone}</a>
+                      <div className="text-[11px] text-zinc-500 mt-1">Submitted {formatDate(lead.createdAt)}</div>
+                    </div>
+                    {leadActions(lead)}
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-3 mt-5">
+                    <LeadField label="Service" value={lead.serviceRequired.replace(/-/g, " ")} />
+                    <LeadField label="Location" value={lead.location} />
+                    <LeadField label="Approx. Size" value={lead.approximateArea} />
+                    <LeadField label="Material Preference" value={lead.materialPreference} />
+                  </div>
+                  <div className="mt-4 p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
+                    <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wide">Message / Requirements</div>
+                    <div className="text-[13px] text-zinc-700 mt-2 leading-5 whitespace-pre-wrap">{lead.message || "—"}</div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </article>
-        ))}
-        {!visibleLeads.length && (
-          <div className="bg-white border border-zinc-100 rounded-[1.5rem] p-8 text-center text-[13px] text-zinc-500">No leads yet. New estimate requests will appear here automatically.</div>
-        )}
-      </div>
+            </article>
+          ))}
+          {!estimateLeads.length && (
+            <div className="bg-white border border-zinc-100 rounded-[1.5rem] p-7 text-center text-[13px] text-zinc-500">No estimate leads yet.</div>
+          )}
+        </div>
+      </section>
+
+      <section className="mt-9">
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="font-heading font-bold text-[17px]">Website Queries</h2>
+          <span className="min-w-6 h-6 px-2 rounded-full bg-zinc-900 text-white text-[11px] font-bold flex items-center justify-center">{websiteQueries.length}</span>
+        </div>
+        <div className="space-y-4">
+          {websiteQueries.map((lead) => (
+            <article key={lead.id} className="bg-white border border-zinc-100 rounded-[1.5rem] p-5 sm:p-6 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div>
+                  <div className="text-[10px] uppercase tracking-[0.12em] text-zinc-500 font-bold">Website Query</div>
+                  <div className="font-heading font-bold text-[18px] mt-1">{lead.name}</div>
+                  <a href={leadWhatsAppUrl(lead)} target="_blank" rel="noopener noreferrer" className="text-[13px] text-[#FF1A3D] font-semibold mt-1 inline-flex">{lead.phone}</a>
+                  <div className="text-[11px] text-zinc-500 mt-1">Submitted {formatDate(lead.createdAt)}</div>
+                </div>
+                {leadActions(lead)}
+              </div>
+
+              <div className="mt-5">
+                <LeadField label="Service" value={lead.serviceRequired.replace(/-/g, " ")} />
+              </div>
+              <div className="mt-4 p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
+                <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wide">Message</div>
+                <div className="text-[13px] text-zinc-700 mt-2 leading-5 whitespace-pre-wrap">{lead.message || "—"}</div>
+              </div>
+            </article>
+          ))}
+          {!websiteQueries.length && (
+            <div className="bg-white border border-zinc-100 rounded-[1.5rem] p-7 text-center text-[13px] text-zinc-500">No website queries yet.</div>
+          )}
+        </div>
+      </section>
     </>
   );
 }
