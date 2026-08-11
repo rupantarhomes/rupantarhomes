@@ -107,10 +107,15 @@ a[href*="wa.me"]:hover::before {
   box-shadow: 0 4px 12px rgba(255, 26, 61, 0.2) !important;
 }
 
-/* The hero visual used to be hidden below the sm breakpoint. Keep the same slot,
-   but make the supplied hero image visible on every screen size. */
+/* Hero image is intentionally desktop-only. */
 main > section:first-child > div.relative.hidden {
-  display: block !important;
+  display: none !important;
+}
+
+@media (min-width: 1024px) {
+  main > section:first-child > div.relative.hidden {
+    display: block !important;
+  }
 }
 
 main > section:first-child img[alt="Rupantar Homes interior design moodboard"] {
