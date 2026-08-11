@@ -240,11 +240,9 @@ export function PublicFooter({
         </div>
 
         <div>
-          <div className="font-heading font-semibold text-[13px] uppercase tracking-wide text-[#FEFEFE]">Contact</div>
-          <div className="mt-4 space-y-2 text-[13px] text-zinc-400">
-            <div>Address: {settings.address}</div>
-            <div className="pt-2 font-heading font-semibold text-[12px] uppercase tracking-wide text-[#FEFEFE]">Social Links</div>
-            <div className="flex gap-2 mt-2">
+          <div className="font-heading font-semibold text-[13px] uppercase tracking-wide text-[#FEFEFE]">Social Links</div>
+          <div className="mt-4 space-y-4 text-[13px] text-zinc-400">
+            <div className="flex gap-2">
               <a href={settings.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="w-9 h-9 rounded-full bg-white/10 border border-white/10 text-white flex items-center justify-center hover:border-[#FF1A3D]/50 transition"><Instagram className="w-4 h-4" /></a>
               <a href={settings.tiktok} target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="w-9 h-9 rounded-full bg-[#FEFEFE] text-[#111111] flex items-center justify-center hover:bg-white transition"><Music2 className="w-4 h-4" /></a>
             </div>
@@ -253,7 +251,7 @@ export function PublicFooter({
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`Open ${settings.address} in Google Maps`}
-              className="mt-4 inline-flex h-10 items-center gap-2.5 rounded-full bg-[#FEFEFE] px-4 text-[12px] font-semibold text-[#111111] transition hover:bg-white"
+              className="inline-flex h-10 items-center gap-2.5 rounded-full bg-[#FEFEFE] px-4 text-[12px] font-semibold text-[#111111] transition hover:bg-white"
             >
               <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0" aria-hidden="true">
                 <path fill="#EA4335" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Z" />
