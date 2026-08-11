@@ -61,7 +61,7 @@ h4,
   text-transform: none !important;
 }
 
-/* Consistent rounded-square WhatsApp mark everywhere. */
+/* Consistent rounded-square WhatsApp mark where WhatsApp is intentionally used. */
 a[href*="wa.me"] > svg,
 a[href*="wa.me"] > div:first-child {
   display: none !important;
@@ -103,6 +103,21 @@ a[href*="wa.me"]:hover::before {
   flex-basis: 36px !important;
   border-radius: 10px !important;
   background-size: 21px 21px !important;
+  background-color: #ff1a3d !important;
+  box-shadow: 0 4px 12px rgba(255, 26, 61, 0.2) !important;
+}
+
+/* The hero visual used to be hidden below the sm breakpoint. Keep the same slot,
+   but make the supplied hero image visible on every screen size. */
+main > section:first-child > div.relative.hidden {
+  display: block !important;
+}
+
+main > section:first-child img[alt="Rupantar Homes interior design moodboard"] {
+  display: block !important;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .hero-h1 {
