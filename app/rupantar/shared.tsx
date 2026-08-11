@@ -213,9 +213,7 @@ export function PublicFooter({
             </div>
           </div>
           <a href={callUrl} className="mt-5 text-[13px] text-zinc-300 flex items-center gap-2 hover:text-white transition" aria-label={`Call Rupantar Homes at ${settings.phone}`}>
-            <span className="w-8 h-8 rounded-lg bg-[#FF1A3D] text-white inline-flex items-center justify-center shrink-0">
-              <Phone className="w-4 h-4" />
-            </span>
+            <Phone className="w-5 h-5 text-[#FF1A3D] shrink-0 transition-transform hover:scale-110" />
             {settings.phone}
           </a>
           <div className="mt-2 text-[12px] text-zinc-400 leading-5">{settings.address}</div>
@@ -245,18 +243,26 @@ export function PublicFooter({
           <div className="font-heading font-semibold text-[13px] uppercase tracking-wide text-[#FEFEFE]">Contact</div>
           <div className="mt-4 space-y-2 text-[13px] text-zinc-400">
             <div>Address: {settings.address}</div>
-            <div className="flex gap-2 mt-3">
+            <div className="pt-2 font-heading font-semibold text-[12px] uppercase tracking-wide text-[#FEFEFE]">Social Links</div>
+            <div className="flex gap-2 mt-2">
               <a href={settings.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="w-9 h-9 rounded-full bg-white/10 border border-white/10 text-white flex items-center justify-center hover:border-[#FF1A3D]/50 transition"><Instagram className="w-4 h-4" /></a>
               <a href={settings.tiktok} target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="w-9 h-9 rounded-full bg-[#FEFEFE] text-[#111111] flex items-center justify-center hover:bg-white transition"><Music2 className="w-4 h-4" /></a>
             </div>
-            <div className="mt-5 rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900">
-              <iframe
-                src="https://www.openstreetmap.org/export/embed.html?bbox=85.25%2C27.65%2C85.40%2C27.75&layer=mapnik&marker=27.7172%2C85.3240"
-                title="Rupantar Homes location map"
-                style={{ width: "100%", height: "240px", border: 0, borderRadius: "16px" }}
-                loading="lazy"
-              />
-            </div>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(settings.address)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Open ${settings.address} in Google Maps`}
+              className="mt-4 inline-flex h-10 items-center gap-2.5 rounded-full bg-[#FEFEFE] px-4 text-[12px] font-semibold text-[#111111] transition hover:bg-white"
+            >
+              <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0" aria-hidden="true">
+                <path fill="#EA4335" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Z" />
+                <path fill="#4285F4" d="M12 5.25a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5Z" />
+                <path fill="#34A853" d="M6.15 12.82C7.92 16.65 12 22 12 22s1.68-1.86 3.36-4.23l-3.6-5.04a3.75 3.75 0 0 1-5.61.09Z" />
+                <path fill="#FBBC04" d="M17.86 5.22 14.5 8.58a3.75 3.75 0 0 1-2.74 4.15l3.6 5.04C17.3 15.03 19 11.72 19 9c0-1.38-.4-2.67-1.14-3.78Z" />
+              </svg>
+              Google Maps
+            </a>
           </div>
         </div>
       </div>
