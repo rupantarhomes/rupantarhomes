@@ -5,6 +5,8 @@ import { brandAssets, categories } from "./data";
 import { PhotoPlaceholder, WorkPhoto } from "./shared";
 import type { Page, SiteSettings, Work } from "./types";
 
+const whatsappUrl = `https://wa.me/9779745941799?text=${encodeURIComponent("Hello Gokul, I would like to discuss my interior project.")}`;
+
 export function WorksPage({
   works,
   filter,
@@ -26,7 +28,7 @@ export function WorksPage({
         <div>
           <h1 className="font-heading text-[28px] sm:text-[36px] font-bold tracking-[-0.02em]">All Works</h1>
           <p className="text-[13px] text-zinc-500 mt-1">
-            Crafted at our Kathmandu workshop • {works.length} projects
+            Crafted in Kathmandu • {works.length} projects
           </p>
         </div>
         <button
@@ -235,7 +237,7 @@ export function AboutPage({ navigate, settings }: { navigate: (page: Page) => vo
                 />
               </div>
               <div className="max-w-[180px] space-y-0">
-                <h3 className="font-bold text-[22px] md:text-[26px] leading-[1.05] tracking-[-0.02em] text-[#111111] whitespace-nowrap" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                <h3 className="font-heading font-bold text-[22px] md:text-[26px] leading-[1.05] tracking-[-0.02em] text-[#111111] whitespace-nowrap">
                   GOKUL KUNWAR
                 </h3>
                 <div className="h-[2px] w-8 bg-[#FF1A3D] mt-2 mb-1.5 rounded-full" />
@@ -248,22 +250,28 @@ export function AboutPage({ navigate, settings }: { navigate: (page: Page) => vo
               <div className="hidden" />
               <div className="mt-2 font-heading font-bold text-[18px] leading-tight text-zinc-900">6+ Years</div>
               <div className="text-[12px] leading-5 text-zinc-600 mt-1 max-w-[220px]">
-                Transforming Homes Across Kathmandu from design to fabrication at our Kathmandu workshop.
+                Transforming homes across Kathmandu from design to fabrication by our local team.
               </div>
-              <div className="mt-3 flex items-center gap-2 text-[11px] text-zinc-500">
-                <span className="h-6 px-2.5 rounded-full bg-zinc-900 text-white inline-flex items-center font-medium">Est. 2019</span>
-                <span>• Workshop Direct</span>
+              <div className="mt-3 flex items-center gap-2">
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="whatsapp-icon-only"
+                  aria-label="Message Gokul Kunwar on WhatsApp"
+                  title="WhatsApp Gokul Kunwar"
+                />
               </div>
             </div>
           </div>
           <p className="text-[15px] leading-7 text-zinc-600 mt-6">
             Rupantar Homes By Gokul Kunwar was started with one simple belief “”. We don’t just show renders,
-            we build it ourselves at our Kathmandu workshop. From modular kitchens to hydraulic beds, every
+            we build it ourselves with our Kathmandu team. From modular kitchens to hydraulic beds, every
             piece is measured, fabricated and installed by our own team.
           </p>
           <div className="mt-8 grid sm:grid-cols-2 gap-4">
             <div className="rounded-2xl bg-zinc-50 border border-zinc-100 p-5">
-              <div className="font-heading font-semibold">Our Workshop</div>
+              <div className="font-heading font-semibold">Our Studio</div>
               <div className="text-[13px] text-zinc-600 mt-1 leading-5">
                 Neupane Chowk Kathmandu Site No.2 Kathmandu. Visit by appointment to see live samples,
                 laminates and hardware.
@@ -272,7 +280,7 @@ export function AboutPage({ navigate, settings }: { navigate: (page: Page) => vo
             <div className="rounded-2xl bg-zinc-900 text-white p-5">
               <div className="font-heading font-semibold">Contact Direct</div>
               <div className="text-[13px] text-zinc-300 mt-1">
-                Gokul Kunwar {settings.phone}. No middleman, workshop direct pricing and warranty.
+                Gokul Kunwar {settings.phone}. No middleman, direct pricing and warranty.
               </div>
             </div>
           </div>
@@ -281,7 +289,7 @@ export function AboutPage({ navigate, settings }: { navigate: (page: Page) => vo
             <ul className="mt-3 space-y-2.5 text-[13px] text-zinc-600">
               {[
                 "Factory finish with BWR ply and branded hardware",
-                "3D design before fabrication, no surprises",
+                "Design preview before fabrication, no surprises",
                 "Clean installation, on time handover",
               ].map((promise) => (
                 <li key={promise} className="flex gap-2">
