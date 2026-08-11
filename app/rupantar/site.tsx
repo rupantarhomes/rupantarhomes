@@ -427,7 +427,7 @@ export function RupantarSite() {
     try {
       await submitQuery(query);
       setQuery(emptyQuery);
-      if (isAdmin) await refreshAdminStats();
+      if (isAdmin) await Promise.all([refreshAdminStats(), refreshLeads()]);
       window.alert("Query sent successfully.");
     } catch (error) {
       window.alert(messageFrom(error));
@@ -466,30 +466,24 @@ export function RupantarSite() {
         uploadingImages={uploadingImages}
         leads={leads}
         onUpdateLeadStatus={handleUpdateLeadStatus}
-        notificationPermission="unsupported"
-        onEnableNotifications={async () => undefined}
-        reviews={reviews}
         reviewForm={reviewForm}
         setReviewForm={setReviewForm}
+        reviews={reviews}
         onSaveReview={handleSaveReview}
         onDeleteReview={handleDeleteReview}
         settings={settings}
         setSettings={setSettings}
         onSaveSettings={handleSaveSettings}
         adminStats={adminStats}
-        busy={adminBusy}
+        adminBusy={adminBusy}
       />
     );
   }
 
   return (
-    <div className="min-h-screen bg-white text-zinc-900 font-['Inter'] antialiased selection:bg-[#FF1A3D] selection:text-white">
-      {publicPage && (
-        <>
-          <TopBar settings={settings} />
-          <PublicHeader page={page} navigate={navigate} onEstimate={goToEstimate} isAdmin={isAdmin} />
-        </>
-      )}
+    <div className="min-h-screen bg-white text-zinc-950">
+      {publicPage && <TopBar settings={settings} />}
+      {publicPage && <PublicHeader page={page} navigate={navigate} onEstimate={goToEstimate} isAdmin={isAdmin} />}
 
       {page === "home" && (
         <HomePage
@@ -510,46 +504,34 @@ export function RupantarSite() {
           queryBusy={queryBusy}
         />
       )}
-      {page === "works" && (
-        <WorksPage works={works} filter={filter} setFilter={setFilter} navigate={navigate} onWork={openWork} />
-      )}
-      {page === "work-detail" && selectedWork && (
-        <WorkDetailPage
-          work={selectedWork}
-          works={works}
-          navigate={navigate}
-          onWork={openWork}
-          onEstimate={goToEstimate}
-        />
-      )}
-      {page === "about" && <AboutPage navigate={navigate} settings={settings} />}
+      {page === "works" && <WorksPage works={works} filter={filter} setFilter={setFilter} onWork={openWork} />}
+      {page === "work-detail" && selectedWork && <WorkDetailPage work={selectedWork} navigate={navigate} />}
+      {page === "about" && <AboutPage settings={settings} />}
 
-      {publicPage && (
-        <PublicFooter navigate={navigate} onCategory={openCategory} onEstimate={goToEstimate} settings={settings} />
-      )}
+      {publicPage && <PublicFooter navigate={navigate} onCategory={openCategory} onEstimate={goToEstimate} settings={settings} />}
 
       {estimateSaved && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4" role="dialog" aria-modal="true" aria-labelledby="estimate-success-title">
-          <div className="relative w-full max-w-[420px] rounded-[2rem] bg-white p-7 sm:p-8 text-center shadow-[0_24px_80px_rgba(0,0,0,0.18)]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4" role="dialog" aria-modal="true" aria-label="Estimate request sent">
+          <div className="relative w-full max-w-[420px] rounded-[2rem] bg-white p-8 text-center shadow-[0_24px_70px_rgba(0,0,0,0.2)]">
             <button
               type="button"
               onClick={() => setEstimateSaved(false)}
-              className="absolute right-4 top-4 w-9 h-9 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-500 hover:bg-zinc-50"
+              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 text-zinc-500 hover:text-zinc-900"
               aria-label="Close success message"
             >
-              <X className="w-4 h-4" />
+              <X className="h-4 w-4" />
             </button>
-            <div className="mx-auto w-14 h-14 rounded-full bg-green-50 text-green-600 flex items-center justify-center">
-              <CheckCircle2 className="w-7 h-7" />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-50 text-green-600">
+              <CheckCircle2 className="h-8 w-8" />
             </div>
-            <h2 id="estimate-success-title" className="font-heading text-[22px] font-bold mt-5">Request Saved Successfully</h2>
-            <p className="text-[13px] text-zinc-600 leading-6 mt-3">
-              Thank you. Your estimate request and photo have been saved. Our team will review the details and reply to you soon on WhatsApp.
+            <h3 className="mt-5 font-heading text-[24px] font-bold">Request Received</h3>
+            <p className="mt-2 text-[13px] leading-6 text-zinc-600">
+              Thank you. Your estimate request was sent successfully. Rupantar Homes will contact you soon.
             </p>
             <button
               type="button"
               onClick={() => setEstimateSaved(false)}
-              className="mt-6 w-full h-11 rounded-full bg-[#FF1A3D] text-white text-[13px] font-semibold"
+              className="mt-6 h-11 w-full rounded-full bg-[#FF1A3D] text-[14px] font-semibold text-white"
             >
               Done
             </button>
