@@ -504,8 +504,16 @@ export function RupantarSite() {
           queryBusy={queryBusy}
         />
       )}
-      {page === "works" && <WorksPage works={works} filter={filter} setFilter={setFilter} onWork={openWork} />}
-      {page === "work-detail" && selectedWork && <WorkDetailPage work={selectedWork} navigate={navigate} />}
+      {page === "works" && <WorksPage works={works} filter={filter} setFilter={setFilter} navigate={navigate} onWork={openWork} />}
+      {page === "work-detail" && selectedWork && (
+        <WorkDetailPage
+          work={selectedWork}
+          works={works}
+          navigate={navigate}
+          onWork={openWork}
+          onEstimate={goToEstimate}
+        />
+      )}
       {page === "about" && <AboutPage settings={settings} />}
 
       {publicPage && <PublicFooter navigate={navigate} onCategory={openCategory} onEstimate={goToEstimate} settings={settings} />}
