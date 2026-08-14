@@ -1,2 +1,2 @@
 // Static hero asset; intentionally shown on desktop only by responsive CSS.
-export const hero2026 = "/assets/rupantar-hero-final.webp";
+export const hero2026 = "/assets/rupantar-hero-final.webp?v=9e9663f";
