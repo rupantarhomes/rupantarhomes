@@ -139,7 +139,7 @@ export function HomePage({
             ))}
           </div>
         </div>
-        <div className="relative">
+        <div className="relative hidden sm:block">
           <div className="aspect-[16/9] w-full rounded-[1.25rem] overflow-hidden bg-[#F8F8F8] border border-zinc-100">
             <img
               src={brandAssets.hero}
