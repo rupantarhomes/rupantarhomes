@@ -483,7 +483,7 @@ export function RupantarSite() {
   return (
     <div className="min-h-screen bg-white text-zinc-950">
       {publicPage && <TopBar settings={settings} />}
-      {publicPage && <PublicHeader page={page} navigate={navigate} onEstimate={goToEstimate} isAdmin={isAdmin} />}
+      {publicPage && <PublicHeader page={page} navigate={navigate} onCategory={openCategory} onEstimate={goToEstimate} isAdmin={isAdmin} />}
 
       {page === "home" && (
         <HomePage
