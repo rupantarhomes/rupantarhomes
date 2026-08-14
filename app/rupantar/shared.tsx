@@ -6,7 +6,6 @@ import {
   BedDouble,
   Check,
   ChefHat,
-  CircleUserRound,
   Fence,
   House,
   Image as ImageIcon,
@@ -115,13 +114,11 @@ export function PublicHeader({
   navigate,
   onCategory,
   onEstimate,
-  isAdmin,
 }: {
   page: Page;
   navigate: (page: Page) => void;
   onCategory: (category: string) => void;
   onEstimate: () => void;
-  isAdmin: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -161,9 +158,6 @@ export function PublicHeader({
             Services
           </button>
           <button onClick={() => go("about")} className={`text-[14px] font-medium transition ${page === "about" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>About</button>
-          <button onClick={() => go(isAdmin ? "admin-dashboard" : "admin-login")} className="text-[14px] font-medium text-zinc-700 hover:text-[#FF1A3D] transition flex items-center gap-1">
-            <CircleUserRound className="w-4 h-4" /> Admin
-          </button>
         </div>
 
         <div className="flex items-center gap-3">
@@ -182,7 +176,6 @@ export function PublicHeader({
             { label: "Home", page: "home" as Page },
             { label: "Works", page: "works" as Page },
             { label: "About", page: "about" as Page },
-            { label: isAdmin ? "Dashboard" : "Admin Login", page: (isAdmin ? "admin-dashboard" : "admin-login") as Page },
           ].map((item) => (
             <button key={item.page} onClick={() => go(item.page)} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">{item.label}</button>
           ))}
