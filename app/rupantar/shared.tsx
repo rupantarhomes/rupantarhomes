@@ -113,11 +113,13 @@ export function TopBar({ settings }: { settings: SiteSettings }) {
 export function PublicHeader({
   page,
   navigate,
+  onCategory,
   onEstimate,
   isAdmin,
 }: {
   page: Page;
   navigate: (page: Page) => void;
+  onCategory: (category: string) => void;
   onEstimate: () => void;
   isAdmin: boolean;
 }) {
@@ -125,6 +127,11 @@ export function PublicHeader({
 
   const go = (next: Page) => {
     navigate(next);
+    setOpen(false);
+  };
+
+  const goCategory = (category: string) => {
+    onCategory(category);
     setOpen(false);
   };
 
@@ -142,6 +149,8 @@ export function PublicHeader({
         <div className="hidden lg:flex items-center gap-8">
           <button onClick={() => go("home")} className={`text-[14px] font-medium transition ${page === "home" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>Home</button>
           <button onClick={() => go("works")} className={`text-[14px] font-medium transition ${page === "works" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>Works</button>
+          <button onClick={() => goCategory("architect")} className="text-[14px] font-medium text-zinc-700 hover:text-[#FF1A3D] transition">Architect</button>
+          <button onClick={() => goCategory("home-construction")} className="text-[14px] font-medium text-zinc-700 hover:text-[#FF1A3D] transition">Home Construction</button>
           <button
             onClick={() => {
               go("home");
@@ -177,6 +186,8 @@ export function PublicHeader({
           ].map((item) => (
             <button key={item.page} onClick={() => go(item.page)} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">{item.label}</button>
           ))}
+          <button onClick={() => goCategory("architect")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Architect</button>
+          <button onClick={() => goCategory("home-construction")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Home Construction</button>
           <button
             onClick={() => {
               setOpen(false);
