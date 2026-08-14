@@ -107,37 +107,40 @@ a[href*="wa.me"]:hover::before {
   box-shadow: 0 4px 12px rgba(255, 26, 61, 0.2) !important;
 }
 
-/* Desktop hero uses the supplied living-room image as a 50% background layer. */
+/* Full-width hero background; content and vertical sizing remain unchanged. */
 main > section:first-child {
   position: relative;
+  isolation: isolate;
 }
 
 main > section:first-child > div.relative.hidden {
   display: none !important;
 }
 
+main > section:first-child::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(50% - 50vw);
+  right: calc(50% - 50vw);
+  z-index: 0;
+  background-image: url("/assets/rupantar-hero-living-room.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+main > section:first-child > div:first-child {
+  position: relative;
+  z-index: 1;
+}
+
 @media (min-width: 1024px) {
   main > section:first-child {
     grid-template-columns: 1fr !important;
-    overflow: hidden;
-  }
-
-  main > section:first-child::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    background-image: url("/assets/rupantar-hero-living-room.svg");
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: cover;
-    opacity: 0.5;
-    pointer-events: none;
-  }
-
-  main > section:first-child > div:first-child {
-    position: relative;
-    z-index: 1;
   }
 }
 
