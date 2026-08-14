@@ -12,7 +12,7 @@ import type {
 } from "./types";
 
 export const categories: Category[] = [
-  { id: "1", slug: "interior-designing", name: "Interior Designing", desc: "Complete home transformation with modern aesthetics" },
+  { id: "1", slug: "architect", name: "Architect", desc: "Architectural planning, layouts & design coordination" },
   { id: "2", slug: "modular-kitchen", name: "Modular Kitchen", desc: "Functional & stylish kitchen solutions" },
   { id: "3", slug: "tv-cabinet", name: "TV Cabinet", desc: "Elegant entertainment units & wall panels" },
   { id: "4", slug: "wardrobe", name: "Wardrobe", desc: "Custom storage with premium finishes" },
@@ -20,6 +20,7 @@ export const categories: Category[] = [
   { id: "6", slug: "false-ceiling", name: "False Ceiling", desc: "Designer ceilings with ambient lighting" },
   { id: "7", slug: "parqueting", name: "Parqueting", desc: "Premium wooden flooring craftsmanship" },
   { id: "8", slug: "railing", name: "Railing", desc: "Modern staircase & balcony railings" },
+  { id: "9", slug: "home-construction", name: "Home Construction", desc: "Complete home construction from structure to finish" },
 ];
 
 export const initialWorks: Work[] = [
@@ -27,7 +28,7 @@ export const initialWorks: Work[] = [
     id: "w1",
     title: "Modern Living Room Makeover",
     slug: "modern-living-room-makeover",
-    category: "interior-designing",
+    category: "architect",
     location: "Kathmandu",
     shortDesc: "Warm minimal interior with oak finishes and ambient cove lighting.",
     longDesc: "A complete transformation of a 3BHK apartment in Kathmandu. We focused on warm neutrals, fluted panels, hidden storage and layered lighting. The client wanted a calm, clutter-free home that still feels lived-in. Delivered in 22 days with factory-finished modular elements fabricated at our workshop.",
@@ -111,7 +112,7 @@ export const emptyEstimate: EstimateForm = {
   name: "",
   phone: "",
   location: "",
-  category: "interior-designing",
+  category: "architect",
   size: "",
   material: "",
   message: "",
@@ -121,7 +122,7 @@ export const emptyEstimate: EstimateForm = {
 export const emptyQuery: QueryForm = {
   name: "",
   phone: "",
-  category: "interior-designing",
+  category: "architect",
   message: "",
   attachment: null,
 };
@@ -129,7 +130,7 @@ export const emptyQuery: QueryForm = {
 export const emptyWork: WorkForm = {
   title: "",
   slug: "",
-  category: "interior-designing",
+  category: "architect",
   location: "",
   shortDesc: "",
   longDesc: "",
