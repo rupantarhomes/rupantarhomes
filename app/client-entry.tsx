@@ -27,6 +27,7 @@ createRoot(root).render(
 
 function normalizeVisibleCopy() {
   const replacements: Array<[RegExp, string]> = [
+    [/\b8 core services\b/gi, "9 core services"],
     [/\b3D sample\b/gi, "design preview"],
     [/\b3D design\b/gi, "design preview"],
     [/\b3D visualization\b/gi, "design preview"],
