@@ -144,7 +144,7 @@ export function HomePage({
             <img
               src={brandAssets.hero}
               alt="Rupantar Homes interior design moodboard"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover opacity-100"
               loading="eager"
               decoding="async"
             />
@@ -322,8 +322,8 @@ export function HomePage({
                     <span className="text-[11px]">JPG, PNG up to 10MB</span>
                   </>
                 )}
-              </label>
-              <textarea required value={estimate.message} onChange={(event) => setEstimate((value) => ({ ...value, message: event.target.value }))} placeholder="Message / Requirements *" rows={3} maxLength={4000} className="sm:col-span-2 w-full px-4 py-3 rounded-2xl border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] resize-none" />
+                </label>
+                <textarea required value={estimate.message} onChange={(event) => setEstimate((value) => ({ ...value, message: event.target.value }))} placeholder="Message / Requirements *" rows={3} maxLength={4000} className="sm:col-span-2 w-full px-4 py-3 rounded-2xl border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] resize-none" />
             </div>
             <button type="submit" disabled={estimateBusy} className="mt-6 w-full h-12 rounded-full bg-[#FF1A3D] text-white font-semibold text-[14px] flex items-center justify-center gap-2 hover:brightness-95 transition disabled:opacity-60">
               {estimateBusy ? "Sending..." : "Send Estimate Request"} <ArrowRight className="w-4 h-4" />
