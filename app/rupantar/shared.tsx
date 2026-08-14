@@ -8,6 +8,7 @@ import {
   ChefHat,
   CircleUserRound,
   Fence,
+  House,
   Image as ImageIcon,
   Instagram,
   Layers3,
@@ -29,7 +30,7 @@ export const whatsappUrl = `https://wa.me/9779745941799?text=${encodeURIComponen
 export const callUrl = "tel:+9779745941799";
 
 export const categoryIcons = {
-  "interior-designing": PencilRuler,
+  architect: PencilRuler,
   "modular-kitchen": ChefHat,
   "tv-cabinet": Monitor,
   wardrobe: PanelsTopLeft,
@@ -37,6 +38,7 @@ export const categoryIcons = {
   "false-ceiling": PanelTop,
   parqueting: Layers3,
   railing: Fence,
+  "home-construction": House,
 } as const;
 
 export function PhotoPlaceholder({
