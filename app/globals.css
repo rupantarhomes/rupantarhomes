@@ -113,10 +113,6 @@ main > section:first-child {
   isolation: isolate;
 }
 
-main > section:first-child > div.relative.hidden {
-  display: none !important;
-}
-
 main > section:first-child::before {
   content: "";
   position: absolute;
