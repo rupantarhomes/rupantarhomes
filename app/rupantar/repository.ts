@@ -196,6 +196,33 @@ function mapLead(row: LeadRow): Lead {
   };
 }
 
+export type PublicWorksPage = { works: Work[]; total: number };
+
+export async function loadPublicWorksPage(offset = 0, limit = 12, category = "all"): Promise<PublicWorksPage> {
+  if (!isSupabaseConfigured) return { works: initialWorks.slice(offset, offset + limit), total: initialWorks.length };
+  const supabase = getSupabase();
+  let query = supabase
+    .from("works")
+    .select("id,title,slug,category,location,short_description,long_description,featured", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+  if (category !== "all") query = query.eq("category", category);
+  const worksResult = await query;
+  if (worksResult.error) throw new Error(worksResult.error.message);
+  const rows = (worksResult.data ?? []) as WorkRow[];
+  const ids = rows.map((row) => row.id);
+  const imagesResult = ids.length
+    ? await supabase.from("work_images").select("id,work_id,secure_url,cloudinary_public_id,alt_text,sort_order,width,height,byte_size").in("work_id", ids).order("sort_order", { ascending: true })
+    : { data: [], error: null };
+  if (imagesResult.error) throw new Error(imagesResult.error.message);
+  const imagesByWork = new Map<string, WorkImage[]>();
+  for (const row of (imagesResult.data ?? []) as WorkImageRow[]) {
+    const id = text(row.work_id);
+    imagesByWork.set(id, [...(imagesByWork.get(id) ?? []), mapImage(row)]);
+  }
+  return { works: rows.map((row) => mapWork(row, imagesByWork.get(text(row.id)) ?? [])), total: worksResult.count ?? 0 };
+}
+
 export async function loadPublicContent(): Promise<{
   works: Work[];
   reviews: Review[];
@@ -206,15 +233,8 @@ export async function loadPublicContent(): Promise<{
   }
 
   const supabase = getSupabase();
-  const [worksResult, imagesResult, reviewsResult, settingsResult] = await Promise.all([
-    supabase
-      .from("works")
-      .select("id,title,slug,category,location,short_description,long_description,featured")
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("work_images")
-      .select("id,work_id,secure_url,cloudinary_public_id,alt_text,sort_order,width,height,byte_size")
-      .order("sort_order", { ascending: true }),
+  const [worksPage, reviewsResult, settingsResult] = await Promise.all([
+    loadPublicWorksPage(),
     supabase
       .from("reviews")
       .select("id,name,location,message,rating,instagram_url")
@@ -226,20 +246,11 @@ export async function loadPublicContent(): Promise<{
       .maybeSingle(),
   ]);
 
-  const error = worksResult.error ?? imagesResult.error ?? reviewsResult.error ?? settingsResult.error;
+  const error = reviewsResult.error ?? settingsResult.error;
   if (error) throw new Error(error.message);
 
-  const imageRows = (imagesResult.data ?? []) as WorkImageRow[];
-  const imagesByWork = new Map<string, WorkImage[]>();
-  for (const row of imageRows) {
-    const workId = text(row.work_id);
-    const images = imagesByWork.get(workId) ?? [];
-    images.push(mapImage(row));
-    imagesByWork.set(workId, images);
-  }
-
   return {
-    works: ((worksResult.data ?? []) as WorkRow[]).map((row) => mapWork(row, imagesByWork.get(text(row.id)) ?? [])),
+    works: worksPage.works,
     reviews: ((reviewsResult.data ?? []) as ReviewRow[]).map(mapReview),
     settings: mapSettings((settingsResult.data as SettingsRow | null) ?? null),
   };
