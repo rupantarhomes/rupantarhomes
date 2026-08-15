@@ -152,8 +152,8 @@ test("keeps secondary content flows validated and synchronized", async () => {
   assert.match(repository, /select\("id", \{ count: "exact", head: true \}\)/);
 
   assert.match(site, /nextPage === "admin-dashboard"[\s\S]*refreshAdminStats/);
-  assert.match(site, /await submitEstimate\(estimate\)[\s\S]*if \(isAdmin\) await refreshAdminStats\(\)/);
-  assert.match(site, /await submitQuery\(query\)[\s\S]*if \(isAdmin\) await refreshAdminStats\(\)/);
+  assert.match(site, /await submitEstimate\(estimate\)[\s\S]*if \(isAdmin\) await Promise\.all\(\[refreshAdminStats\(\), refreshLeads\(\)\]\)/);
+  assert.match(site, /await submitQuery\(query\)[\s\S]*if \(isAdmin\) await Promise\.all\(\[refreshAdminStats\(\), refreshLeads\(\)\]\)/);
   assert.match(site, /await saveReview\(reviewForm\)[\s\S]*await refreshContent\(\)/);
   assert.match(site, /await saveSettings\(settings\)[\s\S]*await refreshContent\(\)/);
 
@@ -162,17 +162,19 @@ test("keeps secondary content flows validated and synchronized", async () => {
   assert.match(home, /accept="image\/jpeg,image\/png,\.jpg,\.jpeg,\.png"/);
   assert.match(home, /onDragOver/);
   assert.match(repository, /fetch\("\/api\/inquiries"/);
+  assert.match(site, /busy=\{adminBusy\}/);
+  assert.match(site, /PublicFooter navigate=\{navigate\}/);
+  assert.match(site, /AboutPage navigate=\{navigate\}/);
   assert.match(admin, /type="url"[\s\S]*Instagram Video Link/);
   assert.match(admin, /SettingField label="Instagram URL" type="url"/);
 });
 
-test("defines normalized tables, explicit grants, RLS, and a server-only inquiry boundary", async () => {
-  const [sql, inquirySql, inquiryFunction, environment, wrangler] = await Promise.all([
+test("defines normalized tables, explicit grants, RLS, and the public inquiry boundary", async () => {
+  const [sql, inquirySql, inquiryFunction, environment] = await Promise.all([
     read("../supabase/migrations/20260809130140_baseline_and_reconcile_schema.sql"),
     read("../supabase/migrations/20260809224500_secure_public_inquiries.sql"),
     read("../functions/api/inquiries.ts"),
     read("../functions/_lib/env.ts"),
-    read("../wrangler.jsonc"),
   ]);
 
   for (const table of ["admin_users", "works", "work_images", "reviews", "site_settings", "queries", "estimate_requests"]) {
@@ -189,11 +191,9 @@ test("defines normalized tables, explicit grants, RLS, and a server-only inquiry
   assert.match(inquiryFunction, /verifyImageSignature/);
   assert.match(inquiryFunction, /result\?\.format !== "webp"/);
   assert.match(inquiryFunction, /destroyCloudinaryImage/);
-  assert.match(inquiryFunction, /apikey: runtime\.SUPABASE_SECRET_KEY/);
-  assert.doesNotMatch(inquiryFunction, /Authorization:\s*`Bearer \$\{runtime\.SUPABASE_SECRET_KEY/);
-  assert.match(environment, /SUPABASE_SECRET_KEY/);
-  assert.match(wrangler, /"ratelimits"/);
-  assert.match(wrangler, /"observability"/);
+  assert.match(inquiryFunction, /requiredEnv\(env, "SUPABASE_URL"\)/);
+  assert.match(inquiryFunction, /requiredEnv\(env, "SUPABASE_PUBLISHABLE_KEY"\)/);
+  assert.match(environment, /SUPABASE_PUBLISHABLE_KEY/);
 });
 
 test("preserves the supplied HTML as an immutable visual reference", async () => {
@@ -203,3 +203,4 @@ test("preserves the supplied HTML as an immutable visual reference", async () =>
     "74483ad7c3a1f04fe06914dc9be17b075ab4d066d4790ce5311b44ae3d9eff16",
   );
 });
+

@@ -120,8 +120,6 @@ type AdminPortalProps = {
   uploadingImages: boolean;
   leads: Lead[];
   onUpdateLeadStatus: (id: string, status: LeadStatus) => Promise<void>;
-  notificationPermission: NotificationPermission | "unsupported";
-  onEnableNotifications: () => Promise<void>;
   reviews: Review[];
   reviewForm: ReviewForm;
   setReviewForm: Dispatch<SetStateAction<ReviewForm>>;
@@ -745,3 +743,4 @@ function SettingField({ label, type = "text", value, onChange }: { label: string
 export function resetWorkForm(setWorkForm: Dispatch<SetStateAction<WorkForm>>) {
   setWorkForm(emptyWork);
 }
+

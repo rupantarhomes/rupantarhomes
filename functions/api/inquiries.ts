@@ -5,11 +5,9 @@ import { errorMessage, json } from "../_lib/http";
 const maximumAttachmentBytes = 10 * 1024 * 1024;
 const maximumRequestBytes = 11 * 1024 * 1024;
 const web3FormsAccessKey = "9cb63466-337d-4480-80f1-2ee7a00f25a3";
-const supabaseUrl = "https://gmtdqeskyvdvyibccxwt.supabase.co";
-const supabasePublishableKey = "sb_publishable_RdT2JC1U6Im3VKobzFzTjg_hy-SWjJo";
 const acceptedAttachmentTypes = new Set(["image/jpeg", "image/png"]);
 const allowedCategories = new Set([
-  "interior-designing",
+  "architect",
   "modular-kitchen",
   "tv-cabinet",
   "wardrobe",
@@ -17,6 +15,7 @@ const allowedCategories = new Set([
   "false-ceiling",
   "parqueting",
   "railing",
+  "home-construction",
 ]);
 
 type InquiryKind = "query" | "estimate";
@@ -63,8 +62,9 @@ function inquiryKind(form: FormData): InquiryKind {
 
 function category(form: FormData): string {
   const value = textField(form, "category", "Category", 64);
-  if (!allowedCategories.has(value)) throw new PublicRequestError("Please select a valid category.");
-  return value;
+  const normalized = value === "interior-designing" ? "architect" : value;
+  if (!allowedCategories.has(normalized)) throw new PublicRequestError("Please select a valid category.");
+  return normalized;
 }
 
 function attachment(form: FormData, required: boolean): File | null {
@@ -193,7 +193,9 @@ async function uploadAttachment(
   }
 }
 
-async function insertInquiry(kind: InquiryKind, payload: InquiryPayload): Promise<void> {
+async function insertInquiry(kind: InquiryKind, payload: InquiryPayload, env: RuntimeEnv): Promise<void> {
+  const supabaseUrl = requiredEnv(env, "SUPABASE_URL");
+  const supabasePublishableKey = requiredEnv(env, "SUPABASE_PUBLISHABLE_KEY");
   const response = await fetch(`${supabaseUrl}/rest/v1/rpc/submit_public_inquiry`, {
     method: "POST",
     headers: {
@@ -265,6 +267,7 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
 
   try {
     requireSameOrigin(request);
+    const runtime = env;
     const contentLengthHeader = request.headers.get("Content-Length");
     const contentLength = contentLengthHeader == null ? 0 : Number(contentLengthHeader);
     if (!Number.isFinite(contentLength) || contentLength < 0 || contentLength > maximumRequestBytes) {
@@ -287,10 +290,10 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
     const normalizedCategory = category(form);
     const message = textField(form, "message", "Message / Requirements", 4000);
     if (!/^[0-9+()\-\s]{5,40}$/.test(phone)) throw new PublicRequestError("Please enter a valid phone number.");
-    await enforceOptionalRateLimits(phone, env);
+    await enforceOptionalRateLimits(phone, runtime);
 
     const photo = attachment(form, kind === "estimate");
-    const uploaded = photo ? await uploadAttachment(photo, kind, env) : null;
+    const uploaded = photo ? await uploadAttachment(photo, kind, runtime) : null;
     uploadedPublicId = uploaded?.publicId ?? null;
 
     const common: InquiryPayload = {
@@ -310,7 +313,7 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
           material_preference: textField(form, "material_preference", "Material preference", 200),
         };
 
-    await insertInquiry(kind, payload);
+    await insertInquiry(kind, payload, runtime);
 
     try {
       await sendWeb3FormsNotification(kind, payload);
@@ -343,3 +346,4 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
     return json({ error: status < 500 ? message : "Your request could not be sent. Please try again." }, status);
   }
 };
+

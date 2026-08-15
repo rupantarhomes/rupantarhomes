@@ -475,7 +475,7 @@ export function RupantarSite() {
         setSettings={setSettings}
         onSaveSettings={handleSaveSettings}
         adminStats={adminStats}
-        adminBusy={adminBusy}
+        busy={adminBusy}
       />
     );
   }
@@ -483,7 +483,7 @@ export function RupantarSite() {
   return (
     <div className="min-h-screen bg-white text-zinc-950">
       {publicPage && <TopBar settings={settings} />}
-      {publicPage && <PublicHeader page={page} navigate={navigate} onCategory={openCategory} onEstimate={goToEstimate} isAdmin={isAdmin} />}
+      {publicPage && <PublicHeader page={page} navigate={navigate} onCategory={openCategory} onEstimate={goToEstimate} />}
 
       {page === "home" && (
         <HomePage
@@ -514,7 +514,7 @@ export function RupantarSite() {
           onEstimate={goToEstimate}
         />
       )}
-      {page === "about" && <AboutPage settings={settings} />}
+      {page === "about" && <AboutPage navigate={navigate} settings={settings} />}
 
       {publicPage && <PublicFooter navigate={navigate} onCategory={openCategory} onEstimate={goToEstimate} settings={settings} />}
 
@@ -549,3 +549,4 @@ export function RupantarSite() {
     </div>
   );
 }
+
