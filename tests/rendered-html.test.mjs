@@ -205,16 +205,20 @@ test("defines normalized tables, explicit grants, RLS, and the public inquiry bo
   assert.match(inquiryEdgeFunction, /SUPABASE_SERVICE_ROLE_KEY/);
 });
 
-test("delivers admin work images responsively and limits the public gallery", async () => {
-  const [shared, publicPages] = await Promise.all([
+test("delivers admin work images responsively and pages the public gallery", async () => {
+  const [shared, publicPages, repository] = await Promise.all([
     read("../app/rupantar/shared.tsx"),
     read("../app/rupantar/public-pages.tsx"),
+    read("../app/rupantar/repository.ts"),
   ]);
 
   assert.match(shared, /c_limit,w_\$\{width\}\/f_auto\/q_auto:good/);
   assert.match(shared, /srcSet=\{sources\}/);
   assert.match(shared, /loading=\{eager \? "eager" : "lazy"\}/);
-  assert.match(publicPages, /const \[visibleCount, setVisibleCount\] = useState\(12\)/);
+  assert.match(repository, /export async function loadPublicWorksPage\(offset = 0, limit = 12, category = "all"\)/);
+  assert.match(repository, /\.range\(offset, offset \+ limit - 1\)/);
+  assert.match(repository, /\.in\("work_id", ids\)/);
+  assert.match(publicPages, /onLoadMore/);
   assert.match(publicPages, /Load More Works/);
 });
 
