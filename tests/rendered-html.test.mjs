@@ -107,8 +107,9 @@ test("keeps Cloudinary secrets server-side and requires admin authorization", as
   assert.match(clientUpload, /export const maximumWorkImages = 3/);
   assert.match(clientUpload, /files\.length > maximumWorkImages/);
   assert.match(site, /remainingImageSlots = maximumWorkImages - currentImageCount/);
-  assert.match(admin, /grid-cols-3/);
+  assert.match(admin, /grid-cols-\[1\.6fr_1fr\] grid-rows-2/);
   assert.match(admin, /Array\.from\(\{ length: maximumWorkImages \}/);
+  assert.match(admin, /index === 0 \? "row-span-2" : "aspect-square"/);
   assert.match(admin, /multiple/);
 });
 

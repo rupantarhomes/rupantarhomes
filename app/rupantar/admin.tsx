@@ -609,11 +609,11 @@ function AdminWorks({
                 )}
               </label>
 
-              <div className="grid grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-[1.6fr_1fr] grid-rows-2 gap-2.5">
                 {Array.from({ length: maximumWorkImages }, (_, index) => {
                   const image = Array.isArray(workForm.images) ? workForm.images[index] : undefined;
                   return image ? (
-                    <div key={image.id} className="group relative border border-zinc-200 rounded-xl aspect-square overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
+                    <div key={image.id} className={`group relative border border-zinc-200 rounded-xl ${index === 0 ? "row-span-2" : "aspect-square"} overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow`}>
                       <img src={image.url} alt={image.altText || workForm.title} className="w-full h-full object-cover" />
                       <button
                         type="button"
@@ -624,7 +624,7 @@ function AdminWorks({
                       >×</button>
                     </div>
                   ) : (
-                    <div key={`slot-${index}`} className="border border-dashed border-zinc-200 rounded-xl aspect-square flex flex-col items-center justify-center gap-1 text-zinc-300 bg-zinc-50/50">
+                    <div key={`slot-${index}`} className={`border border-dashed border-zinc-200 rounded-xl ${index === 0 ? "row-span-2" : "aspect-square"} flex flex-col items-center justify-center gap-1 text-zinc-300 bg-zinc-50/50`}>
                       <ImageIcon className="w-4 h-4" /><span className="text-[9px]">Empty</span>
                     </div>
                   );
