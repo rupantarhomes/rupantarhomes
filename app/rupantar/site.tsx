@@ -1,8 +1,7 @@
 "use client";
 
 import { CheckCircle2, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { AdminLogin, AdminPortal } from "./admin";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { deleteCloudinaryImages, uploadWorkImages } from "./cloudinary";
 import {
   emptyEstimate,
@@ -14,7 +13,6 @@ import {
   initialWorks,
 } from "./data";
 import { HomePage } from "./home-page";
-import { AboutPage, WorkDetailPage, WorksPage } from "./public-pages";
 import {
   deleteReview,
   deleteWork,
@@ -43,6 +41,16 @@ import type {
   Work,
   WorkForm,
 } from "./types";
+
+const AdminLogin = lazy(() => import("./admin").then((module) => ({ default: module.AdminLogin })));
+const AdminPortal = lazy(() => import("./admin").then((module) => ({ default: module.AdminPortal })));
+const AboutPage = lazy(() => import("./public-pages").then((module) => ({ default: module.AboutPage })));
+const WorkDetailPage = lazy(() => import("./public-pages").then((module) => ({ default: module.WorkDetailPage })));
+const WorksPage = lazy(() => import("./public-pages").then((module) => ({ default: module.WorksPage })));
+
+function PageLoader() {
+  return <div className="min-h-[40vh]" aria-busy="true" aria-label="Loading page" />;
+}
 
 const publicPages: Page[] = ["home", "works", "work-detail", "about"];
 
@@ -440,7 +448,7 @@ export function RupantarSite() {
 
   if (page === "admin-login") {
     return (
-      <AdminLogin navigate={navigate} onLogin={handleLogin} error={loginError} busy={loginBusy} />
+      <Suspense fallback={<PageLoader />}><AdminLogin navigate={navigate} onLogin={handleLogin} error={loginError} busy={loginBusy} /></Suspense>
     );
   }
 
@@ -449,7 +457,7 @@ export function RupantarSite() {
       return <AdminLogin navigate={navigate} onLogin={handleLogin} error={loginError} busy={loginBusy} />;
     }
     return (
-      <AdminPortal
+      <Suspense fallback={<PageLoader />}><AdminPortal
         page={page}
         navigate={navigate}
         onLogout={handleLogout}
@@ -476,7 +484,7 @@ export function RupantarSite() {
         onSaveSettings={handleSaveSettings}
         adminStats={adminStats}
         busy={adminBusy}
-      />
+      /></Suspense>
     );
   }
 
@@ -504,17 +512,17 @@ export function RupantarSite() {
           queryBusy={queryBusy}
         />
       )}
-      {page === "works" && <WorksPage works={works} filter={filter} setFilter={setFilter} navigate={navigate} onWork={openWork} />}
+      {page === "works" && <Suspense fallback={<PageLoader />}><WorksPage works={works} filter={filter} setFilter={setFilter} navigate={navigate} onWork={openWork} /></Suspense>}
       {page === "work-detail" && selectedWork && (
-        <WorkDetailPage
+        <Suspense fallback={<PageLoader />}><WorkDetailPage
           work={selectedWork}
           works={works}
           navigate={navigate}
           onWork={openWork}
           onEstimate={goToEstimate}
-        />
+        /></Suspense>
       )}
-      {page === "about" && <AboutPage navigate={navigate} settings={settings} />}
+      {page === "about" && <Suspense fallback={<PageLoader />}><AboutPage navigate={navigate} settings={settings} /></Suspense>}
 
       {publicPage && <PublicFooter navigate={navigate} onCategory={openCategory} onEstimate={goToEstimate} settings={settings} />}
 
