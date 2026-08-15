@@ -125,7 +125,7 @@ main > section:first-child::before {
   left: calc(50% - 50vw);
   right: calc(50% - 50vw);
   z-index: 0;
-  background-image: url("/assets/rupantar-hero-background.jpg");
+  background-image: url("/assets/rupantar-hero-final.webp?v=b6ac5b66");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
