@@ -20,6 +20,7 @@ import {
   loadAdminStats,
   loadLeads,
   loadPublicContent,
+  loadPublicWorksPage,
   saveReview,
   saveSettings,
   saveWork,
@@ -68,6 +69,8 @@ export function RupantarSite() {
   const [selectedWorkId, setSelectedWorkId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [works, setWorks] = useState<Work[]>(initialWorks);
+  const [worksTotal, setWorksTotal] = useState(initialWorks.length);
+  const [worksLoading, setWorksLoading] = useState(false);
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [estimate, setEstimate] = useState(emptyEstimate);
@@ -91,6 +94,17 @@ export function RupantarSite() {
     setReviews(content.reviews);
     setSettings(content.settings);
   }, []);
+
+  const loadWorks = async (category: string, offset: number) => {
+    setWorksLoading(true);
+    try {
+      const result = await loadPublicWorksPage(offset, 12, category);
+      setWorksTotal(result.total);
+      setWorks((current) => offset === 0 ? result.works : [...current, ...result.works]);
+    } finally {
+      setWorksLoading(false);
+    }
+  };
 
   const refreshAdminStats = useCallback(async () => {
     try {
@@ -154,7 +168,9 @@ export function RupantarSite() {
 
   const openCategory = (category: string) => {
     setFilter(category);
-    navigate("works");
+    setPage("works");
+    void loadWorks(category, 0);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const openWork = (id: string) => {
@@ -454,7 +470,7 @@ export function RupantarSite() {
 
   if (page.startsWith("admin-")) {
     if (!isAdmin) {
-      return <AdminLogin navigate={navigate} onLogin={handleLogin} error={loginError} busy={loginBusy} />;
+      return <Suspense fallback={<PageLoader />}><AdminLogin navigate={navigate} onLogin={handleLogin} error={loginError} busy={loginBusy} /></Suspense>;
     }
     return (
       <Suspense fallback={<PageLoader />}><AdminPortal
@@ -512,7 +528,7 @@ export function RupantarSite() {
           queryBusy={queryBusy}
         />
       )}
-      {page === "works" && <Suspense fallback={<PageLoader />}><WorksPage works={works} filter={filter} setFilter={setFilter} navigate={navigate} onWork={openWork} /></Suspense>}
+      {page === "works" && <Suspense fallback={<PageLoader />}><WorksPage works={works} total={worksTotal} loading={worksLoading} filter={filter} setFilter={(next) => { setFilter(next); void loadWorks(next, 0); }} onLoadMore={() => void loadWorks(filter, works.length)} navigate={navigate} onWork={openWork} /></Suspense>}
       {page === "work-detail" && selectedWork && (
         <Suspense fallback={<PageLoader />}><WorkDetailPage
           work={selectedWork}
