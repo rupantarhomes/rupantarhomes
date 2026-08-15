@@ -3,13 +3,20 @@ import { cloudinarySignature } from "../_lib/cloudinary";
 import { requireRuntimeEnv, type RuntimeEnv } from "../_lib/env";
 import { errorMessage, json } from "../_lib/http";
 
+const workImageTransformation = "c_limit,h_1080,w_1920/q_auto:good";
+
 export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env }) => {
   try {
     const runtime = requireRuntimeEnv(env);
     await requireAdmin(request, runtime);
     const timestamp = Math.floor(Date.now() / 1000);
     const signature = await cloudinarySignature(
-      { timestamp, upload_preset: runtime.CLOUDINARY_UPLOAD_PRESET },
+      {
+        format: "webp",
+        timestamp,
+        transformation: workImageTransformation,
+        upload_preset: runtime.CLOUDINARY_UPLOAD_PRESET,
+      },
       runtime.CLOUDINARY_API_SECRET,
     );
 
@@ -19,6 +26,8 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
       apiKey: runtime.CLOUDINARY_API_KEY,
       cloudName: runtime.CLOUDINARY_CLOUD_NAME,
       uploadPreset: runtime.CLOUDINARY_UPLOAD_PRESET,
+      format: "webp",
+      transformation: workImageTransformation,
     });
   } catch (error) {
     const message = errorMessage(error);
@@ -27,3 +36,4 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
     return json({ error: status === 401 ? "Unauthorized" : "Unable to authorize upload" }, status);
   }
 };
+

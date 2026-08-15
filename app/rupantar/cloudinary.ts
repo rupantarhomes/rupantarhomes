@@ -7,6 +7,8 @@ type SignatureResponse = {
   apiKey: string;
   cloudName: string;
   uploadPreset: string;
+  format: "webp";
+  transformation: string;
 };
 
 type UploadResponse = {
@@ -70,12 +72,14 @@ function parseSignature(body: unknown): SignatureResponse {
   const apiKey = nonEmptyString(body.apiKey);
   const cloudName = nonEmptyString(body.cloudName);
   const uploadPreset = nonEmptyString(body.uploadPreset);
+  const format = nonEmptyString(body.format);
+  const transformation = nonEmptyString(body.transformation);
   const timestamp = positiveInteger(body.timestamp);
-  if (!signature || !apiKey || !cloudName || !uploadPreset || !timestamp) {
+  if (!signature || !apiKey || !cloudName || !uploadPreset || !timestamp || format !== "webp" || !transformation) {
     throw new Error("The image upload authorization was incomplete.");
   }
   if (!/^[a-z0-9_-]+$/i.test(cloudName)) throw new Error("The Cloudinary cloud name was invalid.");
-  return { signature, timestamp, apiKey, cloudName, uploadPreset };
+  return { signature, timestamp, apiKey, cloudName, uploadPreset, format, transformation };
 }
 
 async function requestUploadSignature(): Promise<SignatureResponse> {
@@ -130,6 +134,8 @@ async function uploadOne(file: File, sortOrder: number): Promise<WorkImage> {
   body.set("timestamp", String(signed.timestamp));
   body.set("signature", signed.signature);
   body.set("upload_preset", signed.uploadPreset);
+  body.set("format", signed.format);
+  body.set("transformation", signed.transformation);
 
   const response = await fetch(`${cloudinaryApiBase}/v1_1/${encodeURIComponent(signed.cloudName)}/image/upload`, {
     method: "POST",
@@ -195,3 +201,4 @@ export async function deleteCloudinaryImages(publicIds: string[]): Promise<void>
     }
   }
 }
+
