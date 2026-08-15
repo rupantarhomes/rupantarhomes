@@ -10,24 +10,24 @@ const whatsappUrl = `https://wa.me/9779745941799?text=${encodeURIComponent("Hell
 
 export function WorksPage({
   works,
+  total,
+  loading,
   filter,
   setFilter,
+  onLoadMore,
   navigate,
   onWork,
 }: {
   works: Work[];
+  total: number;
+  loading: boolean;
   filter: string;
   setFilter: (filter: string) => void;
+  onLoadMore: () => void;
   navigate: (page: Page) => void;
   onWork: (id: string) => void;
 }) {
-  const filtered = filter === "all" ? works : works.filter((work) => work.category === filter);
-  const [visibleCount, setVisibleCount] = useState(12);
-  const visibleWorks = filtered.slice(0, visibleCount);
-
-  useEffect(() => {
-    setVisibleCount(12);
-  }, [filter]);
+  const visibleWorks = works;
 
   return (
     <main className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
@@ -35,7 +35,7 @@ export function WorksPage({
         <div>
           <h1 className="font-heading text-[28px] sm:text-[36px] font-bold tracking-[-0.02em]">All Works</h1>
           <p className="text-[13px] text-zinc-500 mt-1">
-            Crafted in Kathmandu • {works.length} projects
+            Crafted in Kathmandu • {total} projects
           </p>
         </div>
         <button
@@ -111,18 +111,19 @@ export function WorksPage({
         ))}
       </div>
 
-      {visibleWorks.length < filtered.length && (
+      {visibleWorks.length < total && (
         <div className="mt-8 flex justify-center">
           <button
-            onClick={() => setVisibleCount((count) => count + 12)}
+            onClick={onLoadMore}
+            disabled={loading}
             className="h-11 px-6 rounded-full border border-zinc-200 text-[13px] font-semibold hover:border-zinc-300 hover:bg-zinc-50 transition"
           >
-            Load More Works
+            {loading ? "Loading..." : "Load More Works"}
           </button>
         </div>
       )}
 
-      {filtered.length === 0 && (
+      {visibleWorks.length === 0 && !loading && (
         <div className="text-center py-16">
           <PhotoPlaceholder aspect="aspect-[16/9]" label="No works in this category yet" />
           <p className="text-[13px] text-zinc-500 mt-4">Add works from Admin → Manage Works</p>
