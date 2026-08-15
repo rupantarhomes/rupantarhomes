@@ -65,24 +65,51 @@ export function WorkPhoto({
   aspect = "aspect-[4/3]",
   label = "Photo Coming Soon",
   eager = false,
+  sizes = "(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw",
+  widths = [320, 480, 768, 1200],
 }: {
   image?: WorkImage;
   alt: string;
   aspect?: string;
   label?: string;
   eager?: boolean;
+  sizes?: string;
+  widths?: readonly number[];
 }) {
   if (!image) return <PhotoPlaceholder aspect={aspect} label={label} />;
+  const fallbackWidth = widths[widths.length - 1] ?? 768;
+  const sources = widths
+    .map((width) => `${cloudinaryDeliveryUrl(image.url, width)} ${width}w`)
+    .join(", ");
   return (
     <div className={`${aspect} w-full rounded-[1.25rem] overflow-hidden bg-[#F8F8F8]`}>
       <img
-        src={image.url}
+        src={cloudinaryDeliveryUrl(image.url, fallbackWidth)}
+        srcSet={sources}
+        sizes={sizes}
         alt={image.altText || alt}
         className="w-full h-full object-cover"
         loading={eager ? "eager" : "lazy"}
+        decoding="async"
       />
     </div>
   );
+}
+
+function cloudinaryDeliveryUrl(sourceUrl: string, width: number): string {
+  try {
+    const url = new URL(sourceUrl);
+    const uploadMarker = "/image/upload/";
+    const markerIndex = url.pathname.indexOf(uploadMarker);
+    if (url.protocol !== "https:" || url.hostname !== "res.cloudinary.com" || markerIndex < 0) return sourceUrl;
+
+    const beforeUpload = url.pathname.slice(0, markerIndex + uploadMarker.length);
+    const uploadedAsset = url.pathname.slice(markerIndex + uploadMarker.length);
+    url.pathname = `${beforeUpload}c_limit,w_${width}/f_auto/q_auto:good/${uploadedAsset}`;
+    return url.toString();
+  } catch {
+    return sourceUrl;
+  }
 }
 
 export function TopBar({ settings }: { settings: SiteSettings }) {
@@ -281,3 +308,4 @@ export function PublicFooter({
 }
 
 export { ArrowLeft, ArrowRight, Check, Instagram, MapPin, Music2, Phone };
+

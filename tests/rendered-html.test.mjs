@@ -202,6 +202,19 @@ test("defines normalized tables, explicit grants, RLS, and the public inquiry bo
   assert.match(inquiryEdgeFunction, /SUPABASE_SERVICE_ROLE_KEY/);
 });
 
+test("delivers admin work images responsively and limits the public gallery", async () => {
+  const [shared, publicPages] = await Promise.all([
+    read("../app/rupantar/shared.tsx"),
+    read("../app/rupantar/public-pages.tsx"),
+  ]);
+
+  assert.match(shared, /c_limit,w_\$\{width\}\/f_auto\/q_auto:good/);
+  assert.match(shared, /srcSet=\{sources\}/);
+  assert.match(shared, /loading=\{eager \? "eager" : "lazy"\}/);
+  assert.match(publicPages, /const \[visibleCount, setVisibleCount\] = useState\(12\)/);
+  assert.match(publicPages, /Load More Works/);
+});
+
 test("preserves the supplied HTML as an immutable visual reference", async () => {
   const baseline = await readFile(new URL("../public/baseline/rupantar-latest.html", import.meta.url));
   assert.equal(
