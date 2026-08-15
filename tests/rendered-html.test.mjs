@@ -93,7 +93,7 @@ test("keeps Cloudinary secrets server-side and requires admin authorization", as
   assert.match(signature, /requireAdmin/);
   assert.match(deleteFunction, /requireAdmin/);
   assert.match(signature, /CLOUDINARY_API_SECRET/);
-  assert.match(signature, /c_limit,h_1080,w_1920\/q_auto:good/);
+  assert.match(signature, /c_limit,h_1080,w_1920\/f_webp\/q_auto:good/);
   assert.match(clientUpload, /body\.set\("format", signed\.format\)/);
   assert.match(clientUpload, /body\.set\("transformation", signed\.transformation\)/);
   assert.match(deleteFunction, /destroyCloudinaryImage/);
