@@ -2,7 +2,7 @@
 
 import { CheckCircle2, X } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
-import { deleteCloudinaryImages, uploadWorkImages } from "./cloudinary";
+import { deleteCloudinaryImages, maximumWorkImages, uploadWorkImages } from "./cloudinary";
 import {
   emptyEstimate,
   emptyQuery,
@@ -353,6 +353,16 @@ export function RupantarSite() {
 
   const handleUploadImages = async (files: File[]) => {
     if (!files.length) return;
+    const currentImageCount = Array.isArray(workForm.images) ? workForm.images.length : 0;
+    const remainingImageSlots = maximumWorkImages - currentImageCount;
+    if (remainingImageSlots <= 0) {
+      window.alert(`A work can include up to ${maximumWorkImages} images.`);
+      return;
+    }
+    if (files.length > remainingImageSlots) {
+      window.alert(`You can add ${remainingImageSlots} more image${remainingImageSlots === 1 ? "" : "s"} to this work.`);
+      return;
+    }
     setUploadingImages(true);
     try {
       const uploaded = await uploadWorkImages(files);

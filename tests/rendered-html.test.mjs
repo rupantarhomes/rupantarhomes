@@ -104,7 +104,11 @@ test("keeps Cloudinary secrets server-side and requires admin authorization", as
   assert.match(site, /deletedImagePublicIds = await deleteWork\(id\)[\s\S]*await deleteCloudinaryImages\(deletedImagePublicIds\)/);
   assert.match(site, /draftImagePublicIds/);
   assert.match(site, /handleRemoveWorkImage/);
-  assert.match(admin, /Math\.max\(4, Array\.isArray\(workForm\.images\) \? workForm\.images\.length : 0\)/);
+  assert.match(clientUpload, /export const maximumWorkImages = 3/);
+  assert.match(clientUpload, /files\.length > maximumWorkImages/);
+  assert.match(site, /remainingImageSlots = maximumWorkImages - currentImageCount/);
+  assert.match(admin, /grid-cols-3/);
+  assert.match(admin, /Array\.from\(\{ length: maximumWorkImages \}/);
   assert.match(admin, /multiple/);
 });
 

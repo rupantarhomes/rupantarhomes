@@ -14,6 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { maximumWorkImages } from "./cloudinary";
 import { brandAssets, categories, emptyWork } from "./data";
 import { getSupabase } from "./supabase";
 import type {
@@ -587,7 +588,7 @@ function AdminWorks({
                   accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                   multiple
                   className="hidden"
-                  disabled={uploadingImages}
+                  disabled={uploadingImages || (Array.isArray(workForm.images) ? workForm.images.length : 0) >= maximumWorkImages}
                   onChange={(event) => {
                     const files = Array.from(event.target.files ?? []);
                     event.target.value = "";
@@ -599,7 +600,7 @@ function AdminWorks({
                 </div>
                 <div className="space-y-1">
                   <p className="text-[13px] font-semibold text-zinc-900"><span className="text-[#FF1A3D]">Choose file</span> or drag &amp; drop</p>
-                  <p className="text-[11px] text-zinc-500 leading-[1.4]">JPG, PNG up to 10MB<br />Auto converts to WebP (1920×1080)</p>
+                  <p className="text-[11px] text-zinc-500 leading-[1.4]">JPG, PNG up to 10MB • Up to {maximumWorkImages} photos<br />Auto converts to WebP (1920×1080)</p>
                 </div>
                 {uploadingImages ? (
                   <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FF1A3D] text-white text-[11px] font-medium animate-pulse">Converting and uploading...</div>
@@ -608,8 +609,8 @@ function AdminWorks({
                 )}
               </label>
 
-              <div className="grid grid-cols-4 gap-2.5">
-                {Array.from({ length: Math.max(4, Array.isArray(workForm.images) ? workForm.images.length : 0) }, (_, index) => {
+              <div className="grid grid-cols-3 gap-2.5">
+                {Array.from({ length: maximumWorkImages }, (_, index) => {
                   const image = Array.isArray(workForm.images) ? workForm.images[index] : undefined;
                   return image ? (
                     <div key={image.id} className="group relative border border-zinc-200 rounded-xl aspect-square overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">

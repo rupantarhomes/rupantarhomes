@@ -23,6 +23,7 @@ type UploadResponse = {
 
 const allowedTypes = new Set(["image/jpeg", "image/png"]);
 const maximumBytes = 10 * 1024 * 1024;
+export const maximumWorkImages = 3;
 const deleteBatchSize = 20;
 const cloudinaryApiBase = (import.meta.env.VITE_CLOUDINARY_API_BASE || "https://api.cloudinary.com").replace(/\/$/, "");
 
@@ -162,6 +163,9 @@ async function uploadOne(file: File, sortOrder: number): Promise<WorkImage> {
 }
 
 export async function uploadWorkImages(files: File[]): Promise<WorkImage[]> {
+  if (files.length > maximumWorkImages) {
+    throw new Error(`A work can include up to ${maximumWorkImages} images.`);
+  }
   for (const file of files) {
     if (!allowedTypes.has(file.type)) throw new Error(`${file.name} must be a JPEG or PNG image.`);
     if (file.size <= 0) throw new Error(`${file.name} is empty.`);
