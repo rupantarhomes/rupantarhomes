@@ -170,11 +170,13 @@ test("keeps secondary content flows validated and synchronized", async () => {
 });
 
 test("defines normalized tables, explicit grants, RLS, and the public inquiry boundary", async () => {
-  const [sql, inquirySql, inquiryFunction, environment] = await Promise.all([
+  const [sql, inquirySql, inquiryFunction, environment, inquiryRestriction, inquiryEdgeFunction] = await Promise.all([
     read("../supabase/migrations/20260809130140_baseline_and_reconcile_schema.sql"),
     read("../supabase/migrations/20260809224500_secure_public_inquiries.sql"),
     read("../functions/api/inquiries.ts"),
     read("../functions/_lib/env.ts"),
+    read("../supabase/migrations/20260815193000_restrict_public_inquiry_rpc.sql"),
+    read("../supabase/functions/submit-public-inquiry/index.ts"),
   ]);
 
   for (const table of ["admin_users", "works", "work_images", "reviews", "site_settings", "queries", "estimate_requests"]) {
@@ -192,8 +194,12 @@ test("defines normalized tables, explicit grants, RLS, and the public inquiry bo
   assert.match(inquiryFunction, /result\?\.format !== "webp"/);
   assert.match(inquiryFunction, /destroyCloudinaryImage/);
   assert.match(inquiryFunction, /requiredEnv\(env, "SUPABASE_URL"\)/);
-  assert.match(inquiryFunction, /requiredEnv\(env, "SUPABASE_PUBLISHABLE_KEY"\)/);
+  assert.match(inquiryFunction, /functions\/v1\/submit-public-inquiry/);
+  assert.doesNotMatch(inquiryFunction, /rest\/v1\/rpc\/submit_public_inquiry/);
   assert.match(environment, /SUPABASE_PUBLISHABLE_KEY/);
+  assert.match(inquiryRestriction, /revoke execute[\s\S]*from anon, authenticated/i);
+  assert.match(inquiryRestriction, /grant execute[\s\S]*to service_role/i);
+  assert.match(inquiryEdgeFunction, /SUPABASE_SERVICE_ROLE_KEY/);
 });
 
 test("preserves the supplied HTML as an immutable visual reference", async () => {

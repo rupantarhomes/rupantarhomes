@@ -195,11 +195,9 @@ async function uploadAttachment(
 
 async function insertInquiry(kind: InquiryKind, payload: InquiryPayload, env: RuntimeEnv): Promise<void> {
   const supabaseUrl = requiredEnv(env, "SUPABASE_URL");
-  const supabasePublishableKey = requiredEnv(env, "SUPABASE_PUBLISHABLE_KEY");
-  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/submit_public_inquiry`, {
+  const response = await fetch(`${supabaseUrl}/functions/v1/submit-public-inquiry`, {
     method: "POST",
     headers: {
-      apikey: supabasePublishableKey,
       "Content-Type": "application/json",
       Accept: "application/json",
     },
