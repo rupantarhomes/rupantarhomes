@@ -76,7 +76,8 @@ export function WorkPhoto({
   sizes?: string;
   widths?: readonly number[];
 }) {
-  if (!image) return <PhotoPlaceholder aspect={aspect} label={label} />;
+  const [failed, setFailed] = useState(false);
+  if (!image || failed) return <PhotoPlaceholder aspect={aspect} label={label} />;
   const fallbackWidth = widths[widths.length - 1] ?? 768;
   const sources = widths
     .map((width) => `${cloudinaryDeliveryUrl(image.url, width)} ${width}w`)
@@ -91,6 +92,7 @@ export function WorkPhoto({
         className="w-full h-full object-cover"
         loading={eager ? "eager" : "lazy"}
         decoding="async"
+        onError={() => setFailed(true)}
       />
     </div>
   );
