@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./globals.css";
+import "./smooth-scroll";
 import { BrandIntro } from "./rupantar/brand-intro";
 import { RupantarSite } from "./rupantar/site";
 
