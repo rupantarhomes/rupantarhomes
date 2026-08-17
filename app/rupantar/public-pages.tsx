@@ -177,10 +177,13 @@ export function WorkDetailPage({
           <div className="mt-6">
             <WorkPhoto image={work.images[0]} alt={work.title} aspect="aspect-[16/10]" label="Main Gallery Photo Coming Soon" eager sizes="(min-width: 1280px) 720px, (min-width: 1024px) 55vw, 100vw" widths={[480, 768, 1200, 1600]} />
           </div>
-          <div className="grid grid-cols-4 gap-3 mt-3">
-            {Array.from({ length: Math.max(4, work.images.length) }, (_, index) => (
-              <WorkPhoto key={work.images[index]?.id ?? `slot-${index}`} image={work.images[index]} alt={`${work.title} ${index + 1}`} aspect="aspect-square" label={`Thumb ${index + 1}`} sizes="25vw" widths={[96, 160, 240, 320]} />
-            ))}
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            {Array.from({ length: 2 }, (_, index) => {
+              const image = work.images[index + 1];
+              return (
+                <WorkPhoto key={image?.id ?? `slot-${index + 1}`} image={image} alt={`${work.title} ${index + 2}`} aspect="aspect-square" label={`Thumb ${index + 2}`} sizes="50vw" widths={[96, 160, 240, 320]} />
+              );
+            })}
           </div>
         </div>
 

@@ -225,6 +225,9 @@ test("delivers admin work images responsively and pages the public gallery", asy
   assert.match(repository, /\.in\("work_id", ids\)/);
   assert.match(publicPages, /onLoadMore/);
   assert.match(publicPages, /Load More Works/);
+  assert.match(publicPages, /grid-cols-2 gap-3 mt-3/);
+  assert.match(publicPages, /work\.images\[index \+ 1\]/);
+  assert.match(publicPages, /Array\.from\(\{ length: 2 \}/);
 });
 
 test("preserves the supplied HTML as an immutable visual reference", async () => {
