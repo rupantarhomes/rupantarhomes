@@ -35,7 +35,7 @@ function hasIndependentScroller(target: EventTarget | null): boolean {
 
 function animateScroll(): void {
   const distance = targetPosition - currentPosition;
-  currentPosition += distance * 0.16;
+  currentPosition += distance * 0.18;
 
   if (Math.abs(distance) < 0.5) {
     window.scrollTo(0, targetPosition);
