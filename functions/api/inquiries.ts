@@ -1,10 +1,9 @@
 import { cloudinarySignature, destroyCloudinaryImage } from "../_lib/cloudinary";
-import { type RuntimeEnv } from "../_lib/env";
+import { requireInquiryRuntimeEnv, type InquiryRuntimeEnv, type RuntimeEnv } from "../_lib/env";
 import { errorMessage, json } from "../_lib/http";
 
 const maximumAttachmentBytes = 10 * 1024 * 1024;
 const maximumRequestBytes = 11 * 1024 * 1024;
-const web3FormsAccessKey = "9cb63466-337d-4480-80f1-2ee7a00f25a3";
 const acceptedAttachmentTypes = new Set(["image/jpeg", "image/png"]);
 const allowedCategories = new Set([
   "architect",
@@ -195,11 +194,13 @@ async function uploadAttachment(
 
 async function insertInquiry(kind: InquiryKind, payload: InquiryPayload, env: RuntimeEnv): Promise<void> {
   const supabaseUrl = requiredEnv(env, "SUPABASE_URL");
+  const internalSecret = requiredEnv(env, "PUBLIC_INQUIRY_INTERNAL_SECRET");
   const response = await fetch(`${supabaseUrl}/functions/v1/submit-public-inquiry`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
+      "X-Rupantar-Internal-Secret": internalSecret,
     },
     body: JSON.stringify({
       p_kind: kind,
@@ -221,9 +222,13 @@ async function insertInquiry(kind: InquiryKind, payload: InquiryPayload, env: Ru
   }
 }
 
-async function sendWeb3FormsNotification(kind: InquiryKind, payload: InquiryPayload): Promise<void> {
+async function sendWeb3FormsNotification(
+  kind: InquiryKind,
+  payload: InquiryPayload,
+  env: InquiryRuntimeEnv,
+): Promise<void> {
   const notification: Record<string, string> = {
-    access_key: web3FormsAccessKey,
+    access_key: requiredEnv(env, "WEB3FORMS_ACCESS_KEY"),
     subject: kind === "estimate" ? "New Rupantar Homes Estimate Lead" : "New Rupantar Homes Website Query",
     from_name: "Rupantar Homes Website",
     form_type: kind === "estimate" ? "Estimate Request" : "Website Query",
@@ -265,7 +270,7 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
 
   try {
     requireSameOrigin(request);
-    const runtime = env;
+    const runtime = requireInquiryRuntimeEnv(env);
     const contentLengthHeader = request.headers.get("Content-Length");
     const contentLength = contentLengthHeader == null ? 0 : Number(contentLengthHeader);
     if (!Number.isFinite(contentLength) || contentLength < 0 || contentLength > maximumRequestBytes) {
@@ -314,7 +319,7 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
     await insertInquiry(kind, payload, runtime);
 
     try {
-      await sendWeb3FormsNotification(kind, payload);
+      await sendWeb3FormsNotification(kind, payload, runtime);
     } catch (notificationError) {
       console.error(JSON.stringify({
         message: "Web3Forms notification failed after inquiry save",

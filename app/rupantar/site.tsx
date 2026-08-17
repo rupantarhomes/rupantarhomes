@@ -73,6 +73,9 @@ export function RupantarSite() {
   const [worksLoading, setWorksLoading] = useState(false);
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [leadsHasMore, setLeadsHasMore] = useState(false);
+  const [leadsNextBefore, setLeadsNextBefore] = useState("");
+  const [leadsLoadingOlder, setLeadsLoadingOlder] = useState(false);
   const [estimate, setEstimate] = useState(emptyEstimate);
   const [query, setQuery] = useState(emptyQuery);
   const [workForm, setWorkForm] = useState<WorkForm>(emptyWork);
@@ -116,11 +119,29 @@ export function RupantarSite() {
 
   const refreshLeads = useCallback(async () => {
     try {
-      setLeads(await loadLeads());
+      const result = await loadLeads();
+      setLeads(result.leads);
+      setLeadsHasMore(result.hasMore);
+      setLeadsNextBefore(result.nextBefore);
     } catch (error) {
       console.error("Unable to load leads", error);
     }
   }, []);
+
+  const loadOlderLeads = async () => {
+    if (!leadsHasMore || !leadsNextBefore || leadsLoadingOlder) return;
+    setLeadsLoadingOlder(true);
+    try {
+      const result = await loadLeads(leadsNextBefore);
+      setLeads((current) => [...current, ...result.leads.filter((lead) => !current.some((item) => item.id === lead.id))]);
+      setLeadsHasMore(result.hasMore);
+      setLeadsNextBefore(result.nextBefore);
+    } catch (error) {
+      console.error("Unable to load older leads", error);
+    } finally {
+      setLeadsLoadingOlder(false);
+    }
+  };
 
   useEffect(() => {
     document.title = "Rupantar Homes";
@@ -145,6 +166,10 @@ export function RupantarSite() {
       setPage("admin-login");
     } else {
       setPage(nextPage);
+      if (nextPage === "works") {
+        setFilter("all");
+        void loadWorks("all", 0);
+      }
       if (nextPage.startsWith("admin-") && nextPage !== "admin-login") {
         void refreshContent().catch((error) => console.error("Unable to refresh admin content", error));
         void refreshLeads();
@@ -499,6 +524,9 @@ export function RupantarSite() {
         onRemoveWorkImage={handleRemoveWorkImage}
         uploadingImages={uploadingImages}
         leads={leads}
+        leadsHasMore={leadsHasMore}
+        leadsLoadingOlder={leadsLoadingOlder}
+        onLoadOlderLeads={loadOlderLeads}
         onUpdateLeadStatus={handleUpdateLeadStatus}
         reviewForm={reviewForm}
         setReviewForm={setReviewForm}

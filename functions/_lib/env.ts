@@ -1,15 +1,12 @@
 export type RuntimeEnv = Cloudflare.Env & {
   CLOUDINARY_API_SECRET: string;
-  SUPABASE_SECRET_KEY?: string;
+  PUBLIC_INQUIRY_INTERNAL_SECRET: string;
+  WEB3FORMS_ACCESS_KEY: string;
   PUBLIC_INQUIRY_RATE_LIMITER?: RateLimit;
   PUBLIC_INQUIRY_GLOBAL_RATE_LIMITER?: RateLimit;
 };
 
-export type InquiryRuntimeEnv = RuntimeEnv & {
-  SUPABASE_SECRET_KEY: string;
-  PUBLIC_INQUIRY_RATE_LIMITER: RateLimit;
-  PUBLIC_INQUIRY_GLOBAL_RATE_LIMITER: RateLimit;
-};
+export type InquiryRuntimeEnv = RuntimeEnv;
 
 export function requireRuntimeEnv(env: RuntimeEnv): RuntimeEnv {
   const names = [
@@ -28,11 +25,9 @@ export function requireRuntimeEnv(env: RuntimeEnv): RuntimeEnv {
 
 export function requireInquiryRuntimeEnv(env: RuntimeEnv): InquiryRuntimeEnv {
   const runtime = requireRuntimeEnv(env);
-  if (!runtime.SUPABASE_SECRET_KEY?.trim()) {
-    throw new Error("Missing Cloudflare environment variable: SUPABASE_SECRET_KEY");
+  for (const name of ["PUBLIC_INQUIRY_INTERNAL_SECRET", "WEB3FORMS_ACCESS_KEY"] as const) {
+    if (!runtime[name]?.trim()) throw new Error(`Missing Cloudflare environment variable: ${name}`);
   }
-  if (!runtime.PUBLIC_INQUIRY_RATE_LIMITER || !runtime.PUBLIC_INQUIRY_GLOBAL_RATE_LIMITER) {
-    throw new Error("Missing Cloudflare public inquiry rate-limit bindings");
-  }
-  return runtime as InquiryRuntimeEnv;
+  return runtime;
 }
+

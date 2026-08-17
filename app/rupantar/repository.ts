@@ -29,19 +29,26 @@ type SettingsRow = Pick<
   "id" | "slogan" | "phone" | "instagram_url" | "tiktok_url" | "address" | "workshop_note"
 >;
 
-type LeadRow = {
-  id: string;
-  name: string;
-  phone: string;
-  location: string | null;
-  service_required: string | null;
-  approximate_area: string | null;
-  material_preference: string | null;
-  message: string | null;
-  reference_image_url: string | null;
-  status: string;
-  created_at: string;
-  updated_at: string;
+type LeadRow = Pick<
+  Tables<"leads">,
+  | "id"
+  | "name"
+  | "phone"
+  | "location"
+  | "service_required"
+  | "approximate_area"
+  | "material_preference"
+  | "message"
+  | "reference_image_url"
+  | "status"
+  | "created_at"
+  | "updated_at"
+>;
+
+export type LeadPage = {
+  leads: Lead[];
+  hasMore: boolean;
+  nextBefore: string;
 };
 
 const allowedCategories = new Set(categories.map((category) => category.slug));
@@ -408,14 +415,42 @@ export async function submitQuery(form: QueryForm): Promise<void> {
   await submitPublicInquiry("query", payload);
 }
 
-export async function loadLeads(): Promise<Lead[]> {
-  const supabase = getSupabase() as any;
+export async function loadLeads(olderThan?: string): Promise<LeadPage> {
+  const supabase = getSupabase();
+  const columns = "id,name,phone,location,service_required,approximate_area,material_preference,message,reference_image_url,status,created_at,updated_at";
+  const recentCutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+
+  if (!olderThan) {
+    const [recentResult, olderResult] = await Promise.all([
+      supabase.from("leads").select(columns).gte("created_at", recentCutoff).order("created_at", { ascending: false }),
+      supabase.from("leads").select("id").lt("created_at", recentCutoff).limit(1),
+    ]);
+    if (recentResult.error || olderResult.error) {
+      throw new Error(recentResult.error?.message ?? olderResult.error?.message);
+    }
+    const rows = (recentResult.data ?? []) as LeadRow[];
+    return {
+      leads: rows.map(mapLead),
+      hasMore: Boolean(olderResult.data?.length),
+      nextBefore: rows.at(-1)?.created_at ?? recentCutoff,
+    };
+  }
+
+  const pageSize = 50;
   const { data, error } = await supabase
     .from("leads")
-    .select("id,name,phone,location,service_required,approximate_area,material_preference,message,reference_image_url,status,created_at,updated_at")
-    .order("created_at", { ascending: false });
+    .select(columns)
+    .lt("created_at", olderThan)
+    .order("created_at", { ascending: false })
+    .limit(pageSize + 1);
   if (error) throw new Error(error.message);
-  return ((data ?? []) as LeadRow[]).map(mapLead);
+  const rows = (data ?? []) as LeadRow[];
+  const pageRows = rows.slice(0, pageSize);
+  return {
+    leads: pageRows.map(mapLead),
+    hasMore: rows.length > pageSize,
+    nextBefore: pageRows.at(-1)?.created_at ?? olderThan,
+  };
 }
 
 export async function updateLeadStatus(id: string, status: LeadStatus): Promise<void> {
