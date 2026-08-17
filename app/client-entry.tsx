@@ -75,4 +75,3 @@ if (document.readyState === "loading") {
 } else {
   normalizeVisibleCopy();
 }
-
