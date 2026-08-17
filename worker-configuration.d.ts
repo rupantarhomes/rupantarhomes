@@ -22,6 +22,8 @@ declare namespace Cloudflare {
     CLOUDINARY_CLOUD_NAME: string;
     CLOUDINARY_API_KEY: string;
     CLOUDINARY_UPLOAD_PRESET: string;
+    PUBLIC_INQUIRY_INTERNAL_SECRET: string;
+    WEB3FORMS_ACCESS_KEY: string;
   }
 }
 

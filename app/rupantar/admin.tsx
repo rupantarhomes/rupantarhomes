@@ -120,6 +120,9 @@ type AdminPortalProps = {
   onRemoveWorkImage: (index: number) => Promise<void>;
   uploadingImages: boolean;
   leads: Lead[];
+  leadsHasMore: boolean;
+  leadsLoadingOlder: boolean;
+  onLoadOlderLeads: () => Promise<void>;
   onUpdateLeadStatus: (id: string, status: LeadStatus) => Promise<void>;
   reviews: Review[];
   reviewForm: ReviewForm;
@@ -296,7 +299,7 @@ function leadWhatsAppUrl(lead: Lead): string {
 
 const seenLeadsStorageKey = "rupantar-admin-seen-leads";
 
-function AdminLeads({ leads, onUpdateLeadStatus, busy }: AdminPortalProps) {
+function AdminLeads({ leads, leadsHasMore, leadsLoadingOlder, onLoadOlderLeads, onUpdateLeadStatus, busy }: AdminPortalProps) {
   const [deletedLeadIds, setDeletedLeadIds] = useState<Set<string>>(() => new Set());
   const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
   const [firstViewLeadIds] = useState<Set<string>>(() => {
@@ -518,6 +521,19 @@ function AdminLeads({ leads, onUpdateLeadStatus, busy }: AdminPortalProps) {
           )}
         </div>
       </section>
+
+      {leadsHasMore && (
+        <div className="mt-8 flex justify-center">
+          <button
+            type="button"
+            disabled={leadsLoadingOlder}
+            onClick={() => void onLoadOlderLeads()}
+            className="h-11 px-6 rounded-full border border-zinc-200 bg-white text-[13px] font-semibold hover:bg-zinc-50 disabled:opacity-60 transition"
+          >
+            {leadsLoadingOlder ? "Loading..." : "See More History"}
+          </button>
+        </div>
+      )}
     </>
   );
 }

@@ -76,6 +76,66 @@ export type Database = {
         }
         Relationships: []
       }
+      leads: {
+        Row: {
+          approximate_area: string | null
+          budget: string | null
+          created_at: string
+          email: string | null
+          id: string
+          location: string | null
+          material_preference: string | null
+          message: string | null
+          name: string
+          phone: string
+          property_type: string | null
+          reference_image_public_id: string | null
+          reference_image_url: string | null
+          service_required: string | null
+          status: string
+          timeline: string | null
+          updated_at: string
+        }
+        Insert: {
+          approximate_area?: string | null
+          budget?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          location?: string | null
+          material_preference?: string | null
+          message?: string | null
+          name: string
+          phone: string
+          property_type?: string | null
+          reference_image_public_id?: string | null
+          reference_image_url?: string | null
+          service_required?: string | null
+          status?: string
+          timeline?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approximate_area?: string | null
+          budget?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          location?: string | null
+          material_preference?: string | null
+          message?: string | null
+          name?: string
+          phone?: string
+          property_type?: string | null
+          reference_image_public_id?: string | null
+          reference_image_url?: string | null
+          service_required?: string | null
+          status?: string
+          timeline?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       queries: {
         Row: {
           attachment_public_id: string | null
@@ -427,3 +487,4 @@ export const Constants = {
     Enums: {},
   },
 } as const
+

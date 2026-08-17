@@ -15,6 +15,43 @@ function invalidRequest(message = "Invalid inquiry request."): Response {
   return Response.json({ error: message }, { status: 400 });
 }
 
+async function secretHash(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function hashesMatch(provided: string, expected: string): boolean {
+  const left = new TextEncoder().encode(provided);
+  const right = new TextEncoder().encode(expected);
+  if (left.length !== right.length) return false;
+  let difference = 0;
+  for (let index = 0; index < left.length; index += 1) difference |= left[index] ^ right[index];
+  return difference === 0;
+}
+
+async function internalSecretIsValid(
+  providedSecret: string,
+  supabaseUrl: string,
+  serviceRoleKey: string,
+): Promise<boolean> {
+  if (!providedSecret) return false;
+  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/get_public_inquiry_secret_hash`, {
+    method: "POST",
+    headers: {
+      apikey: serviceRoleKey,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: "{}",
+  });
+  if (!response.ok) {
+    console.error(JSON.stringify({ message: "Unable to read public inquiry secret hash", status: response.status }));
+    return false;
+  }
+  const expectedHash = await response.json();
+  return typeof expectedHash === "string" && hashesMatch(await secretHash(providedSecret), expectedHash);
+}
+
 function stringOrNull(value: unknown, maximumLength: number): string | null {
   if (value == null) return null;
   if (typeof value !== "string" || value.length > maximumLength) throw new Error("invalid");
@@ -49,6 +86,17 @@ function parseInquiry(value: unknown): InquiryInput {
 Deno.serve(async (request) => {
   if (request.method !== "POST") return Response.json({ error: "Method not allowed." }, { status: 405 });
 
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceRoleKey) {
+    console.error("Missing Supabase Edge Function runtime credentials.");
+    return Response.json({ error: "Service unavailable." }, { status: 503 });
+  }
+  const providedSecret = request.headers.get("X-Rupantar-Internal-Secret") ?? "";
+  if (!(await internalSecretIsValid(providedSecret, supabaseUrl, serviceRoleKey))) {
+    return Response.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
   const contentLength = Number(request.headers.get("Content-Length") ?? "0");
   if (!Number.isFinite(contentLength) || contentLength < 0 || contentLength > 16 * 1024) {
     return Response.json({ error: "Request is too large." }, { status: 413 });
@@ -59,13 +107,6 @@ Deno.serve(async (request) => {
     input = parseInquiry(await request.json());
   } catch {
     return invalidRequest();
-  }
-
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!supabaseUrl || !serviceRoleKey) {
-    console.error("Missing Supabase Edge Function runtime credentials.");
-    return Response.json({ error: "Service unavailable." }, { status: 503 });
   }
 
   const response = await fetch(`${supabaseUrl}/rest/v1/rpc/submit_public_inquiry`, {

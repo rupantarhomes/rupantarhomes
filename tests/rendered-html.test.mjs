@@ -230,6 +230,30 @@ test("delivers admin work images responsively and pages the public gallery", asy
   assert.match(publicPages, /Array\.from\(\{ length: 2 \}/);
 });
 
+test("hardens inquiry delivery and bounds long-running admin/public data views", async () => {
+  const [inquiries, environment, edgeFunction, repository, site, admin, imageLimitMigration] = await Promise.all([
+    read("../functions/api/inquiries.ts"),
+    read("../functions/_lib/env.ts"),
+    read("../supabase/functions/submit-public-inquiry/index.ts"),
+    read("../app/rupantar/repository.ts"),
+    read("../app/rupantar/site.tsx"),
+    read("../app/rupantar/admin.tsx"),
+    read("../supabase/migrations/20260817150000_enforce_three_work_images.sql"),
+  ]);
+
+  assert.doesNotMatch(inquiries, /const web3FormsAccessKey\s*=/);
+  assert.match(environment, /WEB3FORMS_ACCESS_KEY/);
+  assert.match(inquiries, /X-Rupantar-Internal-Secret/);
+  assert.match(edgeFunction, /get_public_inquiry_secret_hash/);
+  assert.match(edgeFunction, /internalSecretIsValid/);
+  assert.match(repository, /14 \* 24 \* 60 \* 60 \* 1000/);
+  assert.match(repository, /pageSize = 50/);
+  assert.match(admin, /See More History/);
+  assert.match(site, /nextPage === "works"/);
+  assert.match(site, /loadWorks\("all", 0\)/);
+  assert.match(imageLimitMigration, /jsonb_array_length\(normalized_images\) > 3/);
+});
+
 test("preserves the supplied HTML as an immutable visual reference", async () => {
   const baseline = await readFile(new URL("../public/baseline/rupantar-latest.html", import.meta.url));
   assert.equal(
