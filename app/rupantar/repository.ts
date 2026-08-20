@@ -205,6 +205,29 @@ function mapLead(row: LeadRow): Lead {
 
 export type PublicWorksPage = { works: Work[]; total: number };
 
+export async function loadPublicWorkBySlug(category: string, slug: string): Promise<Work | null> {
+  if (!isSupabaseConfigured) {
+    return initialWorks.find((work) => work.category === category && work.slug === slug) ?? null;
+  }
+  const supabase = getSupabase();
+  const workResult = await supabase
+    .from("works")
+    .select("id,title,slug,category,location,short_description,long_description,featured")
+    .eq("category", category)
+    .eq("slug", slug)
+    .maybeSingle();
+  if (workResult.error) throw new Error(workResult.error.message);
+  if (!workResult.data) return null;
+  const row = workResult.data as WorkRow;
+  const imagesResult = await supabase
+    .from("work_images")
+    .select("id,work_id,secure_url,cloudinary_public_id,alt_text,sort_order,width,height,byte_size")
+    .eq("work_id", row.id)
+    .order("sort_order", { ascending: true });
+  if (imagesResult.error) throw new Error(imagesResult.error.message);
+  return mapWork(row, ((imagesResult.data ?? []) as WorkImageRow[]).map(mapImage));
+}
+
 export async function loadPublicWorksPage(offset = 0, limit = 12, category = "all"): Promise<PublicWorksPage> {
   if (!isSupabaseConfigured) return { works: initialWorks.slice(offset, offset + limit), total: initialWorks.length };
   const supabase = getSupabase();
