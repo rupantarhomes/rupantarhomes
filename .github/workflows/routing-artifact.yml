@@ -55,7 +55,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git rm .github/workflows/build-routing-release.yml .github/workflows/routing-artifact.yml
           git add app/rupantar/routes.ts app/rupantar/site.tsx app/rupantar/repository.ts tests/routes.test.mjs
-          git diff --cached --check
           git checkout -B chatgpt/routing-release-candidate
           git commit -m "Add dedicated public routes"
           git push --force origin HEAD:chatgpt/routing-release-candidate
