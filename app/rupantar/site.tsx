@@ -21,6 +21,7 @@ import {
   loadLeads,
   loadPublicContent,
   loadPublicWorksPage,
+  loadPublicWorkBySlug,
   saveReview,
   saveSettings,
   saveWork,
@@ -31,6 +32,7 @@ import {
   updateLeadStatus,
 } from "./repository";
 import { PublicFooter, PublicHeader, TopBar } from "./shared";
+import { categoryPath, pagePath, parseRoute, workPath } from "./routes";
 import type {
   AdminStats,
   Lead,
@@ -109,6 +111,53 @@ export function RupantarSite() {
     }
   };
 
+  const applyBrowserRoute = useCallback(async () => {
+    const route = parseRoute(window.location.pathname);
+    if (route.kind === "home") {
+      setPage("home");
+      return;
+    }
+    if (route.kind === "about") {
+      setPage("about");
+      return;
+    }
+    if (route.kind === "admin") {
+      setPage("admin-login");
+      return;
+    }
+    if (route.kind === "works") {
+      setFilter(route.category);
+      setPage("works");
+      setWorksLoading(true);
+      try {
+        const result = await loadPublicWorksPage(0, 12, route.category);
+        setWorks(result.works);
+        setWorksTotal(result.total);
+      } finally {
+        setWorksLoading(false);
+      }
+      return;
+    }
+
+    setFilter(route.category);
+    const work = await loadPublicWorkBySlug(route.category, route.slug);
+    if (!work) {
+      setPage("works");
+      setWorksLoading(true);
+      try {
+        const result = await loadPublicWorksPage(0, 12, route.category);
+        setWorks(result.works);
+        setWorksTotal(result.total);
+      } finally {
+        setWorksLoading(false);
+      }
+      return;
+    }
+    setWorks((current) => [work, ...current.filter((item) => item.id !== work.id)]);
+    setSelectedWorkId(work.id);
+    setPage("work-detail");
+  }, []);
+
   const refreshAdminStats = useCallback(async () => {
     try {
       setAdminStats(await loadAdminStats());
@@ -147,21 +196,36 @@ export function RupantarSite() {
     document.title = "Rupantar Homes";
     let active = true;
 
-    void refreshContent().catch((error) => {
-      if (active) console.error("Unable to load website content", error);
-    });
+    void refreshContent()
+      .then(() => {
+        if (active) void applyBrowserRoute();
+      })
+      .catch((error) => {
+        if (active) console.error("Unable to load website content", error);
+      });
     void getCurrentAdminSession().then((session) => {
       if (!active || !session) return;
       setIsAdmin(true);
+      if (parseRoute(window.location.pathname).kind === "admin") setPage("admin-dashboard");
       void Promise.all([refreshAdminStats(), refreshLeads()]);
     });
 
+    const onPopState = () => void applyBrowserRoute();
+    window.addEventListener("popstate", onPopState);
     return () => {
       active = false;
+      window.removeEventListener("popstate", onPopState);
     };
-  }, [refreshAdminStats, refreshContent, refreshLeads]);
+  }, [applyBrowserRoute, refreshAdminStats, refreshContent, refreshLeads]);
+
+  const pushPath = (path: string) => {
+    if (window.location.pathname !== path) window.history.pushState(null, "", path);
+  };
 
   const navigate = (nextPage: Page) => {
+    if (nextPage.startsWith("admin-")) pushPath("/admin");
+    else pushPath(pagePath(nextPage));
+
     if (nextPage.startsWith("admin-") && nextPage !== "admin-login" && !isAdmin) {
       setPage("admin-login");
     } else {
@@ -181,6 +245,7 @@ export function RupantarSite() {
 
   const goToEstimate = () => {
     if (page !== "home") {
+      pushPath("/");
       setPage("home");
       window.setTimeout(
         () => document.getElementById("estimate")?.scrollIntoView({ behavior: "smooth", block: "start" }),
@@ -192,6 +257,7 @@ export function RupantarSite() {
   };
 
   const openCategory = (category: string) => {
+    pushPath(categoryPath(category));
     setFilter(category);
     setPage("works");
     void loadWorks(category, 0);
@@ -199,8 +265,12 @@ export function RupantarSite() {
   };
 
   const openWork = (id: string) => {
+    const work = works.find((item) => item.id === id);
+    if (!work) return;
+    pushPath(workPath(work));
     setSelectedWorkId(id);
-    navigate("work-detail");
+    setPage("work-detail");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const selectedWork = works.find((work) => work.id === selectedWorkId) || works[0];
@@ -245,6 +315,7 @@ export function RupantarSite() {
       setIsAdmin(false);
       setLeads([]);
       setAdminStats({ queries: 0, estimates: 0 });
+      pushPath("/");
       setPage("home");
     } catch (error) {
       window.alert(`Logout stopped: ${messageFrom(error)}`);
@@ -566,7 +637,7 @@ export function RupantarSite() {
           queryBusy={queryBusy}
         />
       )}
-      {page === "works" && <Suspense fallback={<PageLoader />}><WorksPage works={works} total={worksTotal} loading={worksLoading} filter={filter} setFilter={(next) => { setFilter(next); void loadWorks(next, 0); }} onLoadMore={() => void loadWorks(filter, works.length)} navigate={navigate} onWork={openWork} /></Suspense>}
+      {page === "works" && <Suspense fallback={<PageLoader />}><WorksPage works={works} total={worksTotal} loading={worksLoading} filter={filter} setFilter={openCategory} onLoadMore={() => void loadWorks(filter, works.length)} navigate={navigate} onWork={openWork} /></Suspense>}
       {page === "work-detail" && selectedWork && (
         <Suspense fallback={<PageLoader />}><WorkDetailPage
           work={selectedWork}
