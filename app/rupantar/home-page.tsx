@@ -46,6 +46,11 @@ type HomePageProps = {
 };
 
 const morphWords = ["Spaces", "Kitchens", "Wardrobes", "Ceilings", "Homes", "Interiors"];
+const workSteps = [
+  { step: "01", icon: ImageUp, title: "Send Photo", desc: "Share site photos, video & measurements on WhatsApp. Get instant budget range." },
+  { step: "02", icon: Ruler, title: "Home Visit, Samples & 3D", desc: "We visit, show laminates, ply, handles. You get 3D design & final quote." },
+  { step: "03", icon: ShieldCheck, title: "Fabrication & Install", desc: "Factory finish at Kathmandu workshop. Clean install in 7-21 days." },
+] as const;
 const maximumAttachmentBytes = 10 * 1024 * 1024;
 const acceptedAttachmentTypes = new Set(["image/jpeg", "image/png"]);
 const whatsappUrl = `https://wa.me/9779745941799?text=${encodeURIComponent("Hello Rupantar Homes, I would like to discuss my interior project.")}`;
@@ -409,9 +414,7 @@ export function HomePage({
             <p className="text-[14px] text-zinc-500 mt-2">Transparent 3-step process from photo to final handover.</p>
           </div>
           <div className="grid sm:grid-cols-3 gap-5 sm:gap-6 mt-10">
-            [{"step":"01","icon":"ImageUp","title":"Send Photo","desc":"Share site photos, video & measurements on WhatsApp. Get instant budget range."},
-              {"step":"02","icon":"Ruler","title":"Home Visit, Samples & 3D","desc":"We visit, show laminates, ply, handles. You get 3D design & final quote."},
-              {"step":"03","icon":"ShieldCheck","title":"Fabrication & Install","desc":"Factory finish at Kathmandu workshop. Clean install in 7-21 days."}].map((item) => {
+            {workSteps.map((item) => {
               const Icon = item.icon;
               return (
                 <div key={item.step} className="bg-white rounded-[1.5rem] border border-zinc-100 p-6 shadow-[0_6px_24px_rgba(0,0,0,0.04)]">
