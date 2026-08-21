@@ -157,7 +157,7 @@ export function HomePage({
             />
             {heroVideoRequested && (
               <video
-                className={\`absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-300 ${heroVideoReady ? "opacity-100" : "opacity-0"}\`}
+                className={`absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-300 ${heroVideoReady ? "opacity-100" : "opacity-0"}`}
                 autoPlay
                 loop
                 muted
