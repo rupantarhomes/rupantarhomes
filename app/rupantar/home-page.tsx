@@ -16,7 +16,7 @@ import {
   Upload,
 } from "lucide-react";
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
-import { brandAssets, categories } from "./data";
+import { categories } from "./data";
 import { categoryIcons, WorkPhoto } from "./shared";
 import type {
   EstimateForm,
@@ -83,6 +83,8 @@ export function HomePage({
   const featured = works.filter((work) => work.featured).slice(0, 3);
   const [wordIndex, setWordIndex] = useState(0);
   const [morphing, setMorphing] = useState(false);
+  const [heroVideoRequested, setHeroVideoRequested] = useState(false);
+  const [heroVideoReady, setHeroVideoReady] = useState(false);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -93,6 +95,11 @@ export function HomePage({
       }, 320);
     }, 2600);
     return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setHeroVideoRequested(true));
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   return (
@@ -142,12 +149,28 @@ export function HomePage({
         <div className="relative hidden sm:block">
           <div className="aspect-[16/9] w-full rounded-[1.25rem] overflow-hidden bg-[#F8F8F8] border border-zinc-100">
             <img
-              src={brandAssets.hero}
+              src="/rupantar-hero-poster.webp"
               alt="Rupantar Homes interior design moodboard"
-              className="w-full h-full object-cover opacity-100"
+              className="absolute inset-0 w-full h-full object-cover"
               loading="eager"
               decoding="async"
             />
+            {heroVideoRequested && (
+              <video
+                className={\`absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-300 ${heroVideoReady ? "opacity-100" : "opacity-0"}\`}
+                autoPlay
+                loop
+                muted
+                playsInline
+                controls={false}
+                preload="none"
+                aria-hidden="true"
+                onCanPlay={() => setHeroVideoReady(true)}
+                onError={() => setHeroVideoReady(false)}
+              >
+                <source src="/rupantar-hero-loop-web.mp4" type="video/mp4" />
+              </video>
+            )}
           </div>
           <div className="absolute -bottom-4 -left-4 hidden sm:flex bg-white rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.08)] border border-zinc-100 p-4 gap-3 items-center">
             <div className="w-11 h-11 rounded-xl bg-[#FFF0F2] text-[#FF1A3D] flex items-center justify-center">
