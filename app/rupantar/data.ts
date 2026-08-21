@@ -12,7 +12,7 @@ import type {
 } from "./types";
 
 export const categories: Category[] = [
-  { id: "1", slug: "architect", name: "Architect", desc: "Architectural planning, layouts & design coordination" },
+  { id: "1", slug: "architect", name: "Architecture", desc: "Architectural planning, layouts & design coordination" },
   { id: "2", slug: "modular-kitchen", name: "Modular Kitchen", desc: "Functional & stylish kitchen solutions" },
   { id: "3", slug: "tv-cabinet", name: "TV Cabinet", desc: "Elegant entertainment units & wall panels" },
   { id: "4", slug: "wardrobe", name: "Wardrobe", desc: "Custom storage with premium finishes" },
