@@ -14,9 +14,11 @@ test("builds the Cloudflare Pages entry document", async () => {
 });
 
 test("keeps every locked public and admin surface in source components", async () => {
-  const [home, publicPages, admin] = await Promise.all([
+  const [home, publicPages, shared, data, admin] = await Promise.all([
     read("../app/rupantar/home-page.tsx"),
     read("../app/rupantar/public-pages.tsx"),
+    read("../app/rupantar/shared.tsx"),
+    read("../app/rupantar/data.ts"),
     read("../app/rupantar/admin.tsx"),
   ]);
 
@@ -26,6 +28,18 @@ test("keeps every locked public and admin surface in source components", async (
   assert.match(publicPages, /All Works/);
   assert.match(publicPages, /Project Overview/);
   assert.match(publicPages, /About Rupantar Homes/);
+  assert.match(publicPages, /Founder &amp; Curator/);
+  assert.match(publicPages, /Our Location/);
+  assert.match(publicPages, /At Rupantar Homes By Gokul Kunwar, we believe a home shouldn’t just be designed on paper, it should/);
+  assert.match(publicPages, /We offer Interior &amp; Architecture Services, House Construction, 3D Design, Modular Kitchens, and/);
+  assert.match(publicPages, /One team, one responsibility, from your first design to the final finish\./);
+  assert.doesNotMatch(publicPages, /Studio/);
+  assert.doesNotMatch(publicPages, /Craftsman/);
+  assert.match(shared, /Architecture/);
+  assert.match(shared, /Kathmandu Nepal/);
+  assert.doesNotMatch(shared, /Crafted with/);
+  assert.match(data, /slug: "architect"/);
+  assert.match(data, /name: "Architecture"/);
   assert.match(admin, /Admin Login/);
   assert.match(admin, /Dashboard/);
   assert.match(admin, /Manage Works/);
@@ -163,18 +177,26 @@ test("keeps secondary content flows validated and synchronized", async () => {
   assert.match(repository, /select\("id", \{ count: "exact", head: true \}\)/);
 
   assert.match(site, /nextPage === "admin-dashboard"[\s\S]*refreshAdminStats/);
-  assert.match(site, /await submitEstimate\(estimate\)[\s\S]*setEstimateSaved\(true\)/);
-  assert.match(site, /await submitQuery\(query\)[\s\S]*setEstimateSaved\(true\)/);
+  assert.match(site, /await submitEstimate\(estimate\)[\s\S]*setFormSuccessVisible\(true\)/);
+  assert.match(site, /await submitQuery\(query\)[\s\S]*setFormSuccessVisible\(true\)/);
   assert.match(site, /await saveReview\(reviewForm\)[\s\S]*await refreshContent\(\)/);
   assert.match(site, /await saveSettings\(settings\)[\s\S]*await refreshContent\(\)/);
   assert.match(site, /Your form has been submitted\. Mr\. Gokul will connect with you in a few hours\./);
-  assert.match(site, /createPortal/);
-  assert.match(site, /document\.body/);
-  assert.match(site, /position: "fixed"/);
-  assert.match(site, /zIndex: 2147483647/);
-  assert.match(site, /height: "100dvh"/);
-  assert.doesNotMatch(site, /className="fixed inset-0/);
-  assert.match(site, /estimateSaved/);
+  assert.match(site, /formSuccessVisible/);
+  assert.match(site, /createPortal\([\s\S]*document\.body/);
+  assert.match(site, /position:\s*"fixed"/);
+  assert.match(site, /inset:\s*0/);
+  assert.match(site, /width:\s*"100vw"/);
+  assert.match(site, /height:\s*"100dvh"/);
+  assert.match(site, /zIndex:\s*2147483647/);
+  assert.match(site, /background:\s*"rgba\(9,\s*12,\s*18,\s*0\.42\)"/);
+  assert.match(site, /backdropFilter:\s*"blur\(18px\)"/);
+  assert.match(site, /WebkitBackdropFilter:\s*"blur\(18px\)"/);
+  assert.match(site, /rupantarSuccessEnter 320ms cubic-bezier\(0\.22,\s*1,\s*0\.36,\s*1\) both/);
+  assert.match(site, /motion-safe:hover:-translate-y-1/);
+  assert.match(site, /motion-safe:hover:scale-\[1\.01\]/);
+  assert.doesNotMatch(site, /Query sent successfully/);
+  assert.doesNotMatch(site, /Request Received/);
 
   assert.match(home, /maxLength=\{4000\}/);
   assert.match(home, /type="file"/);
@@ -199,7 +221,7 @@ test("defines normalized tables, explicit grants, RLS, and the public inquiry bo
   ]);
 
   for (const table of ["admin_users", "works", "work_images", "reviews", "site_settings", "queries", "estimate_requests"]) {
-    assert.match(sql, new RegExp(`alter table public\\.${table} enable row level security`, "i"));
+    assert.match(sql, new RegExp(`alter table public\.${table} enable row level security`, "i"));
   }
   assert.match(sql, /work_id bigint not null references public\.works\(id\) on delete cascade/i);
   assert.match(sql, /works_public_read/i);
