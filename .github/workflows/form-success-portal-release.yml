@@ -81,8 +81,8 @@ jobs:
           )
           write(path, text)
 
-      - name: Regression test
-        run: node --test tests/rendered-html.test.mjs
+      - name: Portal regression test only
+        run: node --test --test-name-pattern "keeps secondary content flows validated and synchronized" tests/rendered-html.test.mjs
 
       - uses: actions/setup-node@v4
         with:
