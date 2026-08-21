@@ -170,9 +170,10 @@ test("keeps secondary content flows validated and synchronized", async () => {
   assert.match(site, /Your form has been submitted\. Mr\. Gokul will connect with you in a few hours\./);
   assert.match(site, /createPortal/);
   assert.match(site, /document\.body/);
-  assert.match(site, /z-\[9999\]/);
-  assert.match(site, /fixed inset-0/);
-  assert.doesNotMatch(site, /z-50 flex h-screen w-screen items-center justify-center bg-white\/96/);
+  assert.match(site, /position: "fixed"/);
+  assert.match(site, /zIndex: 2147483647/);
+  assert.match(site, /height: "100dvh"/);
+  assert.doesNotMatch(site, /className="fixed inset-0/);
   assert.match(site, /estimateSaved/);
 
   assert.match(home, /maxLength=\{4000\}/);

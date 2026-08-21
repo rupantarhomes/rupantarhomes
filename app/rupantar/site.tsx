@@ -659,9 +659,49 @@ export function RupantarSite() {
       {publicPage && <PublicFooter navigate={navigate} onCategory={openCategory} onEstimate={goToEstimate} settings={settings} />}
 
       {estimateSaved && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[9999] flex h-screen w-screen items-center justify-center bg-white/96 px-4 text-center backdrop-blur-sm" role="status" aria-live="polite" aria-atomic="true">
-          <div className="max-w-[760px] rounded-[2rem] border border-zinc-100 bg-white px-6 py-8 shadow-[0_24px_80px_rgba(0,0,0,0.12)] sm:px-10 sm:py-10">
-            <p className="font-heading text-[20px] font-semibold leading-[1.45] tracking-[-0.01em] text-zinc-900 sm:text-[24px]">
+        <div
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 2147483647,
+            width: "100vw",
+            height: "100dvh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxSizing: "border-box",
+            padding: "16px",
+            textAlign: "center",
+            background: "rgba(255, 255, 255, 0.98)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+          }}
+        >
+          <div
+            style={{
+              width: "min(760px, 100%)",
+              boxSizing: "border-box",
+              borderRadius: "32px",
+              border: "1px solid #f4f4f5",
+              background: "#ffffff",
+              padding: "32px 24px",
+              boxShadow: "0 24px 80px rgba(0, 0, 0, 0.12)",
+            }}
+          >
+            <p
+              style={{
+                margin: 0,
+                fontFamily: '"Space Grotesk", sans-serif',
+                fontSize: "clamp(20px, 2vw, 24px)",
+                fontWeight: 600,
+                lineHeight: 1.45,
+                letterSpacing: "-0.01em",
+                color: "#18181b",
+              }}
+            >
               Your form has been submitted. Mr. Gokul will connect with you in a few hours.
             </p>
           </div>
