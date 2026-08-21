@@ -241,8 +241,7 @@ export function HomePage({
             className="mt-4 text-[15px] leading-6 max-w-[520px]"
             style={{ color: "rgba(255, 255, 255, 0.88)" }}
           >
-            We craft interiors, kitchens, wardrobes &amp; ceilings from our Kathmandu workshop.
-            Send a photo, get a 3D sample and factory finish installation.
+            Interior Design to Home Construction, we craft everything. Send a photo, get a design preview and factory finish installation.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <button
