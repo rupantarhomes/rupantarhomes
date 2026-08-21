@@ -1,0 +1,42 @@
+name: Form success deploy trigger
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  redeploy:
+    if: github.head_ref == 'chatgpt/form-success-deploy-trigger'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Verify current form success fix
+        run: |
+          grep -q 'createPortal' app/rupantar/site.tsx
+          grep -q 'z-\[9999\]' app/rupantar/site.tsx
+          grep -q 'Your form has been submitted. Mr. Gokul will connect with you in a few hours.' app/rupantar/site.tsx
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts
+
+      - name: Production build
+        run: npm run build
+
+      - name: Push deployment-trigger commit and remove this workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/form-success-deploy-trigger.yml
+          git commit -m "Trigger production deployment for form success fix"
+          git push origin HEAD:main
