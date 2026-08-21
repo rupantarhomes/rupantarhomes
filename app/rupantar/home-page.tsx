@@ -3,7 +3,6 @@
 import {
   ArrowRight,
   Check,
-  CircleDollarSign,
   ImageUp,
   Instagram,
   MapPin,
@@ -116,28 +115,28 @@ export function HomePage({
 
     let cancelled = false;
 
-    const tryPlay = () => {
-      if (cancelled) return;
-      const maybePromise = video.play();
-      if (maybePromise && typeof maybePromise.then === "function") {
-        void maybePromise
-          .then(() => {
-            if (!cancelled) {
-              setHeroVideoReady(true);
-            }
-          })
-          .catch(() => {});
-      } else {
+    const handlePlaying = () => {
+      if (!cancelled) {
         setHeroVideoReady(true);
       }
     };
 
+    const tryPlay = () => {
+      if (cancelled) return;
+      const maybePromise = video.play();
+      if (maybePromise && typeof maybePromise.then === "function") {
+        void maybePromise.catch(() => {});
+      }
+    };
+
+    video.addEventListener("playing", handlePlaying);
     video.load();
 
     if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
       tryPlay();
       return () => {
         cancelled = true;
+        video.removeEventListener("playing", handlePlaying);
       };
     }
 
@@ -150,18 +149,88 @@ export function HomePage({
     return () => {
       cancelled = true;
       video.removeEventListener("canplay", handleCanPlay);
+      video.removeEventListener("playing", handlePlaying);
     };
   }, [heroVideoRequested]);
 
   return (
-    <main className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
-      <section className="pt-14 pb-10 sm:pt-20 sm:pb-16 min-h-[30vh] sm:min-h-[56vh] md:min-h-[72vh] grid lg:grid-cols-[1.15fr_0.85fr] gap-6 sm:gap-8 items-start">
-        <div>
+    <>
+      <section style={{ position: "relative", isolation: "isolate" }}>
+        <div
+          aria-hidden="true"
+          data-hero-background="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            overflow: "hidden",
+            pointerEvents: "none",
+            zIndex: 0,
+          }}
+        >
+          <img
+            src="/rupantar-hero-poster.webp"
+            alt=""
+            loading="eager"
+            decoding="async"
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              pointerEvents: "none",
+              zIndex: 0,
+            }}
+          />
+          {heroVideoRequested && (
+            <video
+              ref={heroVideoRef}
+              autoPlay
+              loop
+              muted
+              playsInline
+              controls={false}
+              preload="none"
+              aria-hidden="true"
+              tabIndex={-1}
+              onError={() => setHeroVideoReady(false)}
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                pointerEvents: "none",
+                opacity: heroVideoReady ? 1 : 0,
+                transition: "opacity 300ms ease",
+                zIndex: 1,
+              }}
+            >
+              <source src="/rupantar-hero-loop-web.mp4" type="video/mp4" />
+            </video>
+          )}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+              background: "rgba(0, 0, 0, 0.38)",
+              zIndex: 2,
+            }}
+          />
+        </div>
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10 sm:pt-20 sm:pb-16 min-h-[30vh] sm:min-h-[56vh] md:min-h-[72vh] grid lg:grid-cols-[1.15fr_0.85fr] gap-6 sm:gap-8 items-start">
+        <div style={{ position: "relative", zIndex: 3 }}>
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FFF0F2] text-[#FF1A3D] text-[11px] font-semibold tracking-wide uppercase mt-2 sm:mt-0">
             <Sparkles className="w-3.5 h-3.5" /> Kathmandu
           </div>
           <div className="hidden" />
-          <h2 className="font-heading font-semibold text-[22px] sm:text-[26px] leading-tight mt-6 sm:mt-4 text-zinc-800">
+          <h2
+            className="font-heading font-semibold text-[22px] sm:text-[26px] leading-tight mt-6 sm:mt-4"
+            style={{ color: "#FFFFFF" }}
+          >
             Transforming{" "}
             <span
               id="morph-word"
@@ -171,7 +240,10 @@ export function HomePage({
             </span>{" "}
             <br /> Inspiring Lives
           </h2>
-          <p className="mt-4 text-[15px] leading-6 text-zinc-600 max-w-[520px]">
+          <p
+            className="mt-4 text-[15px] leading-6 max-w-[520px]"
+            style={{ color: "rgba(255, 255, 255, 0.88)" }}
+          >
             We craft interiors, kitchens, wardrobes &amp; ceilings from our Kathmandu workshop.
             Send a photo, get a 3D sample and factory finish installation.
           </p>
@@ -189,7 +261,10 @@ export function HomePage({
               View Works
             </button>
           </div>
-          <div className="mt-8 flex items-center gap-6 text-[12px] text-zinc-500">
+          <div
+            className="mt-8 flex items-center gap-6 text-[12px]"
+            style={{ color: "rgba(255, 255, 255, 0.82)" }}
+          >
             {["Site Visit", "3D Design", "Factory Finish"].map((item) => (
               <span key={item} className="flex items-center gap-1.5">
                 <Check className="w-4 h-4 text-[#FF1A3D]" /> {item}
@@ -197,44 +272,10 @@ export function HomePage({
             ))}
           </div>
         </div>
-        <div className="relative hidden sm:block">
-          <div className="aspect-[16/9] w-full rounded-[1.25rem] overflow-hidden bg-[#F8F8F8] border border-zinc-100">
-            <img
-              src="/rupantar-hero-poster.webp"
-              alt="Rupantar Homes interior design moodboard"
-              className="absolute inset-0 w-full h-full object-cover"
-              loading="eager"
-              decoding="async"
-            />
-            {heroVideoRequested && (
-              <video
-                ref={heroVideoRef}
-                className={`absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-300 ${heroVideoReady ? "opacity-100" : "opacity-0"}`}
-                autoPlay
-                loop
-                muted
-                playsInline
-                controls={false}
-                preload="none"
-                aria-hidden="true"
-                onError={() => setHeroVideoReady(false)}
-              >
-                <source src="/rupantar-hero-loop-web.mp4" type="video/mp4" />
-              </video>
-            )}
-          </div>
-          <div className="absolute -bottom-4 -left-4 hidden sm:flex bg-white rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.08)] border border-zinc-100 p-4 gap-3 items-center">
-            <div className="w-11 h-11 rounded-xl bg-[#FFF0F2] text-[#FF1A3D] flex items-center justify-center">
-              <CircleDollarSign className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-[12px] font-semibold">Workshop Direct</div>
-              <div className="text-[11px] text-zinc-500">No middleman pricing</div>
-            </div>
-          </div>
         </div>
       </section>
 
+    <main className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
       <section className="py-4 sm:py-16">
         <div className="flex items-center justify-between mb-3 sm:mb-7">
           <h3 className="font-heading text-[18px] sm:text-[30px] font-bold">Recent Works</h3>
@@ -507,5 +548,7 @@ export function HomePage({
         </div>
       </section>
     </main>
+    </>
   );
 }
+
