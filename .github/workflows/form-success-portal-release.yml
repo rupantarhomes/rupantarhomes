@@ -1,0 +1,105 @@
+name: Form success portal release
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.head_ref == 'chatgpt/form-success-portal-fix'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Apply byte-safe portal fix
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          def read(path):
+              return Path(path).read_bytes().decode('utf-8')
+
+          def write(path, text):
+              Path(path).write_bytes(text.encode('utf-8'))
+
+          def replace_once(text, pattern, replacement, label, flags=0):
+              updated, count = re.subn(pattern, replacement, text, count=1, flags=flags)
+              if count != 1:
+                  raise SystemExit(f'Expected exactly one {label} replacement, got {count}')
+              return updated
+
+          path = 'app/rupantar/site.tsx'
+          text = read(path)
+          text = replace_once(
+              text,
+              r'(import \{ lazy, Suspense, useCallback, useEffect, useState \} from "react";\r?\n)',
+              lambda m: m.group(1) + 'import { createPortal } from "react-dom";\n',
+              'createPortal import',
+          )
+          text = replace_once(
+              text,
+              r'const timer = window\.setTimeout\(\(\) => setEstimateSaved\(false\), 2500\);',
+              'const timer = window.setTimeout(() => setEstimateSaved(false), 5000);',
+              'success timeout',
+          )
+          overlay_pattern = re.compile(
+              r'      \{estimateSaved && \(\r?\n'
+              r'        <div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-white/96 px-4 text-center backdrop-blur-sm" role="status" aria-live="polite" aria-atomic="true">\r?\n'
+              r'          <div className="max-w-\[760px\] rounded-\[2rem\] border border-zinc-100 bg-white px-6 py-8 shadow-\[0_24px_80px_rgba\(0,0,0,0\.12\)\] sm:px-10 sm:py-10">\r?\n'
+              r'            <p className="font-heading text-\[20px\] font-semibold leading-\[1\.45\] tracking-\[-0\.01em\] text-zinc-900 sm:text-\[24px\]">\r?\n'
+              r'              Your form has been submitted\. Mr\. Gokul will connect with you in a few hours\.\r?\n'
+              r'            </p>\r?\n'
+              r'          </div>\r?\n'
+              r'        </div>\r?\n'
+              r'      \)\}\r?\n'
+          )
+          replacement = '''      {estimateSaved && typeof document !== "undefined" && createPortal(\n        <div className="fixed inset-0 z-[9999] flex h-screen w-screen items-center justify-center bg-white/96 px-4 text-center backdrop-blur-sm" role="status" aria-live="polite" aria-atomic="true">\n          <div className="max-w-[760px] rounded-[2rem] border border-zinc-100 bg-white px-6 py-8 shadow-[0_24px_80px_rgba(0,0,0,0.12)] sm:px-10 sm:py-10">\n            <p className="font-heading text-[20px] font-semibold leading-[1.45] tracking-[-0.01em] text-zinc-900 sm:text-[24px]">\n              Your form has been submitted. Mr. Gokul will connect with you in a few hours.\n            </p>\n          </div>\n        </div>,\n        document.body,\n      )}\n'''
+          text = replace_once(text, overlay_pattern, replacement, 'inline success overlay')
+          write(path, text)
+
+          path = 'tests/rendered-html.test.mjs'
+          text = read(path)
+          text = replace_once(
+              text,
+              r'(  assert\.match\(site, /Your form has been submitted\\\. Mr\\\. Gokul will connect with you in a few hours\\\./\);\r?\n)'
+              r'(  assert\.match\(site, /estimateSaved/\);)',
+              lambda m: m.group(1)
+                + '  assert.match(site, /createPortal/);\n'
+                + '  assert.match(site, /document\\.body/);\n'
+                + '  assert.match(site, /z-\\[9999\\]/);\n'
+                + '  assert.match(site, /fixed inset-0/);\n'
+                + '  assert.doesNotMatch(site, /z-50 flex h-screen w-screen items-center justify-center bg-white\\/96/);\n'
+                + m.group(2),
+              'success overlay regression assertions',
+          )
+          write(path, text)
+
+      - name: Regression test
+        run: node --test tests/rendered-html.test.mjs
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts
+
+      - name: Production build
+        run: npm run build
+
+      - name: Publish clean candidate
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/form-success-portal-release.yml
+          git add app/rupantar/site.tsx tests/rendered-html.test.mjs
+          git checkout -B chatgpt/form-success-portal-candidate
+          git commit -m "Fix form success overlay portal"
+          git push --force origin HEAD:chatgpt/form-success-portal-candidate
