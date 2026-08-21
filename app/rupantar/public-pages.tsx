@@ -251,7 +251,7 @@ export function AboutPage({ navigate, settings }: { navigate: (page: Page) => vo
               <div className="w-32 h-32 sm:w-40 sm:h-40 md:w-40 md:h-40 rounded-2xl overflow-hidden shadow-lg border-2 border-white ring-1 ring-zinc-200 bg-white">
                 <img
                   src={brandAssets.founder}
-                  alt="Gokul Kunwar Founder & Craftsman"
+                  alt="Gokul Kunwar Founder & Curator"
                   className="w-full h-full object-cover object-top"
                   style={{ imageRendering: "auto", filter: "contrast(1.06) brightness(1.03) saturate(1.06)" }}
                   loading="eager"
@@ -264,7 +264,7 @@ export function AboutPage({ navigate, settings }: { navigate: (page: Page) => vo
                 </h3>
                 <div className="h-[2px] w-8 bg-[#FF1A3D] mt-2 mb-1.5 rounded-full" />
                 <p className="font-['Space_Grotesk'] text-[11px] uppercase tracking-[0.14em] font-medium text-zinc-500">
-                  Founder &amp; Craftsman
+                  Founder &amp; Curator
                 </p>
               </div>
             </div>
@@ -286,14 +286,22 @@ export function AboutPage({ navigate, settings }: { navigate: (page: Page) => vo
               </div>
             </div>
           </div>
-          <p className="text-[15px] leading-7 text-zinc-600 mt-6">
-            Rupantar Homes By Gokul Kunwar was started with one simple belief “”. We don’t just show renders,
-            we build it ourselves with our Kathmandu team. From modular kitchens to hydraulic beds, every
-            piece is measured, fabricated and installed by our own team.
-          </p>
+          <div className="mt-6 space-y-4 text-[15px] leading-7 text-zinc-600">
+            <p>
+              At Rupantar Homes By Gokul Kunwar, we believe a home shouldn’t just be designed on paper, it should
+              be built with care, by people who take full ownership of it. That’s why our own skilled team manages
+              every step ourselves: measurement, fabrication, installation, finishing.
+            </p>
+            <p>
+              We offer Interior &amp; Architecture Services, House Construction, 3D Design, Modular Kitchens, and
+              complete Interior Works, including wardrobes, hydraulic beds, TV cabinets, false ceilings,
+              partitions, and custom furniture.
+            </p>
+            <p>One team, one responsibility, from your first design to the final finish.</p>
+          </div>
           <div className="mt-8 grid sm:grid-cols-2 gap-4">
             <div className="rounded-2xl bg-zinc-50 border border-zinc-100 p-5">
-              <div className="font-heading font-semibold">Our Studio</div>
+              <div className="font-heading font-semibold">Our Location</div>
               <div className="text-[13px] text-zinc-600 mt-1 leading-5">
                 Neupane Chowk Kathmandu Site No.2 Kathmandu. Visit by appointment to see live samples,
                 laminates and hardware.
@@ -325,4 +333,3 @@ export function AboutPage({ navigate, settings }: { navigate: (page: Page) => vo
     </main>
   );
 }
-
