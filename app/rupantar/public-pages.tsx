@@ -301,10 +301,10 @@ export function AboutPage({ navigate, settings }: { navigate: (page: Page) => vo
           </div>
           <div className="mt-8 grid sm:grid-cols-2 gap-4">
             <div className="rounded-2xl bg-zinc-50 border border-zinc-100 p-5">
-              <div className="font-heading font-semibold">Our Location</div>
+              <div className="font-heading font-semibold">Built Around Your Project</div>
               <div className="text-[13px] text-zinc-600 mt-1 leading-5">
-                Neupane Chowk Kathmandu Site No.2 Kathmandu. Visit by appointment to see live samples,
-                laminates and hardware.
+                From first discussion to final installation, every project is handled with clear ownership,
+                practical guidance, and a focus on delivering the right result for your space.
               </div>
             </div>
             <div className="rounded-2xl bg-zinc-900 text-white p-5">
