@@ -15,7 +15,7 @@ import {
   Star,
   Upload,
 } from "lucide-react";
-import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { categories } from "./data";
 import { categoryIcons, WorkPhoto } from "./shared";
 import type {
@@ -85,6 +85,7 @@ export function HomePage({
   const [morphing, setMorphing] = useState(false);
   const [heroVideoRequested, setHeroVideoRequested] = useState(false);
   const [heroVideoReady, setHeroVideoReady] = useState(false);
+  const heroVideoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -101,6 +102,51 @@ export function HomePage({
     const frame = window.requestAnimationFrame(() => setHeroVideoRequested(true));
     return () => window.cancelAnimationFrame(frame);
   }, []);
+
+  useEffect(() => {
+    if (!heroVideoRequested) return;
+
+    const video = heroVideoRef.current;
+    if (!video) return;
+
+    let cancelled = false;
+
+    const tryPlay = () => {
+      if (cancelled) return;
+      const maybePromise = video.play();
+      if (maybePromise && typeof maybePromise.then === "function") {
+        void maybePromise
+          .then(() => {
+            if (!cancelled) {
+              setHeroVideoReady(true);
+            }
+          })
+          .catch(() => {});
+      } else {
+        setHeroVideoReady(true);
+      }
+    };
+
+    video.load();
+
+    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      tryPlay();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const handleCanPlay = () => {
+      tryPlay();
+    };
+
+    video.addEventListener("canplay", handleCanPlay, { once: true });
+
+    return () => {
+      cancelled = true;
+      video.removeEventListener("canplay", handleCanPlay);
+    };
+  }, [heroVideoRequested]);
 
   return (
     <main className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -157,6 +203,7 @@ export function HomePage({
             />
             {heroVideoRequested && (
               <video
+                ref={heroVideoRef}
                 className={`absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-300 ${heroVideoReady ? "opacity-100" : "opacity-0"}`}
                 autoPlay
                 loop
@@ -165,7 +212,6 @@ export function HomePage({
                 controls={false}
                 preload="none"
                 aria-hidden="true"
-                onCanPlay={() => setHeroVideoReady(true)}
                 onError={() => setHeroVideoReady(false)}
               >
                 <source src="/rupantar-hero-loop-web.mp4" type="video/mp4" />
@@ -363,11 +409,9 @@ export function HomePage({
             <p className="text-[14px] text-zinc-500 mt-2">Transparent 3-step process from photo to final handover.</p>
           </div>
           <div className="grid sm:grid-cols-3 gap-5 sm:gap-6 mt-10">
-            {[
-              { step: "01", icon: ImageUp, title: "Send Photo", desc: "Share site photos, video & measurements on WhatsApp. Get instant budget range." },
-              { step: "02", icon: Ruler, title: "Home Visit, Samples & 3D", desc: "We visit, show laminates, ply, handles. You get 3D design & final quote." },
-              { step: "03", icon: ShieldCheck, title: "Fabrication & Install", desc: "Factory finish at Kathmandu workshop. Clean install in 7-21 days." },
-            ].map((item) => {
+            [{"step":"01","icon":"ImageUp","title":"Send Photo","desc":"Share site photos, video & measurements on WhatsApp. Get instant budget range."},
+              {"step":"02","icon":"Ruler","title":"Home Visit, Samples & 3D","desc":"We visit, show laminates, ply, handles. You get 3D design & final quote."},
+              {"step":"03","icon":"ShieldCheck","title":"Fabrication & Install","desc":"Factory finish at Kathmandu workshop. Clean install in 7-21 days."}].map((item) => {
               const Icon = item.icon;
               return (
                 <div key={item.step} className="bg-white rounded-[1.5rem] border border-zinc-100 p-6 shadow-[0_6px_24px_rgba(0,0,0,0.04)]">
