@@ -2,6 +2,7 @@
 
 import { CheckCircle2, X } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { deleteCloudinaryImages, maximumWorkImages, uploadWorkImages } from "./cloudinary";
 import {
   emptyEstimate,
@@ -95,7 +96,7 @@ export function RupantarSite() {
 
   useEffect(() => {
     if (!estimateSaved) return;
-    const timer = window.setTimeout(() => setEstimateSaved(false), 2500);
+    const timer = window.setTimeout(() => setEstimateSaved(false), 5000);
     return () => window.clearTimeout(timer);
   }, [estimateSaved]);
 
@@ -657,14 +658,15 @@ export function RupantarSite() {
 
       {publicPage && <PublicFooter navigate={navigate} onCategory={openCategory} onEstimate={goToEstimate} settings={settings} />}
 
-      {estimateSaved && (
-        <div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-white/96 px-4 text-center backdrop-blur-sm" role="status" aria-live="polite" aria-atomic="true">
+      {estimateSaved && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[9999] flex h-screen w-screen items-center justify-center bg-white/96 px-4 text-center backdrop-blur-sm" role="status" aria-live="polite" aria-atomic="true">
           <div className="max-w-[760px] rounded-[2rem] border border-zinc-100 bg-white px-6 py-8 shadow-[0_24px_80px_rgba(0,0,0,0.12)] sm:px-10 sm:py-10">
             <p className="font-heading text-[20px] font-semibold leading-[1.45] tracking-[-0.01em] text-zinc-900 sm:text-[24px]">
               Your form has been submitted. Mr. Gokul will connect with you in a few hours.
             </p>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
