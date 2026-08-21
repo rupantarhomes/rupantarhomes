@@ -1,0 +1,39 @@
+name: Update hero copy
+
+on:
+  push:
+    paths:
+      - '.github/workflows/update-hero-copy.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Replace only hero paragraph
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('app/rupantar/home-page.tsx')
+          b = p.read_bytes()
+          old = b'            We craft interiors, kitchens, wardrobes &amp; ceilings from our Kathmandu workshop.\n            Send a photo, get a 3D sample and factory finish installation.\n'
+          new = b'            Interior Design to Home Construction, we craft everything. Send a photo, get a design preview and factory finish installation.\n'
+          count = b.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one hero paragraph, found {count}')
+          p.write_bytes(b.replace(old, new, 1))
+      - name: Verify exact scope
+        run: |
+          test "$(git diff --name-only)" = "app/rupantar/home-page.tsx"
+          git diff --check
+          git diff -- app/rupantar/home-page.tsx
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/rupantar/home-page.tsx
+          git commit -m "Update hero paragraph"
+          git push origin HEAD:main
