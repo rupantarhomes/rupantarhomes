@@ -93,6 +93,12 @@ export function RupantarSite() {
   const [queryBusy, setQueryBusy] = useState(false);
   const [estimateSaved, setEstimateSaved] = useState(false);
 
+  useEffect(() => {
+    if (!estimateSaved) return;
+    const timer = window.setTimeout(() => setEstimateSaved(false), 2500);
+    return () => window.clearTimeout(timer);
+  }, [estimateSaved]);
+
   const refreshContent = useCallback(async () => {
     const content = await loadPublicContent();
     setWorks(content.works);
@@ -558,7 +564,7 @@ export function RupantarSite() {
       await submitQuery(query);
       setQuery(emptyQuery);
       if (isAdmin) await Promise.all([refreshAdminStats(), refreshLeads()]);
-      window.alert("Query sent successfully.");
+      setEstimateSaved(true);
     } catch (error) {
       window.alert(messageFrom(error));
     } finally {
@@ -652,34 +658,14 @@ export function RupantarSite() {
       {publicPage && <PublicFooter navigate={navigate} onCategory={openCategory} onEstimate={goToEstimate} settings={settings} />}
 
       {estimateSaved && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4" role="dialog" aria-modal="true" aria-label="Estimate request sent">
-          <div className="relative w-full max-w-[420px] rounded-[2rem] bg-white p-8 text-center shadow-[0_24px_70px_rgba(0,0,0,0.2)]">
-            <button
-              type="button"
-              onClick={() => setEstimateSaved(false)}
-              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 text-zinc-500 hover:text-zinc-900"
-              aria-label="Close success message"
-            >
-              <X className="h-4 w-4" />
-            </button>
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-50 text-green-600">
-              <CheckCircle2 className="h-8 w-8" />
-            </div>
-            <h3 className="mt-5 font-heading text-[24px] font-bold">Request Received</h3>
-            <p className="mt-2 text-[13px] leading-6 text-zinc-600">
-              Thank you. Your estimate request was sent successfully. Rupantar Homes will contact you soon.
+        <div className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-white/96 px-4 text-center backdrop-blur-sm" role="status" aria-live="polite" aria-atomic="true">
+          <div className="max-w-[760px] rounded-[2rem] border border-zinc-100 bg-white px-6 py-8 shadow-[0_24px_80px_rgba(0,0,0,0.12)] sm:px-10 sm:py-10">
+            <p className="font-heading text-[20px] font-semibold leading-[1.45] tracking-[-0.01em] text-zinc-900 sm:text-[24px]">
+              Your form has been submitted. Mr. Gokul will connect with you in a few hours.
             </p>
-            <button
-              type="button"
-              onClick={() => setEstimateSaved(false)}
-              className="mt-6 h-11 w-full rounded-full bg-[#FF1A3D] text-[14px] font-semibold text-white"
-            >
-              Done
-            </button>
           </div>
         </div>
       )}
     </div>
   );
 }
-
