@@ -302,6 +302,8 @@ export function PublicFooter({
       <div className="border-t border-gray-800">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 h-12 flex items-center justify-center text-[11px] text-zinc-400">
           <span>Kathmandu Nepal</span>
+          <span className="mx-2">•</span>
+          <span>All Right Reserved - Rupantar Homes</span>
         </div>
       </div>
     </footer>
