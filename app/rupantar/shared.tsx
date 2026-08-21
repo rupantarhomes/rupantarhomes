@@ -175,7 +175,7 @@ export function PublicHeader({
         <div className="hidden lg:flex items-center gap-8">
           <button onClick={() => go("home")} className={`text-[14px] font-medium transition ${page === "home" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>Home</button>
           <button onClick={() => go("works")} className={`text-[14px] font-medium transition ${page === "works" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>Works</button>
-          <button onClick={() => goCategory("architect")} className="text-[14px] font-medium text-zinc-700 hover:text-[#FF1A3D] transition">Architect</button>
+          <button onClick={() => goCategory("architect")} className="text-[14px] font-medium text-zinc-700 hover:text-[#FF1A3D] transition">Architecture</button>
           <button onClick={() => goCategory("home-construction")} className="text-[14px] font-medium text-zinc-700 hover:text-[#FF1A3D] transition">Home Construction</button>
           <button
             onClick={() => {
@@ -208,7 +208,7 @@ export function PublicHeader({
           ].map((item) => (
             <button key={item.page} onClick={() => go(item.page)} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">{item.label}</button>
           ))}
-          <button onClick={() => goCategory("architect")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Architect</button>
+          <button onClick={() => goCategory("architect")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Architecture</button>
           <button onClick={() => goCategory("home-construction")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Home Construction</button>
           <button
             onClick={() => {
@@ -300,9 +300,8 @@ export function PublicFooter({
         </div>
       </div>
       <div className="border-t border-gray-800">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 h-12 flex items-center justify-between text-[11px] text-zinc-400">
-          <span>© {new Date().getFullYear()} Rupantar Homes By Gokul Kunwar. All rights reserved.</span>
-          <span className="hidden sm:inline">Crafted with red #FF1A3D • Kathmandu Nepal</span>
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 h-12 flex items-center justify-center text-[11px] text-zinc-400">
+          <span>Kathmandu Nepal</span>
         </div>
       </div>
     </footer>
@@ -310,4 +309,3 @@ export function PublicFooter({
 }
 
 export { ArrowLeft, ArrowRight, Check, Instagram, MapPin, Music2, Phone };
-
