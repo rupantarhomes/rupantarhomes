@@ -30,8 +30,6 @@ export const interiorDesignCategories = categories.filter((category) =>
   interiorDesignCategorySlugs.includes(category.slug as (typeof interiorDesignCategorySlugs)[number]),
 );
 
-export const initialWorks);
-
 export const worksFilterCategories = ["architect", "interior", "home-construction", "modular-kitchen", "tv-cabinet", "wardrobe", "hydraulic-bed", "false-ceiling", "parqueting", "railing"].map((slug) => categories.find((category) => category.slug === slug)!);
 
 export const initialWorks: Work[] = [
