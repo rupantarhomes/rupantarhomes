@@ -155,7 +155,18 @@ export function HomePage({
 
   return (
     <>
-      <section style={{ position: "relative", isolation: "isolate" }}>
+      <style>{`
+        .rupantar-hero-section {
+          min-height: calc(100vh - 201px);
+        }
+
+        @media (min-width: 640px) {
+          .rupantar-hero-section {
+            min-height: calc(100vh - 261px);
+          }
+        }
+      `}</style>
+      <section className="rupantar-hero-section" style={{ position: "relative", isolation: "isolate" }}>
         <div
           aria-hidden="true"
           data-hero-background="true"
