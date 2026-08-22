@@ -187,6 +187,7 @@ export function PublicHeader({
             Services
           </button>
           <button onClick={() => go("about")} className={`text-[14px] font-medium transition ${page === "about" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>About</button>
+          <button onClick={() => go("contact")} className={"text-[14px] font-medium transition "+(page === "contact" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]")}>Contact</button>
         </div>
 
         <div className="flex items-center gap-3">
@@ -205,6 +206,7 @@ export function PublicHeader({
             { label: "Home", page: "home" as Page },
             { label: "Works", page: "works" as Page },
             { label: "About", page: "about" as Page },
+            { label: "Contact", page: "contact" as Page },
           ].map((item) => (
             <button key={item.page} onClick={() => go(item.page)} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">{item.label}</button>
           ))}
@@ -269,6 +271,8 @@ export function PublicFooter({
             <button onClick={() => navigate("home")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Home</button>
             <button onClick={() => navigate("works")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">All Works</button>
             <button onClick={() => navigate("about")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">About Us</button>
+            <button onClick={() => navigate("contact")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Contact</button>
+            <button onClick={() => navigate("privacy")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Privacy Policy</button>
             <button onClick={onEstimate} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Get Estimate</button>
             <button onClick={() => navigate("admin-login")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Admin Login</button>
           </div>

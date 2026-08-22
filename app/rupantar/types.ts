@@ -1,4 +1,4 @@
-export type PublicPage = "home" | "works" | "work-detail" | "about";
+export type PublicPage = "home" | "works" | "work-detail" | "about" | "contact" | "privacy";
 
 export type AdminPage =
   | "admin-login"
