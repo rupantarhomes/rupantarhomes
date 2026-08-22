@@ -30,6 +30,7 @@ export const callUrl = "tel:+9779745941799";
 
 export const categoryIcons = {
   architect: PencilRuler,
+  interior: House,
   "modular-kitchen": ChefHat,
   "tv-cabinet": Monitor,
   wardrobe: PanelsTopLeft,
@@ -263,7 +264,7 @@ export function PublicFooter({
         <div>
           <div className="font-heading font-semibold text-[13px] uppercase tracking-wide text-[#FEFEFE]">Categories</div>
           <div className="mt-4 grid grid-cols-1 gap-2.5">
-            {categories.map((category) => (
+            {categories.filter((category) => category.slug !== "interior").map((category) => (
               <button key={category.slug} onClick={() => onCategory(category.slug)} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D] transition">{category.name}</button>
             ))}
           </div>

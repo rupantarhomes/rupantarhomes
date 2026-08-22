@@ -49,3 +49,19 @@ test("Interior Design is a virtual public group over the existing flat categorie
   assert.match(site, /route\.kind === "interior-design"/);
   assert.match(shared, /Interior Design/);
 });
+
+
+test("Interior is a real category with the requested public ordering", () => {
+  assert.match(data, /slug: "interior", name: "Interior"/);
+  assert.match(data, /interiorDesignCategorySlugs = \["interior", "modular-kitchen"/);
+  assert.match(data, /worksFilterCategories = \["architect", "interior", "home-construction"/);
+  assert.match(routes, /segments\[0\] === "works"/);
+  assert.match(publicPages, /worksFilterCategories\.map/);
+  assert.match(shared, /category\.slug !== "interior"/);
+});
+
+test("hero labels use the approved three-part wording", async () => {
+  const home = await readFile(new URL("../app/rupantar/home-page.tsx", import.meta.url), "utf8");
+  assert.match(home, /\["We Plan", "We Build", "We Deliver"\]/);
+  assert.doesNotMatch(home, /\["Site Visit", "Design Preview", "Factory Finish"\]/);
+});

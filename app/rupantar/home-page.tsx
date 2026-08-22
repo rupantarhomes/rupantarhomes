@@ -261,7 +261,7 @@ export function HomePage({
             className="mt-8 flex items-center gap-6 text-[12px]"
             style={{ color: "rgba(255, 255, 255, 0.82)" }}
           >
-            {["Site Visit", "Design Preview", "Factory Finish"].map((item) => (
+            {["We Plan", "We Build", "We Deliver"].map((item) => (
               <span key={item} className="flex items-center gap-1.5">
                 <Check className="w-4 h-4 text-[#FF1A3D]" /> {item}
               </span>

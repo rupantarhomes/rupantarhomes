@@ -21,13 +21,18 @@ export const categories: Category[] = [
   { id: "7", slug: "parqueting", name: "Parqueting", desc: "Premium wooden flooring craftsmanship" },
   { id: "8", slug: "railing", name: "Railing", desc: "Modern staircase & balcony railings" },
   { id: "9", slug: "home-construction", name: "Home Construction", desc: "Complete home construction from structure to finish" },
+  { id: "10", slug: "interior", name: "Interior", desc: "Complete interior solutions for your space" },
 ];
 
-export const interiorDesignCategorySlugs = ["modular-kitchen", "tv-cabinet", "wardrobe", "hydraulic-bed", "false-ceiling", "parqueting", "railing"] as const;
+export const interiorDesignCategorySlugs = ["interior", "modular-kitchen", "tv-cabinet", "wardrobe", "hydraulic-bed", "false-ceiling", "parqueting", "railing"] as const;
 
 export const interiorDesignCategories = categories.filter((category) =>
   interiorDesignCategorySlugs.includes(category.slug as (typeof interiorDesignCategorySlugs)[number]),
 );
+
+export const initialWorks);
+
+export const worksFilterCategories = ["architect", "interior", "home-construction", "modular-kitchen", "tv-cabinet", "wardrobe", "hydraulic-bed", "false-ceiling", "parqueting", "railing"].map((slug) => categories.find((category) => category.slug === slug)!);
 
 export const initialWorks: Work[] = [
   {

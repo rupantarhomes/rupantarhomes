@@ -3,7 +3,7 @@
 import { ArrowLeft, ArrowRight, Check, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { brandAssets, categories, interiorDesignCategories } from "./data";
+import { brandAssets, categories, interiorDesignCategories, worksFilterCategories } from "./data";
 import { categoryIcons, PhotoPlaceholder, WorkPhoto } from "./shared";
 import type { Page, SiteSettings, Work } from "./types";
 
@@ -58,7 +58,7 @@ export function WorksPage({
         >
           All
         </button>
-        {categories.map((category) => (
+        {worksFilterCategories.map((category) => (
           <button
             key={category.slug}
             onClick={() => setFilter(category.slug)}
