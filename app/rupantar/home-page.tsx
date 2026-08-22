@@ -232,7 +232,8 @@ export function HomePage({
             }}
           />
         </div>
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10 sm:pt-20 sm:pb-16 grid lg:grid-cols-[1.15fr_0.85fr] gap-6 sm:gap-8 items-center" style={{ minHeight: "inherit" }}>
+        <div style={{ position: "absolute", inset: 0, zIndex: 3 }}>
+          <div className="max-w-[1280px] mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center">
         <div style={{ position: "relative", zIndex: 3 }}>
           <div className="hidden" />
           <h2
@@ -277,6 +278,7 @@ export function HomePage({
                 <Check className="w-4 h-4 text-[#FF1A3D]" /> {item}
               </span>
             ))}
+          </div>
           </div>
         </div>
         </div>
