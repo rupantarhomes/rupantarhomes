@@ -22,7 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
-import { brandAssets, categories } from "./data";
+import { brandAssets, categories, interiorDesignCategories } from "./data";
 import type { Page, SiteSettings, WorkImage } from "./types";
 
 export const whatsappUrl = `https://wa.me/9779745941799?text=${encodeURIComponent("Hello Rupantar Homes, I would like to discuss my interior project.")}`;
@@ -176,6 +176,17 @@ export function PublicHeader({
           <button onClick={() => go("home")} className={`text-[14px] font-medium transition ${page === "home" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>Home</button>
           <button onClick={() => go("works")} className={`text-[14px] font-medium transition ${page === "works" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>Works</button>
           <button onClick={() => goCategory("architect")} className="text-[14px] font-medium text-zinc-700 hover:text-[#FF1A3D] transition">Architecture</button>
+          <div className="relative group">
+            <button onClick={() => go("interior-design")} className={`text-[14px] font-medium transition ${page === "interior-design" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>Interior Design</button>
+            <div className="absolute left-1/2 top-full z-50 hidden -translate-x-1/2 pt-3 group-hover:block">
+              <div className="w-56 rounded-2xl border border-zinc-100 bg-white p-2 shadow-xl">
+                <button onClick={() => go("interior-design")} className="w-full rounded-xl px-3 py-2 text-left text-[13px] font-semibold hover:bg-zinc-50">All Interior Design</button>
+                {interiorDesignCategories.map((category) => (
+                  <button key={category.slug} onClick={() => goCategory(category.slug)} className="w-full rounded-xl px-3 py-2 text-left text-[13px] hover:bg-zinc-50">{category.name}</button>
+                ))}
+              </div>
+            </div>
+          </div>
           <button onClick={() => goCategory("home-construction")} className="text-[14px] font-medium text-zinc-700 hover:text-[#FF1A3D] transition">Home Construction</button>
           <button
             onClick={() => {
@@ -211,6 +222,12 @@ export function PublicHeader({
             <button key={item.page} onClick={() => go(item.page)} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">{item.label}</button>
           ))}
           <button onClick={() => goCategory("architect")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Architecture</button>
+          <button onClick={() => go("interior-design")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Interior Design</button>
+          <div className="pl-4 pb-2">
+            {interiorDesignCategories.map((category) => (
+              <button key={category.slug} onClick={() => goCategory(category.slug)} className="w-full text-left py-2 px-4 rounded-xl text-[13px] text-zinc-600 hover:bg-zinc-50">{category.name}</button>
+            ))}
+          </div>
           <button onClick={() => goCategory("home-construction")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Home Construction</button>
           <button
             onClick={() => {

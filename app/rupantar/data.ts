@@ -23,6 +23,12 @@ export const categories: Category[] = [
   { id: "9", slug: "home-construction", name: "Home Construction", desc: "Complete home construction from structure to finish" },
 ];
 
+export const interiorDesignCategorySlugs = ["modular-kitchen", "tv-cabinet", "wardrobe", "hydraulic-bed", "false-ceiling", "parqueting", "railing"] as const;
+
+export const interiorDesignCategories = categories.filter((category) =>
+  interiorDesignCategorySlugs.includes(category.slug as (typeof interiorDesignCategorySlugs)[number]),
+);
+
 export const initialWorks: Work[] = [
   {
     id: "w1",

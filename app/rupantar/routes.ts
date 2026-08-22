@@ -3,6 +3,7 @@ export type AppRoute =
   | { kind: "about" }
   | { kind: "contact" }
   | { kind: "privacy" }
+  | { kind: "interior-design" }
   | { kind: "works"; category: string }
   | { kind: "work-detail"; category: string; slug: string }
   | { kind: "admin" };
@@ -27,6 +28,7 @@ export function parseRoute(pathname: string): AppRoute {
   if (segments.length === 1 && segments[0] === "privacy") return { kind: "privacy" };
   if (segments.length === 1 && segments[0] === "admin") return { kind: "admin" };
   if (segments[0] === "works") {
+    if (segments.length === 2 && segments[1] === "interior-design") return { kind: "interior-design" };
     if (segments.length === 1) return { kind: "works", category: "all" };
     if (segments.length === 2 && segments[1]) return { kind: "works", category: segments[1] };
     if (segments.length === 3 && segments[1] && segments[2]) {
@@ -42,6 +44,7 @@ export function pagePath(page: string): string {
   if (page === "about") return "/about";
   if (page === "contact") return "/contact";
   if (page === "privacy") return "/privacy";
+  if (page === "interior-design") return "/works/interior-design";
   if (page === "works") return "/works";
   return "/";
 }

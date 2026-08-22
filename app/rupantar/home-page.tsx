@@ -15,7 +15,7 @@ import {
   Upload,
 } from "lucide-react";
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
-import { categories } from "./data";
+import { categories, interiorDesignCategories } from "./data";
 import { categoryIcons, WorkPhoto } from "./shared";
 import type {
   EstimateForm,
@@ -327,26 +327,25 @@ export function HomePage({
             8 core services from our Kathmandu workshop. Click any card to see works.
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-          {categories.map((category) => {
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+          {["architect", "home-construction"].map((slug) => {
+            const category = categories.find((candidate) => candidate.slug === slug)!;
             const Icon = categoryIcons[category.slug as keyof typeof categoryIcons];
             return (
-              <button
-                key={category.slug}
-                onClick={() => onCategory(category.slug)}
-                className="text-left group bg-white border border-zinc-100 rounded-[1.5rem] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.06)] hover:border-zinc-200 transition-all"
-              >
-                <div className="w-11 h-11 rounded-2xl bg-[#FFF0F2] text-[#FF1A3D] flex items-center justify-center mb-4 group-hover:scale-105 transition">
-                  <Icon className="w-5 h-5" />
-                </div>
+              <button key={category.slug} onClick={() => onCategory(category.slug)} className="text-left group bg-white border border-zinc-100 rounded-[1.5rem] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.06)] hover:border-zinc-200 transition-all">
+                <div className="w-11 h-11 rounded-2xl bg-[#FFF0F2] text-[#FF1A3D] flex items-center justify-center mb-4 group-hover:scale-105 transition"><Icon className="w-5 h-5" /></div>
                 <div className="font-heading font-semibold text-[15px] text-zinc-900">{category.name}</div>
                 <div className="text-[12.5px] leading-5 text-zinc-500 mt-1.5 line-clamp-2">{category.desc}</div>
-                <div className="mt-4 text-[12px] font-medium text-zinc-900 flex items-center gap-1 group-hover:text-[#FF1A3D] transition">
-                  View Works <ArrowRight className="w-3.5 h-3.5" />
-                </div>
+                <div className="mt-4 text-[12px] font-medium text-zinc-900 flex items-center gap-1 group-hover:text-[#FF1A3D] transition">View Works <ArrowRight className="w-3.5 h-3.5" /></div>
               </button>
             );
           })}
+          <button onClick={() => onCategory("interior-design")} className="text-left group bg-white border border-zinc-100 rounded-[1.5rem] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.06)] hover:border-zinc-200 transition-all">
+            <div className="w-11 h-11 rounded-2xl bg-[#FFF0F2] text-[#FF1A3D] flex items-center justify-center mb-4 group-hover:scale-105 transition"><Sparkles className="w-5 h-5" /></div>
+            <div className="font-heading font-semibold text-[15px] text-zinc-900">Interior Design</div>
+            <div className="text-[12.5px] leading-5 text-zinc-500 mt-1.5 line-clamp-2">{interiorDesignCategories.map((category) => category.name).join(" • ")}</div>
+            <div className="mt-4 text-[12px] font-medium text-zinc-900 flex items-center gap-1 group-hover:text-[#FF1A3D] transition">Explore Categories <ArrowRight className="w-3.5 h-3.5" /></div>
+          </button>
         </div>
       </section>
 

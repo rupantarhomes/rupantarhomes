@@ -51,6 +51,7 @@ const AdminPortal = lazy(() => import("./admin").then((module) => ({ default: mo
 const AboutPage = lazy(() => import("./public-pages").then((module) => ({ default: module.AboutPage })));
 const ContactPage = lazy(() => import("./public-pages").then((module) => ({ default: module.ContactPage })));
 const PrivacyPage = lazy(() => import("./public-pages").then((module) => ({ default: module.PrivacyPage })));
+const InteriorDesignPage = lazy(() => import("./public-pages").then((module) => ({ default: module.InteriorDesignPage })));
 const WorkDetailPage = lazy(() => import("./public-pages").then((module) => ({ default: module.WorkDetailPage })));
 const WorksPage = lazy(() => import("./public-pages").then((module) => ({ default: module.WorksPage })));
 
@@ -58,7 +59,7 @@ function PageLoader() {
   return <div className="min-h-[40vh]" aria-busy="true" aria-label="Loading page" />;
 }
 
-const publicPages: Page[] = ["home", "works", "work-detail", "about", "contact", "privacy"];
+const publicPages: Page[] = ["home", "works", "work-detail", "about", "contact", "privacy", "interior-design"];
 
 function messageFrom(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong. Please try again.";
@@ -140,6 +141,10 @@ export function RupantarSite() {
     }
     if (route.kind === "admin") {
       setPage("admin-login");
+      return;
+    }
+    if (route.kind === "interior-design") {
+      setPage("interior-design");
       return;
     }
     if (route.kind === "works") {
@@ -667,6 +672,7 @@ export function RupantarSite() {
       {page === "about" && <Suspense fallback={<PageLoader />}><AboutPage navigate={navigate} settings={settings} /></Suspense>}
       {page === "contact" && <Suspense fallback={<PageLoader />}><ContactPage navigate={navigate} /></Suspense>}
       {page === "privacy" && <Suspense fallback={<PageLoader />}><PrivacyPage navigate={navigate} /></Suspense>}
+      {page === "interior-design" && <Suspense fallback={<PageLoader />}><InteriorDesignPage navigate={navigate} onCategory={openCategory} /></Suspense>}
 
       {publicPage && <PublicFooter navigate={navigate} onCategory={openCategory} onEstimate={goToEstimate} settings={settings} />}
 

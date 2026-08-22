@@ -3,8 +3,8 @@
 import { ArrowLeft, ArrowRight, Check, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { brandAssets, categories } from "./data";
-import { PhotoPlaceholder, WorkPhoto } from "./shared";
+import { brandAssets, categories, interiorDesignCategories } from "./data";
+import { categoryIcons, PhotoPlaceholder, WorkPhoto } from "./shared";
 import type { Page, SiteSettings, Work } from "./types";
 
 const whatsappUrl = `https://wa.me/9779745941799?text=${encodeURIComponent("Hello Gokul, I would like to discuss my interior project.")}`;
@@ -130,6 +130,41 @@ export function WorksPage({
           <p className="text-[13px] text-zinc-500 mt-4">Add works from Admin → Manage Works</p>
         </div>
       )}
+    </main>
+  );
+}
+
+export function InteriorDesignPage({
+  navigate,
+  onCategory,
+}: {
+  navigate: (page: Page) => void;
+  onCategory: (category: string) => void;
+}) {
+  return (
+    <main className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="font-heading text-[28px] sm:text-[36px] font-bold tracking-[-0.02em]">Interior Design</h1>
+          <p className="text-[13px] text-zinc-500 mt-1">Choose a service to explore related works.</p>
+        </div>
+        <button onClick={() => navigate("home")} className="h-9 px-4 rounded-full border border-zinc-200 text-[13px] font-medium flex items-center gap-1.5 hover:bg-zinc-50">
+          <ArrowLeft className="w-4 h-4" /> Back Home
+        </button>
+      </div>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+        {interiorDesignCategories.map((category) => {
+          const Icon = categoryIcons[category.slug as keyof typeof categoryIcons];
+          return (
+            <button key={category.slug} onClick={() => onCategory(category.slug)} className="text-left group bg-white border border-zinc-100 rounded-[1.5rem] p-5 shadow-[0_8px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgba(0,0,0,0.08)] transition">
+              <div className="w-11 h-11 rounded-2xl bg-[#FFF0F2] text-[#FF1A3D] flex items-center justify-center mb-4 group-hover:scale-105 transition"><Icon className="w-5 h-5" /></div>
+              <div className="font-heading font-semibold text-[15px] text-zinc-900">{category.name}</div>
+              <div className="text-[12.5px] leading-5 text-zinc-500 mt-1.5">{category.desc}</div>
+              <div className="mt-4 text-[12px] font-medium text-zinc-900 flex items-center gap-1 group-hover:text-[#FF1A3D] transition">View Works <ArrowRight className="w-3.5 h-3.5" /></div>
+            </button>
+          );
+        })}
+      </div>
     </main>
   );
 }
