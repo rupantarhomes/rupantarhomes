@@ -174,7 +174,6 @@ export function PublicHeader({
 
         <div className="hidden lg:flex items-center gap-8">
           <button onClick={() => go("home")} className={`text-[14px] font-medium transition ${page === "home" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>Home</button>
-          <button onClick={() => go("works")} className={`text-[14px] font-medium transition ${page === "works" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>Works</button>
           <button onClick={() => goCategory("architect")} className="text-[14px] font-medium text-zinc-700 hover:text-[#FF1A3D] transition">Architecture</button>
           <div className="relative group">
             <button onClick={() => go("interior-design")} className={`text-[14px] font-medium transition ${page === "interior-design" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>Interior Design</button>
@@ -188,15 +187,6 @@ export function PublicHeader({
             </div>
           </div>
           <button onClick={() => goCategory("home-construction")} className="text-[14px] font-medium text-zinc-700 hover:text-[#FF1A3D] transition">Home Construction</button>
-          <button
-            onClick={() => {
-              go("home");
-              window.setTimeout(() => document.getElementById("services")?.scrollIntoView({ behavior: "smooth" }), 100);
-            }}
-            className="text-[14px] font-medium text-zinc-700 hover:text-[#FF1A3D] transition"
-          >
-            Services
-          </button>
           <button onClick={() => go("about")} className={`text-[14px] font-medium transition ${page === "about" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>About</button>
           <button onClick={() => go("contact")} className={"text-[14px] font-medium transition "+(page === "contact" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]")}>Contact</button>
         </div>
@@ -213,14 +203,7 @@ export function PublicHeader({
 
       {open && (
         <div className="lg:hidden border-t border-zinc-100 bg-white px-4 py-4 space-y-1">
-          {[
-            { label: "Home", page: "home" as Page },
-            { label: "Works", page: "works" as Page },
-            { label: "About", page: "about" as Page },
-            { label: "Contact", page: "contact" as Page },
-          ].map((item) => (
-            <button key={item.page} onClick={() => go(item.page)} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">{item.label}</button>
-          ))}
+          <button onClick={() => go("home")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Home</button>
           <button onClick={() => goCategory("architect")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Architecture</button>
           <button onClick={() => go("interior-design")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Interior Design</button>
           <div className="pl-4 pb-2">
