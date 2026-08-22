@@ -17,6 +17,8 @@ test("browser navigation uses history and popstate", () => {
   assert.match(site, /history\.pushState/);
   assert.match(site, /popstate/);
   assert.match(site, /applyBrowserRoute/);
+  assert.match(site, /route\.kind === "contact"/);
+  assert.match(site, /route\.kind === "privacy"/);
 });
 
 test("work detail routes load by category and slug", () => {

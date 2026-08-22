@@ -130,6 +130,14 @@ export function RupantarSite() {
       setPage("about");
       return;
     }
+    if (route.kind === "contact") {
+      setPage("contact");
+      return;
+    }
+    if (route.kind === "privacy") {
+      setPage("privacy");
+      return;
+    }
     if (route.kind === "admin") {
       setPage("admin-login");
       return;
