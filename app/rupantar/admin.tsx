@@ -3,6 +3,7 @@
 import {
   ArrowLeft,
   FileText,
+  BookOpen,
   Image as ImageIcon,
   LayoutDashboard,
   LogOut,
@@ -15,6 +16,8 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { maximumWorkImages } from "./cloudinary";
+import { AdminBlogs } from "./blog-admin";
+import type { Blog, BlogForm } from "./blog";
 import { brandAssets, categories, emptyWork } from "./data";
 import { getSupabase } from "./supabase";
 import type {
@@ -108,7 +111,15 @@ type AdminPortalProps = {
   page: Page;
   navigate: (page: Page) => void;
   onLogout: () => void | Promise<void>;
-  works: Work[];
+  works: Work[];  blogs: Blog[];
+  blogForm: BlogForm;
+  setBlogForm: Dispatch<SetStateAction<BlogForm>>;
+  editingBlogId: string | null;
+  onSaveBlog: () => void | Promise<void>;
+  onEditBlog: (blog: Blog) => void;
+  onDeleteBlog: (id: string) => void | Promise<void>;
+  onCancelBlog: () => void | Promise<void>;
+
   workForm: WorkForm;
   setWorkForm: Dispatch<SetStateAction<WorkForm>>;
   editingWorkId: string | null;
@@ -139,6 +150,7 @@ type AdminPortalProps = {
 const adminTabs = [
   { page: "admin-dashboard" as Page, label: "Dashboard", icon: LayoutDashboard },
   { page: "admin-works" as Page, label: "Works", icon: FileText },
+  { page: "admin-blogs" as Page, label: "Blogs", icon: BookOpen },
   { page: "admin-leads" as Page, label: "Leads", icon: Users },
   { page: "admin-reviews" as Page, label: "Reviews", icon: Star },
   { page: "admin-settings" as Page, label: "Settings", icon: Settings },
@@ -218,6 +230,7 @@ export function AdminPortal(props: AdminPortalProps) {
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {page === "admin-dashboard" && <AdminDashboard {...props} />}
         {page === "admin-works" && <AdminWorks {...props} />}
+        {page === "admin-blogs" && <AdminBlogs {...props} />}
         {page === "admin-leads" && <AdminLeads {...props} />}
         {page === "admin-reviews" && <AdminReviews {...props} />}
         {page === "admin-settings" && <AdminSettings {...props} />}

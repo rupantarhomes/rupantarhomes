@@ -187,6 +187,7 @@ export function PublicHeader({
             </div>
           </div>
           <button onClick={() => goCategory("home-construction")} className="text-[14px] font-medium text-zinc-700 hover:text-[#FF1A3D] transition">Home Construction</button>
+          <button onClick={() => go("blog")} className={`text-[14px] font-medium transition ${page === "blog" || page === "blog-detail" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>Blog</button>
           <button onClick={() => go("about")} className={`text-[14px] font-medium transition ${page === "about" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>About</button>
           <button onClick={() => go("contact")} className={"text-[14px] font-medium transition "+(page === "contact" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]")}>Contact</button>
         </div>
@@ -212,6 +213,9 @@ export function PublicHeader({
             ))}
           </div>
           <button onClick={() => goCategory("home-construction")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Home Construction</button>
+          <button onClick={() => go("blog")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Blog</button>
+          <button onClick={() => go("about")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">About</button>
+          <button onClick={() => go("contact")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Contact</button>
           <button
             onClick={() => {
               setOpen(false);
@@ -270,6 +274,7 @@ export function PublicFooter({
           <div className="mt-4 flex flex-col gap-2.5">
             <button onClick={() => navigate("home")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Home</button>
             <button onClick={() => navigate("works")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">All Works</button>
+            <button onClick={() => navigate("blog")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Blog</button>
             <button onClick={() => navigate("about")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">About Us</button>
             <button onClick={() => navigate("contact")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Contact</button>
             <button onClick={() => navigate("privacy")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Privacy Policy</button>

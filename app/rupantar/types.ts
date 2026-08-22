@@ -1,9 +1,10 @@
-export type PublicPage = "home" | "works" | "work-detail" | "about" | "contact" | "privacy" | "interior-design";
+export type PublicPage = "home" | "works" | "work-detail" | "about" | "contact" | "privacy" | "interior-design" | "blog" | "blog-detail";
 
 export type AdminPage =
   | "admin-login"
   | "admin-dashboard"
   | "admin-works"
+  | "admin-blogs"
   | "admin-leads"
   | "admin-reviews"
   | "admin-settings";

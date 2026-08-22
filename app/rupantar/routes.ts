@@ -4,6 +4,8 @@ export type AppRoute =
   | { kind: "contact" }
   | { kind: "privacy" }
   | { kind: "interior-design" }
+  | { kind: "blog" }
+  | { kind: "blog-detail"; slug: string }
   | { kind: "works"; category: string }
   | { kind: "work-detail"; category: string; slug: string }
   | { kind: "admin" };
@@ -26,6 +28,8 @@ export function parseRoute(pathname: string): AppRoute {
   if (segments.length === 1 && segments[0] === "about") return { kind: "about" };
   if (segments.length === 1 && segments[0] === "contact") return { kind: "contact" };
   if (segments.length === 1 && segments[0] === "privacy") return { kind: "privacy" };
+  if (segments.length === 1 && segments[0] === "blog") return { kind: "blog" };
+  if (segments.length === 2 && segments[0] === "blog" && segments[1]) return { kind: "blog-detail", slug: segments[1] };
   if (segments.length === 1 && segments[0] === "admin") return { kind: "admin" };
   if (segments[0] === "works") {
     if (segments.length === 2 && segments[1] === "interior-design") return { kind: "interior-design" };
@@ -44,6 +48,7 @@ export function pagePath(page: string): string {
   if (page === "about") return "/about";
   if (page === "contact") return "/contact";
   if (page === "privacy") return "/privacy";
+  if (page === "blog") return "/blog";
   if (page === "interior-design") return "/works/interior-design";
   if (page === "works") return "/works";
   return "/";
@@ -56,3 +61,6 @@ export function categoryPath(category: string): string {
 export function workPath(work: { category: string; slug: string }): string {
   return `/works/${encodeURIComponent(work.category)}/${encodeURIComponent(work.slug)}`;
 }
+
+export function blogPath(): string { return "/blog"; }
+export function blogArticlePath(slug: string): string { return `/blog/${encodeURIComponent(slug)}`; }

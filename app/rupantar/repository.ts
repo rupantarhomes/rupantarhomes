@@ -1,4 +1,5 @@
 import { categories, initialReviews, initialSettings, initialWorks } from "./data";
+import { countBlogWords, maximumBlogWords, slugifyBlogTitle, type Blog, type BlogCategory, type BlogForm } from "./blog";
 import type { Tables, TablesInsert } from "./database.types";
 import { getSupabase, isSupabaseConfigured, type Session } from "./supabase";
 import type {
@@ -24,6 +25,7 @@ type WorkImageRow = Pick<
   "id" | "work_id" | "secure_url" | "cloudinary_public_id" | "alt_text" | "sort_order" | "width" | "height" | "byte_size"
 >;
 type ReviewRow = Pick<Tables<"reviews">, "id" | "name" | "location" | "message" | "rating" | "instagram_url">;
+type BlogRow = Pick<Tables<"blogs">, "id" | "title" | "slug" | "body" | "category" | "created_at" | "updated_at">;
 type SettingsRow = Pick<
   Tables<"site_settings">,
   "id" | "slogan" | "phone" | "instagram_url" | "tiktok_url" | "address" | "workshop_note"
@@ -53,6 +55,7 @@ export type LeadPage = {
 
 const allowedCategories = new Set(categories.map((category) => category.slug));
 const allowedLeadStatuses = new Set<LeadStatus>(["new", "contacted", "closed"]);
+const allowedBlogCategories = new Set<BlogCategory>(["architecture", "interior-design", "home-construction"]);
 const maximumPublicMessageLength = 4000;
 const maximumEstimatePhotoBytes = 10 * 1024 * 1024;
 
@@ -498,3 +501,12 @@ export async function loadAdminStats(): Promise<AdminStats> {
   return { queries: queries.count ?? 0, estimates: estimates.count ?? 0 };
 }
 
+
+function blogCategory(value: unknown): BlogCategory { const category=trimmed(value) as BlogCategory; if(!allowedBlogCategories.has(category)) throw new Error("Please select a valid blog category."); return category; }
+function blogBody(value: unknown): string { const body=requiredText(value,"Body"); if(countBlogWords(body)>maximumBlogWords) throw new Error(`Body must be ${maximumBlogWords.toLocaleString()} words or fewer.`); return body; }
+function mapBlog(row: BlogRow): Blog { return {id:String(row.id),title:row.title,slug:row.slug,body:row.body,category:row.category as BlogCategory,createdAt:row.created_at,updatedAt:row.updated_at}; }
+export async function loadPublicBlogs(): Promise<Blog[]> { const {data,error}=await getSupabase().from("blogs").select("id,title,slug,body,category,created_at,updated_at").order("created_at",{ascending:false}); if(error) throw new Error(error.message); return ((data??[]) as BlogRow[]).map(mapBlog); }
+export async function loadPublicBlogBySlug(slug:string): Promise<Blog|null> { const {data,error}=await getSupabase().from("blogs").select("id,title,slug,body,category,created_at,updated_at").eq("slug",slug).maybeSingle(); if(error) throw new Error(error.message); return data?mapBlog(data as BlogRow):null; }
+async function nextBlogSlug(title:string): Promise<string> { const base=slugifyBlogTitle(title); if(!base) throw new Error("Title must include letters or numbers."); const {data,error}=await getSupabase().from("blogs").select("slug").like("slug",`${base}%`); if(error) throw new Error(error.message); const existing=new Set((data??[]).map((row)=>row.slug)); if(!existing.has(base))return base; let suffix=2; while(existing.has(`${base}-${suffix}`))suffix+=1; return `${base}-${suffix}`; }
+export async function saveBlog(form:BlogForm,editingBlogId:string|null):Promise<void> { const title=requiredText(form.title,"Title"),body=blogBody(form.body),category=blogCategory(form.category),supabase=getSupabase() as any; if(editingBlogId){const {data,error}=await supabase.from("blogs").update({title,body,category,updated_at:new Date().toISOString()}).eq("id",Number(editingBlogId)).select("id").maybeSingle();if(error||!data)throw new Error(error?.message??"Article could not be saved.");return;}for(let attempt=0;attempt<3;attempt+=1){const slug=await nextBlogSlug(title);const {error}=await supabase.from("blogs").insert({title,slug,body,category});if(!error)return;if(error.code!=="23505"||attempt===2)throw new Error(error.message);} }
+export async function deleteBlog(id:string):Promise<void> { const {data,error}=await (getSupabase() as any).from("blogs").delete().eq("id",Number(id)).select("id").maybeSingle();if(error||!data)throw new Error(error?.message??"Article could not be deleted."); }

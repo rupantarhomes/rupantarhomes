@@ -16,6 +16,12 @@ export type Database = {
   }
   public: {
     Tables: {
+      blogs: {
+        Row: { body: string; category: string; created_at: string; id: number; slug: string; title: string; updated_at: string }
+        Insert: { body: string; category: string; created_at?: string; id?: never; slug: string; title: string; updated_at?: string }
+        Update: { body?: string; category?: string; created_at?: string; id?: never; slug?: string; title?: string; updated_at?: string }
+        Relationships: []
+      }
       admin_users: {
         Row: {
           created_at: string

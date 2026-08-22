@@ -3,6 +3,7 @@
 import { CheckCircle2, X } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { emptyBlogForm, type Blog, type BlogForm } from "./blog";
 import { deleteCloudinaryImages, maximumWorkImages, uploadWorkImages } from "./cloudinary";
 import {
   emptyEstimate,
@@ -15,14 +16,18 @@ import {
 } from "./data";
 import { HomePage } from "./home-page";
 import {
+  deleteBlog,
   deleteReview,
   deleteWork,
   getCurrentAdminSession,
   loadAdminStats,
+  loadPublicBlogBySlug,
+  loadPublicBlogs,
   loadLeads,
   loadPublicContent,
   loadPublicWorksPage,
   loadPublicWorkBySlug,
+  saveBlog,
   saveReview,
   saveSettings,
   saveWork,
@@ -33,7 +38,7 @@ import {
   updateLeadStatus,
 } from "./repository";
 import { PublicFooter, PublicHeader, TopBar } from "./shared";
-import { categoryPath, pagePath, parseRoute, workPath } from "./routes";
+import { blogArticlePath, categoryPath, pagePath, parseRoute, workPath } from "./routes";
 import type {
   AdminStats,
   Lead,
@@ -54,12 +59,14 @@ const PrivacyPage = lazy(() => import("./public-pages").then((module) => ({ defa
 const InteriorDesignPage = lazy(() => import("./public-pages").then((module) => ({ default: module.InteriorDesignPage })));
 const WorkDetailPage = lazy(() => import("./public-pages").then((module) => ({ default: module.WorkDetailPage })));
 const WorksPage = lazy(() => import("./public-pages").then((module) => ({ default: module.WorksPage })));
+const BlogIndexPage = lazy(() => import("./blog-pages").then((module) => ({ default: module.BlogIndexPage })));
+const BlogArticlePage = lazy(() => import("./blog-pages").then((module) => ({ default: module.BlogArticlePage })));
 
 function PageLoader() {
   return <div className="min-h-[40vh]" aria-busy="true" aria-label="Loading page" />;
 }
 
-const publicPages: Page[] = ["home", "works", "work-detail", "about", "contact", "privacy", "interior-design"];
+const publicPages: Page[] = ["home", "works", "work-detail", "about", "contact", "privacy", "interior-design", "blog", "blog-detail"];
 
 function messageFrom(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong. Please try again.";
@@ -78,6 +85,10 @@ export function RupantarSite() {
   const [worksTotal, setWorksTotal] = useState(initialWorks.length);
   const [worksLoading, setWorksLoading] = useState(false);
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [selectedBlogId, setSelectedBlogId] = useState<string | null>(null);
+  const [blogForm, setBlogForm] = useState<BlogForm>(emptyBlogForm);
+  const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [leadsHasMore, setLeadsHasMore] = useState(false);
   const [leadsNextBefore, setLeadsNextBefore] = useState("");
@@ -110,6 +121,8 @@ export function RupantarSite() {
     setSettings(content.settings);
   }, []);
 
+  const refreshBlogs = useCallback(async () => { setBlogs(await loadPublicBlogs()); }, []);
+
   const loadWorks = async (category: string, offset: number) => {
     setWorksLoading(true);
     try {
@@ -139,6 +152,8 @@ export function RupantarSite() {
       setPage("privacy");
       return;
     }
+    if (route.kind === "blog") { setPage("blog"); setSelectedBlogId(null); await refreshBlogs(); return; }
+    if (route.kind === "blog-detail") { const blog = await loadPublicBlogBySlug(route.slug); if (!blog) { setPage("blog"); await refreshBlogs(); return; } setBlogs((current) => [blog, ...current.filter((item) => item.id !== blog.id)]); setSelectedBlogId(blog.id); setPage("blog-detail"); return; }
     if (route.kind === "admin") {
       setPage("admin-login");
       return;
@@ -178,7 +193,7 @@ export function RupantarSite() {
     setWorks((current) => [work, ...current.filter((item) => item.id !== work.id)]);
     setSelectedWorkId(work.id);
     setPage("work-detail");
-  }, []);
+  }, [refreshBlogs]);
 
   const refreshAdminStats = useCallback(async () => {
     try {
@@ -229,7 +244,7 @@ export function RupantarSite() {
       if (!active || !session) return;
       setIsAdmin(true);
       if (parseRoute(window.location.pathname).kind === "admin") setPage("admin-dashboard");
-      void Promise.all([refreshAdminStats(), refreshLeads()]);
+      void Promise.all([refreshAdminStats(), refreshLeads(), refreshBlogs()]);
     });
 
     const onPopState = () => void applyBrowserRoute();
@@ -238,7 +253,7 @@ export function RupantarSite() {
       active = false;
       window.removeEventListener("popstate", onPopState);
     };
-  }, [applyBrowserRoute, refreshAdminStats, refreshContent, refreshLeads]);
+  }, [applyBrowserRoute, refreshAdminStats, refreshBlogs, refreshContent, refreshLeads]);
 
   const pushPath = (path: string) => {
     if (window.location.pathname !== path) window.history.pushState(null, "", path);
@@ -252,6 +267,7 @@ export function RupantarSite() {
       setPage("admin-login");
     } else {
       setPage(nextPage);
+      if (nextPage === "blog") { setSelectedBlogId(null); void refreshBlogs().catch((error) => console.error("Unable to load blog", error)); }
       if (nextPage === "works") {
         setFilter("all");
         void loadWorks("all", 0);
@@ -259,6 +275,7 @@ export function RupantarSite() {
       if (nextPage.startsWith("admin-") && nextPage !== "admin-login") {
         void refreshContent().catch((error) => console.error("Unable to refresh admin content", error));
         void refreshLeads();
+        void refreshBlogs();
         if (nextPage === "admin-dashboard") void refreshAdminStats();
       }
     }
@@ -286,6 +303,8 @@ export function RupantarSite() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const openBlog = (id: string) => { const blog = blogs.find((item) => item.id === id); if (!blog) return; pushPath(blogArticlePath(blog.slug)); setSelectedBlogId(id); setPage("blog-detail"); window.scrollTo({ top: 0, behavior: "smooth" }); };
+
   const openWork = (id: string) => {
     const work = works.find((item) => item.id === id);
     if (!work) return;
@@ -296,6 +315,7 @@ export function RupantarSite() {
   };
 
   const selectedWork = works.find((work) => work.id === selectedWorkId) || works[0];
+  const selectedBlog = blogs.find((blog) => blog.id === selectedBlogId) || blogs[0];
 
   const persistedDraftImageIds = () =>
     new Set(
@@ -317,7 +337,7 @@ export function RupantarSite() {
     try {
       await signInAdmin(email, password);
       setIsAdmin(true);
-      await Promise.all([refreshContent(), refreshAdminStats(), refreshLeads()]);
+      await Promise.all([refreshContent(), refreshAdminStats(), refreshLeads(), refreshBlogs()]);
       setPage("admin-dashboard");
       window.scrollTo({ top: 0 });
     } catch (error) {
@@ -517,6 +537,11 @@ export function RupantarSite() {
     }
   };
 
+  const handleSaveBlog = async () => { if (!trimmed(blogForm.title) || !trimmed(blogForm.body)) { window.alert("Title and body are required."); return; } setAdminBusy(true); try { await saveBlog(blogForm, editingBlogId); setBlogForm(emptyBlogForm); setEditingBlogId(null); await refreshBlogs(); } catch (error) { window.alert(messageFrom(error)); } finally { setAdminBusy(false); } };
+  const editBlog = (blog: Blog) => { setEditingBlogId(blog.id); setBlogForm({ title: blog.title, category: blog.category, body: blog.body }); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const cancelBlog = () => { setEditingBlogId(null); setBlogForm(emptyBlogForm); };
+  const handleDeleteBlog = async (id: string) => { if (!window.confirm("Delete this article?")) return; setAdminBusy(true); try { await deleteBlog(id); if (editingBlogId === id) cancelBlog(); await refreshBlogs(); } catch (error) { window.alert(messageFrom(error)); } finally { setAdminBusy(false); } };
+
   const handleSaveReview = async () => {
     if (!trimmed(reviewForm.name) || !trimmed(reviewForm.message)) {
       window.alert("Name and message required");
@@ -605,6 +630,14 @@ export function RupantarSite() {
         page={page}
         navigate={navigate}
         onLogout={handleLogout}
+        blogs={blogs}
+        blogForm={blogForm}
+        setBlogForm={setBlogForm}
+        editingBlogId={editingBlogId}
+        onSaveBlog={handleSaveBlog}
+        onEditBlog={editBlog}
+        onDeleteBlog={handleDeleteBlog}
+        onCancelBlog={cancelBlog}
         works={works}
         workForm={workForm}
         setWorkForm={setWorkForm}
@@ -659,6 +692,8 @@ export function RupantarSite() {
           queryBusy={queryBusy}
         />
       )}
+      {page === "blog" && <Suspense fallback={<PageLoader />}><BlogIndexPage blogs={blogs} navigate={navigate} onBlog={openBlog} /></Suspense>}
+      {page === "blog-detail" && selectedBlog && <Suspense fallback={<PageLoader />}><BlogArticlePage blog={selectedBlog} navigate={navigate} /></Suspense>}
       {page === "works" && <Suspense fallback={<PageLoader />}><WorksPage works={works} total={worksTotal} loading={worksLoading} filter={filter} setFilter={openCategory} onLoadMore={() => void loadWorks(filter, works.length)} navigate={navigate} onWork={openWork} /></Suspense>}
       {page === "work-detail" && selectedWork && (
         <Suspense fallback={<PageLoader />}><WorkDetailPage
