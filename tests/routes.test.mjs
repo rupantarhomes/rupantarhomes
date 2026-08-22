@@ -42,7 +42,7 @@ test("contact and privacy pages are wired into the public app", () => {
 
 test("Interior Design is a virtual public group over the existing flat categories", () => {
   for (const slug of ["modular-kitchen", "tv-cabinet", "wardrobe", "hydraulic-bed", "false-ceiling", "parqueting", "railing"]) {
-    assert.match(data, new RegExp(`slug: "\${slug}"`));
+    assert.match(data, new RegExp(`slug: "${slug}"`));
   }
   assert.match(data, /interiorDesignCategorySlugs/);
   assert.match(publicPages, /InteriorDesignPage/);
