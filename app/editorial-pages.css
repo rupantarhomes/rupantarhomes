@@ -188,3 +188,258 @@ main.max-w-\[1280px\] > article.max-w-\[800px\] > h1 + div > p + p {
     line-height: 1.75;
   }
 }
+
+/* Final scoped Blog + Contact refinement.
+   This intentionally overrides only the existing Blog and Contact DOM shapes. */
+
+/* Blog index: restrained publication header + premium list cards */
+main.max-w-\[1280px\] > div.max-w-\[800px\] {
+  max-width: 820px;
+}
+
+main.max-w-\[1280px\] > div.max-w-\[800px\] > h1:first-child {
+  font-size: 40px;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+main.max-w-\[1280px\] > div.max-w-\[800px\] > h1:first-child + p {
+  margin-top: 12px;
+  max-width: 680px;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+main.max-w-\[1280px\] > div.max-w-\[800px\] > div.mt-14.divide-y {
+  margin-top: 34px !important;
+  border-top: 0 !important;
+  display: grid;
+  gap: 16px;
+}
+
+main.max-w-\[1280px\] > div.max-w-\[800px\] > div.mt-14.divide-y > article {
+  padding: 24px !important;
+  border: 1px solid #ececef !important;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 8px 28px rgba(17, 17, 17, 0.045);
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+main.max-w-\[1280px\] > div.max-w-\[800px\] > div.mt-14.divide-y > article:hover {
+  border-color: #dedee3 !important;
+  box-shadow: 0 14px 36px rgba(17, 17, 17, 0.07);
+  transform: translateY(-1px);
+}
+
+main.max-w-\[1280px\] > div.max-w-\[800px\] > div.mt-14.divide-y > article h2 {
+  margin-top: 9px;
+  font-size: 22px;
+  line-height: 1.24;
+  letter-spacing: -0.018em;
+}
+
+main.max-w-\[1280px\] > div.max-w-\[800px\] > div.mt-14.divide-y > article p {
+  margin-top: 10px;
+  max-width: 720px;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+main.max-w-\[1280px\] > div.max-w-\[800px\] > div.mt-14.divide-y > article button {
+  margin-top: 16px;
+}
+
+/* Proper end navigation on Blog list */
+main.max-w-\[1280px\] > div.max-w-\[800px\] > button.mt-12 {
+  min-height: 40px;
+  margin-top: 30px !important;
+  padding: 0 16px;
+  border: 1px solid #e4e4e7;
+  border-radius: 9999px;
+  background: #ffffff;
+  color: #27272a;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(17, 17, 17, 0.035);
+}
+
+main.max-w-\[1280px\] > div.max-w-\[800px\] > button.mt-12:hover {
+  border-color: #d4d4d8;
+  background: #fafafa;
+  color: #ff1a3d;
+}
+
+/* Dedicated Blog article: normal reading size, clear title hierarchy */
+main.max-w-\[1280px\] > article.max-w-\[800px\] {
+  width: min(760px, 100%);
+  max-width: 760px;
+}
+
+main.max-w-\[1280px\] > article.max-w-\[800px\] > h1 {
+  margin-top: 10px;
+  font-size: 38px;
+  line-height: 1.12;
+  letter-spacing: -0.028em;
+}
+
+main.max-w-\[1280px\] > article.max-w-\[800px\] > h1 + div {
+  margin-top: 28px;
+  font-size: 15px;
+  line-height: 1.72;
+  color: #52525b;
+}
+
+main.max-w-\[1280px\] > article.max-w-\[800px\] > h1 + div > p + p {
+  margin-top: 18px;
+}
+
+/* Proper Back to Blog button at the article end */
+main.max-w-\[1280px\] > article.max-w-\[800px\] > button.mt-12 {
+  min-height: 42px;
+  margin-top: 38px !important;
+  padding: 0 18px;
+  border: 1px solid #18181b;
+  border-radius: 9999px;
+  background: #18181b;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 8px 20px rgba(17, 17, 17, 0.1);
+}
+
+main.max-w-\[1280px\] > article.max-w-\[800px\] > button.mt-12:hover {
+  border-color: #ff1a3d;
+  background: #ff1a3d;
+  color: #ffffff;
+}
+
+/* Contact only: distinguish it from Privacy by its direct intro + sections structure */
+main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) {
+  width: min(760px, 100%);
+  max-width: 760px;
+}
+
+main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > h1 {
+  margin-top: 14px;
+  font-size: 38px;
+  line-height: 1.1;
+  letter-spacing: -0.028em;
+}
+
+main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > h1 + div {
+  margin-top: 14px;
+  font-size: 15px;
+  line-height: 1.68;
+}
+
+/* Direct contact block: one restrained information panel, not a card-heavy page */
+main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > h1 + div + section {
+  margin-top: 34px;
+  padding: 20px 22px;
+  border: 1px solid #ececef;
+  border-radius: 18px;
+  background: #fafafa;
+}
+
+main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > h1 + div + section > h2 {
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > h1 + div + section p {
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+/* Contact FAQ remains editorial, with clean separators instead of cards */
+main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > section:last-of-type {
+  margin-top: 42px;
+}
+
+main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > section:last-of-type > h2 {
+  font-size: 28px;
+  line-height: 1.16;
+  letter-spacing: -0.02em;
+}
+
+main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > section:last-of-type > div {
+  margin-top: 22px;
+}
+
+main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > section:last-of-type > div > div {
+  padding: 20px 0 22px;
+  border-top: 1px solid #eeeeef;
+}
+
+main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > section:last-of-type > div > div:last-child {
+  padding-bottom: 0;
+}
+
+main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > section:last-of-type h3 {
+  font-size: 18px;
+  line-height: 1.28;
+  letter-spacing: -0.01em;
+}
+
+main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > section:last-of-type h3 + p {
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.68;
+}
+
+@media (max-width: 639px) {
+  main.max-w-\[1280px\] > div.max-w-\[800px\] > h1:first-child {
+    font-size: 32px;
+  }
+
+  main.max-w-\[1280px\] > div.max-w-\[800px\] > div.mt-14.divide-y {
+    margin-top: 28px !important;
+    gap: 12px;
+  }
+
+  main.max-w-\[1280px\] > div.max-w-\[800px\] > div.mt-14.divide-y > article {
+    padding: 18px !important;
+    border-radius: 17px;
+  }
+
+  main.max-w-\[1280px\] > div.max-w-\[800px\] > div.mt-14.divide-y > article h2 {
+    font-size: 19px;
+    line-height: 1.28;
+  }
+
+  main.max-w-\[1280px\] > article.max-w-\[800px\] > h1 {
+    font-size: 30px;
+    line-height: 1.16;
+  }
+
+  main.max-w-\[1280px\] > article.max-w-\[800px\] > h1 + div {
+    margin-top: 22px;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > h1 {
+    font-size: 32px;
+    line-height: 1.13;
+  }
+
+  main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > h1 + div + section {
+    margin-top: 28px;
+    padding: 17px 18px;
+    border-radius: 16px;
+  }
+
+  main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > section:last-of-type {
+    margin-top: 36px;
+  }
+
+  main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > section:last-of-type > h2 {
+    font-size: 24px;
+  }
+
+  main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > section:last-of-type h3 {
+    font-size: 17px;
+  }
+}
