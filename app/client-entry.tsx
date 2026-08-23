@@ -7,7 +7,6 @@ import "./social-links-enhancer.css";
 import { BrandIntro } from "./rupantar/brand-intro";
 import { RupantarSite } from "./rupantar/site";
 import { initWorkMediaEnhancements } from "./rupantar/work-media-enhancer";
-import { initSocialLinksEnhancements } from "./rupantar/social-links-enhancer";
 
 const root = document.getElementById("root");
 
@@ -31,7 +30,73 @@ createRoot(root).render(
 );
 
 initWorkMediaEnhancements();
-initSocialLinksEnhancements();
+
+const facebookUrl = "https://www.facebook.com/rupantarbygokulkunwar";
+
+function createFacebookIcon() {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("focusable", "false");
+  svg.classList.add("rh-facebook-icon");
+
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("fill", "currentColor");
+  path.setAttribute("d", "M14 8h3V4h-3c-3.3 0-5 2-5 5v3H6v4h3v8h4v-8h3.5l.5-4H13V9c0-.7.3-1 1-1Z");
+  svg.appendChild(path);
+  return svg;
+}
+
+function createFacebookLink(labelled: boolean) {
+  const link = document.createElement("a");
+  link.href = facebookUrl;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.dataset.rhFacebookLink = labelled ? "connect" : "footer";
+  link.setAttribute("aria-label", "Facebook");
+  link.appendChild(createFacebookIcon());
+
+  if (labelled) {
+    link.className = "rh-facebook-connect h-11 px-6 rounded-full bg-white border border-zinc-200 text-[13px] font-medium flex items-center gap-2 hover:border-[#FF1A3D]/30 transition";
+    link.append(document.createTextNode("Facebook"));
+  } else {
+    link.className = "rh-facebook-footer w-9 h-9 rounded-full bg-white/10 border border-white/10 text-white flex items-center justify-center hover:border-[#FF1A3D]/50 transition";
+  }
+
+  return link;
+}
+
+function ensureFacebookLinks() {
+  const connectHeading = Array.from(document.querySelectorAll<HTMLElement>("h3")).find(
+    (element) => element.textContent?.trim() === "Connect With Us",
+  );
+  const connectPanel = connectHeading?.parentElement?.parentElement;
+  const connectActions = connectPanel?.lastElementChild;
+
+  if (connectActions instanceof HTMLElement) {
+    connectActions.classList.add("rh-social-actions");
+    if (!connectActions.querySelector('[data-rh-facebook-link="connect"]')) {
+      connectActions.appendChild(createFacebookLink(true));
+    }
+  }
+
+  const footer = document.querySelector("footer");
+  if (footer) {
+    const socialHeading = Array.from(footer.querySelectorAll<HTMLElement>("div")).find(
+      (element) => element.textContent?.trim() === "Social Links" && element.children.length === 0,
+    );
+    const socialColumn = socialHeading?.parentElement;
+    const socialBody = socialColumn?.children.item(1);
+    const socialIcons = socialBody?.firstElementChild;
+
+    if (socialIcons instanceof HTMLElement) {
+      socialIcons.classList.add("rh-footer-social-links");
+      if (!socialIcons.querySelector('[data-rh-facebook-link="footer"]')) {
+        socialIcons.appendChild(createFacebookLink(false));
+      }
+    }
+  }
+}
 
 function normalizeVisibleCopy() {
   const replacements: Array<[RegExp, string]> = [
@@ -85,12 +150,14 @@ function normalizeVisibleCopy() {
 
   normalizeNode(document.body);
   normalizeFooter();
+  ensureFacebookLinks();
 
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) normalizeNode(node);
     }
     normalizeFooter();
+    ensureFacebookLinks();
   });
 
   observer.observe(document.body, { childList: true, subtree: true });
