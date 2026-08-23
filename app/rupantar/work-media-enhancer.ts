@@ -5,6 +5,39 @@ const LOCATION_SOURCE_CLASS = "rh-work-location-source";
 const LOCATION_OVERLAY_CLASS = "rh-work-location";
 const DETAIL_IMAGE_CLASS = "rh-work-detail-image";
 
+function activateCardMediaSlot(mediaSlot: HTMLElement, card: HTMLElement, body: HTMLElement) {
+  if (mediaSlot.dataset.rhCardMediaReady === "true") return;
+  mediaSlot.dataset.rhCardMediaReady = "true";
+  mediaSlot.style.cursor = "pointer";
+  mediaSlot.setAttribute("role", "button");
+  mediaSlot.setAttribute("tabindex", "0");
+  mediaSlot.setAttribute("aria-label", "Open project details");
+
+  const openProject = () => {
+    if (card.getAttribute("role") === "button") {
+      card.click();
+      return;
+    }
+
+    const viewDetailsButton = Array.from(body.querySelectorAll<HTMLButtonElement>("button")).find((button) =>
+      button.textContent?.includes("View Details"),
+    );
+    viewDetailsButton?.click();
+  };
+
+  mediaSlot.addEventListener("click", (event) => {
+    event.stopPropagation();
+    openProject();
+  });
+
+  mediaSlot.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    event.stopPropagation();
+    openProject();
+  });
+}
+
 function enhanceWorkCards() {
   const mediaShells = document.querySelectorAll<HTMLElement>("article > .p-3, [role='button'] > .p-3");
 
@@ -22,6 +55,7 @@ function enhanceWorkCards() {
     mediaShell.classList.add(MEDIA_SHELL_CLASS);
     mediaSlot.classList.add(MEDIA_SLOT_CLASS);
     locationSource.classList.add(LOCATION_SOURCE_CLASS);
+    activateCardMediaSlot(mediaSlot, card, body);
 
     const locationText = locationSource.textContent?.trim() ?? "";
     const existingOverlay = mediaSlot.querySelector<HTMLElement>(`:scope > .${LOCATION_OVERLAY_CLASS}`);
@@ -190,14 +224,20 @@ function enhanceWorkDetailGallery() {
   const controller = getLightboxController();
 
   images.forEach((image, index) => {
-    if (image.dataset.rhLightboxReady === "true") return;
-    image.dataset.rhLightboxReady = "true";
+    const slot = image.parentElement;
+    if (!(slot instanceof HTMLElement) || slot.dataset.rhLightboxReady === "true") return;
+
+    slot.dataset.rhLightboxReady = "true";
+    slot.style.cursor = "zoom-in";
+    slot.setAttribute("role", "button");
+    slot.setAttribute("tabindex", "0");
+    slot.setAttribute("aria-label", `${image.alt || "Project image"}. Open full image.`);
     image.classList.add(DETAIL_IMAGE_CLASS);
-    image.setAttribute("role", "button");
-    image.setAttribute("tabindex", "0");
-    image.setAttribute("aria-label", `${image.alt || "Project image"}. Open full image.`);
-    image.addEventListener("click", () => controller.open(index));
-    image.addEventListener("keydown", (event) => {
+    image.removeAttribute("role");
+    image.removeAttribute("tabindex");
+
+    slot.addEventListener("click", () => controller.open(index));
+    slot.addEventListener("keydown", (event) => {
       if (event.key !== "Enter" && event.key !== " ") return;
       event.preventDefault();
       controller.open(index);
