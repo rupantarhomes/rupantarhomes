@@ -376,7 +376,38 @@ function PublicTextPage({ title, children, navigate, editorial = false }: { titl
 }
 
 export function ContactPage({ navigate }: { navigate: (page: Page) => void }) {
-  return <PublicTextPage title="Contact Rupantar Homes" navigate={navigate} editorial><section className="space-y-4"><p>Have a project in mind or want to discuss your space directly?</p><p>Rupantar Homes handles Interior Design, Home Construction, Modular Kitchens, custom furniture, ceilings, partitions, and complete interior works.</p><p>For project discussions, estimates, site visits, or general questions, contact:</p><h2 className="mt-4 font-heading text-[22px] sm:text-[26px] font-bold leading-tight text-zinc-900">Contact Gokul Kunwar</h2><p className="mt-3 whitespace-pre-line">Gokul Kunwar{"\n"}9745941799</p><p>You can call directly or contact through WhatsApp.</p></section><section className="pt-3"><h2 className="font-heading text-[28px] sm:text-[32px] font-bold leading-tight text-zinc-900">Frequently Asked Questions</h2><div className="mt-7 space-y-7"><div><h3 className="font-heading text-[17px] sm:text-[18px] font-semibold leading-tight text-zinc-900">What services does Rupantar Homes provide?</h3><p className="mt-3">Rupantar Homes provides Interior Design, Home Construction, 3D Design, Modular Kitchens, wardrobes, hydraulic beds, TV cabinets, false ceilings, partitions, custom furniture, and complete interior works.</p></div><div><h3 className="font-heading text-[17px] sm:text-[18px] font-semibold leading-tight text-zinc-900">Do you handle both interior design and home construction?</h3><p className="mt-3">Yes. Rupantar Homes works on both interior projects and complete home construction, depending on the project scope and requirements.</p></div><div><h3 className="font-heading text-[17px] sm:text-[18px] font-semibold leading-tight text-zinc-900">How can I get an estimate for my project?</h3><p className="mt-3">You can use the Estimate form on the website or contact Gokul Kunwar directly. Sharing your location, approximate measurements, requirements, and a clear photo of the space helps us understand the project better.</p></div><div><h3 className="font-heading text-[17px] sm:text-[18px] font-semibold leading-tight text-zinc-900">Can I send photos of my space before a site visit?</h3><p className="mt-3">Yes. You can upload a photo through the Estimate form or send project details directly. A site visit may still be required before final measurements, pricing, or execution.</p></div><div><h3 className="font-heading text-[17px] sm:text-[18px] font-semibold leading-tight text-zinc-900">Do you provide a design preview before work starts?</h3><p className="mt-3">Design previews can be provided as part of the project process where applicable. The exact design scope is confirmed based on the project requirements.</p></div><div><h3 className="font-heading text-[17px] sm:text-[18px] font-semibold leading-tight text-zinc-900">How do I contact Rupantar Homes directly?</h3><p className="mt-3">You can contact Gokul Kunwar at 9745941799 for project discussions, estimates, site visits, and general inquiries.</p></div></div></section></PublicTextPage>;
+  return (
+    <main className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <button onClick={() => navigate("home")} className="h-9 px-4 rounded-full border border-zinc-200 text-[13px] font-medium inline-flex items-center gap-1.5 hover:bg-zinc-50 mb-8">
+        <ArrowLeft className="w-4 h-4" /> Back Home
+      </button>
+      <div className="max-w-[800px]">
+        <div className="inline-flex px-3 py-1 rounded-full bg-[#FFF0F2] text-[#FF1A3D] text-[11px] font-semibold uppercase tracking-wide">Rupantar Homes</div>
+        <h1 className="font-heading text-[36px] sm:text-[48px] font-bold leading-[1.05] mt-4 tracking-[-0.02em]">Contact Rupantar Homes</h1>
+        <div className="mt-3 space-y-4 text-[15px] leading-7 text-zinc-600">
+          <p>Have a project in mind or want to discuss your space directly?</p>
+          <p>Rupantar Homes handles Interior Design, Home Construction, Modular Kitchens, custom furniture, ceilings, partitions, and complete interior works.</p>
+          <p>For project discussions, estimates, site visits, or general questions, contact:</p>
+        </div>
+        <section className="mt-12 text-[15px] leading-7 text-zinc-600">
+          <h2 className="font-heading text-[22px] sm:text-[26px] font-bold leading-tight text-zinc-900">Contact Gokul Kunwar</h2>
+          <p className="mt-3 whitespace-pre-line">Gokul Kunwar{"\n"}9745941799</p>
+          <p className="mt-4">You can call directly or contact through WhatsApp.</p>
+        </section>
+        <section className="mt-12">
+          <h2 className="font-heading text-[24px] sm:text-[30px] font-bold leading-tight text-zinc-900">Frequently Asked Questions</h2>
+          <div className="mt-8 space-y-8 sm:space-y-9 text-[15px] leading-7 text-zinc-600">
+            <div><h3 className="font-heading text-[18px] sm:text-[20px] font-semibold leading-tight text-zinc-900">What services does Rupantar Homes provide?</h3><p className="mt-2.5">Rupantar Homes provides Interior Design, Home Construction, 3D Design, Modular Kitchens, wardrobes, hydraulic beds, TV cabinets, false ceilings, partitions, custom furniture, and complete interior works.</p></div>
+            <div><h3 className="font-heading text-[18px] sm:text-[20px] font-semibold leading-tight text-zinc-900">Do you handle both interior design and home construction?</h3><p className="mt-2.5">Yes. Rupantar Homes works on both interior projects and complete home construction, depending on the project scope and requirements.</p></div>
+            <div><h3 className="font-heading text-[18px] sm:text-[20px] font-semibold leading-tight text-zinc-900">How can I get an estimate for my project?</h3><p className="mt-2.5">You can use the Estimate form on the website or contact Gokul Kunwar directly. Sharing your location, approximate measurements, requirements, and a clear photo of the space helps us understand the project better.</p></div>
+            <div><h3 className="font-heading text-[18px] sm:text-[20px] font-semibold leading-tight text-zinc-900">Can I send photos of my space before a site visit?</h3><p className="mt-2.5">Yes. You can upload a photo through the Estimate form or send project details directly. A site visit may still be required before final measurements, pricing, or execution.</p></div>
+            <div><h3 className="font-heading text-[18px] sm:text-[20px] font-semibold leading-tight text-zinc-900">Do you provide a design preview before work starts?</h3><p className="mt-2.5">Design previews can be provided as part of the project process where applicable. The exact design scope is confirmed based on the project requirements.</p></div>
+            <div><h3 className="font-heading text-[18px] sm:text-[20px] font-semibold leading-tight text-zinc-900">How do I contact Rupantar Homes directly?</h3><p className="mt-2.5">You can contact Gokul Kunwar at 9745941799 for project discussions, estimates, site visits, and general inquiries.</p></div>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
 }
 
 export function PrivacyPage({ navigate }: { navigate: (page: Page) => void }) {
