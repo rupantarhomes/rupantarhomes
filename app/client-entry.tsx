@@ -32,6 +32,9 @@ initWorkMediaEnhancements();
 
 function normalizeVisibleCopy() {
   const replacements: Array<[RegExp, string]> = [
+    [/9 core services from our Kathmandu studio\. Click any card to see works\./gi, "9 core services. Click any card to see works."],
+    [/Factory finish at Kathmandu studio\. Clean install in 7-21 days\./gi, "Proper Finishing. Clean installation."],
+    [/Kathmandu Nepal\s*•\s*All Right Reserved - Rupantar Homes/gi, "All Right Reserved • Rupantar Homes by Gokul Kunwar"],
     [/\b8 core services\b/gi, "9 core services"],
     [/\b3D sample\b/gi, "design preview"],
     [/\b3D design\b/gi, "design preview"],
