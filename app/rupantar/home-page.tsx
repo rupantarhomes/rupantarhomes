@@ -14,7 +14,7 @@ import {
   Star,
   Upload,
 } from "lucide-react";
-import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { categories, interiorDesignCategories } from "./data";
 import { categoryIcons, WorkPhoto } from "./shared";
 import type {
@@ -45,6 +45,7 @@ type HomePageProps = {
 };
 
 const morphWords = ["Spaces", "Kitchens", "Wardrobes", "Ceilings", "Homes", "Interiors"];
+const heroSlides = ["/hero-1.webp", "/hero-2.webp", "/hero-3.webp", "/hero-4.webp", "/hero-5.webp", "/hero-6.webp"] as const;
 const workSteps = [
   { step: "01", icon: ImageUp, title: "Send Photo", desc: "Share site photos, video & measurements on WhatsApp. Get instant budget range." },
   { step: "02", icon: Ruler, title: "Home Visit, Samples & 3D", desc: "We visit, show laminates, ply, handles. You get 3D design & final quote." },
@@ -87,9 +88,8 @@ export function HomePage({
   const featured = works.filter((work) => work.featured).slice(0, 3);
   const [wordIndex, setWordIndex] = useState(0);
   const [morphing, setMorphing] = useState(false);
-  const [heroVideoRequested, setHeroVideoRequested] = useState(false);
-  const [heroVideoReady, setHeroVideoReady] = useState(false);
-  const heroVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [heroSlideIndex, setHeroSlideIndex] = useState(0);
+  const [heroSlidesReady, setHeroSlidesReady] = useState<Set<number>>(() => new Set([0]));
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -103,55 +103,40 @@ export function HomePage({
   }, []);
 
   useEffect(() => {
-    const frame = window.requestAnimationFrame(() => setHeroVideoRequested(true));
-    return () => window.cancelAnimationFrame(frame);
-  }, []);
-
-  useEffect(() => {
-    if (!heroVideoRequested) return;
-
-    const video = heroVideoRef.current;
-    if (!video) return;
-
     let cancelled = false;
+    const nextIndex = (heroSlideIndex + 1) % heroSlides.length;
+    const timer = window.setTimeout(() => {
+      if (heroSlidesReady.has(nextIndex)) return;
+      const image = new window.Image();
+      image.onload = () => {
+        if (cancelled) return;
+        setHeroSlidesReady((current) => {
+          if (current.has(nextIndex)) return current;
+          const next = new Set(current);
+          next.add(nextIndex);
+          return next;
+        });
+      };
+      image.src = heroSlides[nextIndex];
+    }, 0);
 
-    const handlePlaying = () => {
-      if (!cancelled) {
-        setHeroVideoReady(true);
-      }
-    };
-
-    const tryPlay = () => {
-      if (cancelled) return;
-      const maybePromise = video.play();
-      if (maybePromise && typeof maybePromise.then === "function") {
-        void maybePromise.catch(() => {});
-      }
-    };
-
-    video.addEventListener("playing", handlePlaying);
-    video.load();
-
-    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-      tryPlay();
+    if (!heroSlidesReady.has(nextIndex)) {
       return () => {
         cancelled = true;
-        video.removeEventListener("playing", handlePlaying);
+        window.clearTimeout(timer);
       };
     }
 
-    const handleCanPlay = () => {
-      tryPlay();
-    };
-
-    video.addEventListener("canplay", handleCanPlay, { once: true });
+    const advance = window.setTimeout(() => {
+      setHeroSlideIndex(nextIndex);
+    }, 2000);
 
     return () => {
       cancelled = true;
-      video.removeEventListener("canplay", handleCanPlay);
-      video.removeEventListener("playing", handlePlaying);
+      window.clearTimeout(timer);
+      window.clearTimeout(advance);
     };
-  }, [heroVideoRequested]);
+  }, [heroSlideIndex, heroSlidesReady]);
 
   return (
     <>
@@ -180,48 +165,29 @@ export function HomePage({
             zIndex: 0,
           }}
         >
-          <img
-            src="/rupantar-hero-poster.webp"
-            alt=""
-            loading="eager"
-            decoding="async"
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              pointerEvents: "none",
-              zIndex: 0,
-            }}
-          />
-          {heroVideoRequested && (
-            <video
-              ref={heroVideoRef}
-              autoPlay
-              loop
-              muted
-              playsInline
-              controls={false}
-              preload="none"
-              aria-hidden="true"
-              tabIndex={-1}
-              onError={() => setHeroVideoReady(false)}
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                pointerEvents: "none",
-                opacity: heroVideoReady ? 1 : 0,
-                transition: "opacity 300ms ease",
-                zIndex: 1,
-              }}
-            >
-              <source src="/rupantar-hero-loop-web.mp4" type="video/mp4" />
-            </video>
-          )}
+          {Array.from(heroSlides).map((src, index) => (
+            heroSlidesReady.has(index) && (
+              <img
+                key={src}
+                src={src}
+                alt=""
+                loading={index === 0 ? "eager" : "lazy"}
+                decoding="async"
+                aria-hidden="true"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  pointerEvents: "none",
+                  opacity: heroSlideIndex === index ? 1 : 0,
+                  transition: "opacity 800ms ease-in-out",
+                  zIndex: 0,
+                }}
+              />
+            )
+          ))}
           <div
             style={{
               position: "absolute",
