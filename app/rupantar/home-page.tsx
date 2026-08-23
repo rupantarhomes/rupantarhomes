@@ -85,7 +85,7 @@ export function HomePage({
   estimateBusy,
   queryBusy,
 }: HomePageProps) {
-  const featured = works.filter((work) => work.featured).slice(0, 6);
+  const featured = [...works.filter((work) => work.featured), ...works.filter((work) => !work.featured)].slice(0, 6);
   const [wordIndex, setWordIndex] = useState(0);
   const [morphing, setMorphing] = useState(false);
   const [heroSlideIndex, setHeroSlideIndex] = useState(0);
