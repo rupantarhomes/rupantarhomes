@@ -1,0 +1,61 @@
+/* Social-link enhancement only. Existing section/footer structure is preserved. */
+
+.rh-social-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.rh-social-actions > a {
+  flex: 0 0 auto;
+}
+
+.rh-facebook-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.rh-facebook-connect {
+  white-space: nowrap;
+}
+
+.rh-footer-social-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rh-footer-social-links > a {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 639px) {
+  .rh-social-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .rh-social-actions > a {
+    width: 100%;
+    min-width: 0;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    justify-content: center;
+    font-size: 11px !important;
+    gap: 6px !important;
+  }
+
+  .rh-facebook-icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .rh-footer-social-links {
+    gap: 8px;
+  }
+}
