@@ -3,9 +3,11 @@ import { createRoot } from "react-dom/client";
 import "./globals.css";
 import "./editorial-pages.css";
 import "./work-media-enhancer.css";
+import "./social-links-enhancer.css";
 import { BrandIntro } from "./rupantar/brand-intro";
 import { RupantarSite } from "./rupantar/site";
 import { initWorkMediaEnhancements } from "./rupantar/work-media-enhancer";
+import { initSocialLinksEnhancements } from "./rupantar/social-links-enhancer";
 
 const root = document.getElementById("root");
 
@@ -29,6 +31,7 @@ createRoot(root).render(
 );
 
 initWorkMediaEnhancements();
+initSocialLinksEnhancements();
 
 function normalizeVisibleCopy() {
   const replacements: Array<[RegExp, string]> = [
