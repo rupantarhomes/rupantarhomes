@@ -2,8 +2,10 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./globals.css";
 import "./editorial-pages.css";
+import "./work-media-enhancer.css";
 import { BrandIntro } from "./rupantar/brand-intro";
 import { RupantarSite } from "./rupantar/site";
+import { initWorkMediaEnhancements } from "./rupantar/work-media-enhancer";
 
 const root = document.getElementById("root");
 
@@ -25,6 +27,8 @@ createRoot(root).render(
     <BrandIntro enabled={showBrandIntro} />
   </StrictMode>,
 );
+
+initWorkMediaEnhancements();
 
 function normalizeVisibleCopy() {
   const replacements: Array<[RegExp, string]> = [
