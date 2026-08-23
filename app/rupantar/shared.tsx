@@ -84,13 +84,13 @@ export function WorkPhoto({
     .map((width) => `${cloudinaryDeliveryUrl(image.url, width)} ${width}w`)
     .join(", ");
   return (
-    <div className={`${aspect} w-full rounded-[1.25rem] overflow-hidden bg-[#F8F8F8]`}>
+    <div className={`${aspect} w-full rounded-[1.25rem] overflow-hidden bg-[#F8F8F8] ring-1 ring-inset ring-black/[0.04]`}>
       <img
         src={cloudinaryDeliveryUrl(image.url, fallbackWidth)}
         srcSet={sources}
         sizes={sizes}
         alt={image.altText || alt}
-        className="w-full h-full object-cover"
+        className="w-full h-full object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.025]"
         loading={eager ? "eager" : "lazy"}
         decoding="async"
         onError={() => setFailed(true)}

@@ -265,7 +265,7 @@ export function HomePage({
           {featured.map((work) => (
             <article
               key={work.id}
-              className="group bg-white border border-zinc-100 rounded-[1.5rem] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgba(0,0,0,0.08)] transition"
+              className="group bg-white border border-zinc-100/90 rounded-[1.5rem] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-[border-color,box-shadow,transform] duration-300 ease-out hover:border-zinc-200 hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(0,0,0,0.08)]"
             >
               <div className="p-3">
                 <WorkPhoto image={work.images[0]} alt={work.title} />
