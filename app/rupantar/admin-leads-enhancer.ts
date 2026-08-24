@@ -8,9 +8,12 @@ function findLeadHeading(title: (typeof leadSectionTitles)[number]) {
 
 function setSectionOpen(section: HTMLElement, header: HTMLElement, panel: HTMLElement, open: boolean) {
   section.dataset.rhLeadOpen = String(open);
-  section.classList.toggle("is-open", open);
+  section.style.display = "block";
+  header.style.display = "flex";
+  header.style.cursor = "pointer";
   header.setAttribute("aria-expanded", String(open));
   panel.hidden = !open;
+  panel.style.display = open ? "block" : "none";
 }
 
 function enhanceLeadSection(title: (typeof leadSectionTitles)[number]) {
@@ -21,9 +24,18 @@ function enhanceLeadSection(title: (typeof leadSectionTitles)[number]) {
 
   if (!(section instanceof HTMLElement) || !(header instanceof HTMLElement) || !(panel instanceof HTMLElement)) return;
 
-  section.classList.add("rh-admin-lead-section");
-  header.classList.add("rh-admin-lead-toggle");
-  panel.classList.add("rh-admin-lead-panel");
+  section.classList.remove(
+    "rh-admin-lead-section",
+    "rh-admin-lead-section-estimate",
+    "rh-admin-lead-section-queries",
+    "is-open",
+  );
+  header.classList.remove("rh-admin-lead-original-header", "rh-admin-lead-toggle");
+  panel.classList.remove("rh-admin-lead-panel");
+
+  section.style.display = "block";
+  header.style.display = "flex";
+  header.style.cursor = "pointer";
 
   if (header.dataset.rhLeadToggleReady !== "true") {
     header.dataset.rhLeadToggleReady = "true";
@@ -35,8 +47,7 @@ function enhanceLeadSection(title: (typeof leadSectionTitles)[number]) {
     setSectionOpen(section, header, panel, false);
 
     const toggle = () => {
-      const open = section.dataset.rhLeadOpen !== "true";
-      setSectionOpen(section, header, panel, open);
+      setSectionOpen(section, header, panel, section.dataset.rhLeadOpen !== "true");
     };
 
     header.addEventListener("click", toggle);
@@ -56,6 +67,7 @@ function enhanceAdminLeads() {
   );
   if (!leadsHeading) return;
 
+  document.querySelectorAll<HTMLElement>("[data-rh-admin-leads-selector]").forEach((selector) => selector.remove());
   leadSectionTitles.forEach(enhanceLeadSection);
 }
 
