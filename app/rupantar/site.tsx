@@ -177,6 +177,7 @@ export function RupantarSite() {
   }, []);
 
   const restoreHomeWorks = () => {
+    worksRequestIdRef.current += 1;
     const homeWorks = homeWorksRef.current;
     worksRef.current = homeWorks;
     worksLoadedRef.current = true;
@@ -186,15 +187,20 @@ export function RupantarSite() {
   };
 
   const refreshContent = useCallback(async () => {
-    const requestId = ++worksRequestIdRef.current;
     const content = await loadPublicContent();
     setReviews(content.reviews);
     setSettings(content.settings);
     homeWorksRef.current = content.works;
-    if (requestId !== worksRequestIdRef.current) return;
+
+    const route = parseRoute(window.location.pathname);
+    if (route.kind !== "home" && route.kind !== "admin") return;
+
+    worksRequestIdRef.current += 1;
     worksRef.current = content.works;
     worksLoadedRef.current = true;
     setWorks(content.works);
+    setWorksTotal(content.works.length);
+    setWorksLoading(false);
   }, []);
 
   const refreshBlogs = useCallback(async () => {
@@ -377,10 +383,12 @@ export function RupantarSite() {
           setSettings(content.settings);
           homeWorksRef.current = content.works;
           if (parseRoute(window.location.pathname).kind === "home") {
+            worksRequestIdRef.current += 1;
             worksRef.current = content.works;
             worksLoadedRef.current = true;
             setWorks(content.works);
             setWorksTotal(content.works.length);
+            setWorksLoading(false);
           }
         })
         .catch((error) => {
