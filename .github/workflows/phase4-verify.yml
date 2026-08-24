@@ -1,0 +1,107 @@
+name: Phase 4 Verify
+
+on:
+  push:
+    branches:
+      - perf/public-navigation-phase3
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: perf/public-navigation-phase3
+          fetch-depth: 0
+
+      - name: Apply final navigation race fix
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("app/rupantar/site.tsx")
+          text = path.read_text(encoding="utf-8")
+
+          old_restore = '''  const restoreHomeWorks = () => {
+            const homeWorks = homeWorksRef.current;
+          '''.replace("            ", "")
+          new_restore = '''  const restoreHomeWorks = () => {
+            worksRequestIdRef.current += 1;
+            const homeWorks = homeWorksRef.current;
+          '''.replace("            ", "")
+
+          old_refresh = '''  const refreshContent = useCallback(async () => {
+            const requestId = ++worksRequestIdRef.current;
+            const content = await loadPublicContent();
+            setReviews(content.reviews);
+            setSettings(content.settings);
+            homeWorksRef.current = content.works;
+            if (requestId !== worksRequestIdRef.current) return;
+            worksRef.current = content.works;
+            worksLoadedRef.current = true;
+            setWorks(content.works);
+          }, []);
+          '''.replace("            ", "")
+          new_refresh = '''  const refreshContent = useCallback(async () => {
+            const content = await loadPublicContent();
+            setReviews(content.reviews);
+            setSettings(content.settings);
+            homeWorksRef.current = content.works;
+
+            const route = parseRoute(window.location.pathname);
+            if (route.kind !== "home" && route.kind !== "admin") return;
+
+            worksRequestIdRef.current += 1;
+            worksRef.current = content.works;
+            worksLoadedRef.current = true;
+            setWorks(content.works);
+            setWorksTotal(content.works.length);
+            setWorksLoading(false);
+          }, []);
+          '''.replace("            ", "")
+
+          if old_restore not in text:
+              raise SystemExit("restoreHomeWorks target block not found; refusing broad edit")
+          if old_refresh not in text:
+              raise SystemExit("refreshContent target block not found; refusing broad edit")
+
+          text = text.replace(old_restore, new_restore, 1)
+          text = text.replace(old_refresh, new_refresh, 1)
+          path.write_text(text, encoding="utf-8")
+          PY
+
+          git diff --check
+          git diff -- app/rupantar/site.tsx
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package.json
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build
+        run: npm run build
+
+      - name: Commit verified race fix
+        shell: bash
+        run: |
+          if git diff --quiet -- app/rupantar/site.tsx; then
+            echo "No race-fix diff to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/rupantar/site.tsx
+          git commit -m "Finalize navigation race protection [phase4]"
+          git push origin HEAD:perf/public-navigation-phase3
