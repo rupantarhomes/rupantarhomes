@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle2, X } from "lucide-react";
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { emptyBlogForm, type Blog, type BlogForm } from "./blog";
 import { deleteCloudinaryImages, maximumWorkImages, uploadWorkImages } from "./cloudinary";
@@ -68,6 +68,25 @@ function PageLoader() {
 
 const publicPages: Page[] = ["home", "works", "work-detail", "about", "contact", "privacy", "interior-design", "blog", "blog-detail"];
 
+type BrowserRoute = ReturnType<typeof parseRoute>;
+
+function pageForRoute(route: BrowserRoute): Page {
+  if (route.kind === "about") return "about";
+  if (route.kind === "contact") return "contact";
+  if (route.kind === "privacy") return "privacy";
+  if (route.kind === "blog") return "blog";
+  if (route.kind === "blog-detail") return "blog-detail";
+  if (route.kind === "admin") return "admin-login";
+  if (route.kind === "interior-design") return "interior-design";
+  if (route.kind === "works") return "works";
+  if (route.kind === "work-detail") return "work-detail";
+  return "home";
+}
+
+function initialBrowserRoute(): BrowserRoute {
+  return typeof window === "undefined" ? { kind: "home" } : parseRoute(window.location.pathname);
+}
+
 function messageFrom(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong. Please try again.";
 }
@@ -77,15 +96,20 @@ function trimmed(value: unknown): string {
 }
 
 export function RupantarSite() {
-  const [page, setPage] = useState<Page>("home");
-  const [filter, setFilter] = useState("all");
+  const initialRoute = initialBrowserRoute();
+  const initialRouteUsesWorks = initialRoute.kind === "works" || initialRoute.kind === "work-detail";
+  const initialWorksState = initialRouteUsesWorks ? [] : initialWorks;
+  const [page, setPage] = useState<Page>(() => pageForRoute(initialRoute));
+  const [filter, setFilter] = useState(() => initialRoute.kind === "works" || initialRoute.kind === "work-detail" ? initialRoute.category : "all");
   const [selectedWorkId, setSelectedWorkId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [works, setWorks] = useState<Work[]>(initialWorks);
-  const [worksTotal, setWorksTotal] = useState(initialWorks.length);
-  const [worksLoading, setWorksLoading] = useState(false);
+  const [works, setWorks] = useState<Work[]>(initialWorksState);
+  const [worksTotal, setWorksTotal] = useState(initialRouteUsesWorks ? 0 : initialWorks.length);
+  const [worksLoading, setWorksLoading] = useState(initialRoute.kind === "works");
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [blogsLoading, setBlogsLoading] = useState(false);
+  const [blogsLoaded, setBlogsLoaded] = useState(false);
   const [selectedBlogId, setSelectedBlogId] = useState<string | null>(null);
   const [blogForm, setBlogForm] = useState<BlogForm>(emptyBlogForm);
   const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
@@ -108,35 +132,120 @@ export function RupantarSite() {
   const [queryBusy, setQueryBusy] = useState(false);
   const [estimateSaved, setEstimateSaved] = useState(false);
 
+  const homeWorksRef = useRef<Work[]>(initialWorks);
+  const worksRef = useRef(works);
+  const worksLoadedRef = useRef(false);
+  const worksRequestIdRef = useRef(0);
+  const blogsRef = useRef(blogs);
+  const blogsLoadedRef = useRef(false);
+  const blogsRequestIdRef = useRef(0);
+  const routeRequestIdRef = useRef(0);
+
+  useEffect(() => {
+    worksRef.current = works;
+  }, [works]);
+
+  useEffect(() => {
+    blogsRef.current = blogs;
+  }, [blogs]);
+
   useEffect(() => {
     if (!estimateSaved) return;
     const timer = window.setTimeout(() => setEstimateSaved(false), 5000);
     return () => window.clearTimeout(timer);
   }, [estimateSaved]);
 
-  const refreshContent = useCallback(async () => {
-    const content = await loadPublicContent();
-    setWorks(content.works);
-    setReviews(content.reviews);
-    setSettings(content.settings);
+  useEffect(() => {
+    if (parseRoute(window.location.pathname).kind === "admin") return;
+
+    const idleWindow = window as typeof window & {
+      requestIdleCallback?: (callback: () => void) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
+    const prefetchPublicPages = () => {
+      void import("./public-pages");
+      void import("./blog-pages");
+    };
+
+    if (idleWindow.requestIdleCallback) {
+      const handle = idleWindow.requestIdleCallback(prefetchPublicPages);
+      return () => idleWindow.cancelIdleCallback?.(handle);
+    }
+
+    const timer = window.setTimeout(prefetchPublicPages, 150);
+    return () => window.clearTimeout(timer);
   }, []);
 
-  const refreshBlogs = useCallback(async () => { setBlogs(await loadPublicBlogs()); }, []);
+  const restoreHomeWorks = () => {
+    worksRequestIdRef.current += 1;
+    const homeWorks = homeWorksRef.current;
+    worksRef.current = homeWorks;
+    worksLoadedRef.current = true;
+    setWorks(homeWorks);
+    setWorksTotal(homeWorks.length);
+    setWorksLoading(false);
+  };
 
-  const loadWorks = async (category: string, offset: number) => {
+  const refreshContent = useCallback(async () => {
+    const content = await loadPublicContent();
+    setReviews(content.reviews);
+    setSettings(content.settings);
+    homeWorksRef.current = content.works;
+
+    const route = parseRoute(window.location.pathname);
+    if (route.kind !== "home" && route.kind !== "admin") return;
+
+    worksRequestIdRef.current += 1;
+    worksRef.current = content.works;
+    worksLoadedRef.current = true;
+    setWorks(content.works);
+    setWorksTotal(content.works.length);
+    setWorksLoading(false);
+  }, []);
+
+  const refreshBlogs = useCallback(async () => {
+    const requestId = ++blogsRequestIdRef.current;
+    setBlogsLoading(true);
+    try {
+      const nextBlogs = await loadPublicBlogs();
+      if (requestId !== blogsRequestIdRef.current) return;
+      blogsRef.current = nextBlogs;
+      blogsLoadedRef.current = true;
+      setBlogs(nextBlogs);
+      setBlogsLoaded(true);
+    } finally {
+      if (requestId === blogsRequestIdRef.current) setBlogsLoading(false);
+    }
+  }, []);
+
+  const loadWorks = useCallback(async (category: string, offset: number, clearCurrent = false) => {
+    const requestId = ++worksRequestIdRef.current;
+    if (clearCurrent) {
+      worksRef.current = [];
+      setWorks([]);
+      setWorksTotal(0);
+    }
     setWorksLoading(true);
     try {
       const result = await loadPublicWorksPage(offset, 12, category);
+      if (requestId !== worksRequestIdRef.current) return;
+      const nextWorks = offset === 0 ? result.works : [...worksRef.current, ...result.works];
+      worksRef.current = nextWorks;
+      worksLoadedRef.current = true;
       setWorksTotal(result.total);
-      setWorks((current) => offset === 0 ? result.works : [...current, ...result.works]);
+      setWorks(nextWorks);
     } finally {
-      setWorksLoading(false);
+      if (requestId === worksRequestIdRef.current) setWorksLoading(false);
     }
-  };
+  }, []);
 
   const applyBrowserRoute = useCallback(async () => {
+    const routeRequestId = ++routeRequestIdRef.current;
+    const isCurrentRoute = () => routeRequestId === routeRequestIdRef.current;
     const route = parseRoute(window.location.pathname);
+
     if (route.kind === "home") {
+      restoreHomeWorks();
       setPage("home");
       return;
     }
@@ -152,8 +261,33 @@ export function RupantarSite() {
       setPage("privacy");
       return;
     }
-    if (route.kind === "blog") { setPage("blog"); setSelectedBlogId(null); await refreshBlogs(); return; }
-    if (route.kind === "blog-detail") { const blog = await loadPublicBlogBySlug(route.slug); if (!blog) { setPage("blog"); await refreshBlogs(); return; } setBlogs((current) => [blog, ...current.filter((item) => item.id !== blog.id)]); setSelectedBlogId(blog.id); setPage("blog-detail"); return; }
+    if (route.kind === "blog") {
+      setPage("blog");
+      setSelectedBlogId(null);
+      if (!blogsLoadedRef.current) await refreshBlogs();
+      return;
+    }
+    if (route.kind === "blog-detail") {
+      setPage("blog-detail");
+      const cachedBlog = blogsRef.current.find((item) => item.slug === route.slug);
+      if (cachedBlog) {
+        setSelectedBlogId(cachedBlog.id);
+        return;
+      }
+      const blog = await loadPublicBlogBySlug(route.slug);
+      if (!isCurrentRoute()) return;
+      if (!blog) {
+        setSelectedBlogId(null);
+        setPage("blog");
+        if (!blogsLoadedRef.current) await refreshBlogs();
+        return;
+      }
+      const nextBlogs = [blog, ...blogsRef.current.filter((item) => item.id !== blog.id)];
+      blogsRef.current = nextBlogs;
+      setBlogs(nextBlogs);
+      setSelectedBlogId(blog.id);
+      return;
+    }
     if (route.kind === "admin") {
       setPage("admin-login");
       return;
@@ -165,35 +299,34 @@ export function RupantarSite() {
     if (route.kind === "works") {
       setFilter(route.category);
       setPage("works");
-      setWorksLoading(true);
-      try {
-        const result = await loadPublicWorksPage(0, 12, route.category);
-        setWorks(result.works);
-        setWorksTotal(result.total);
-      } finally {
-        setWorksLoading(false);
-      }
+      await loadWorks(route.category, 0, true);
       return;
     }
 
     setFilter(route.category);
-    const work = await loadPublicWorkBySlug(route.category, route.slug);
-    if (!work) {
-      setPage("works");
-      setWorksLoading(true);
-      try {
-        const result = await loadPublicWorksPage(0, 12, route.category);
-        setWorks(result.works);
-        setWorksTotal(result.total);
-      } finally {
-        setWorksLoading(false);
-      }
+    setPage("work-detail");
+    const cachedWork = worksLoadedRef.current
+      ? worksRef.current.find((item) => item.category === route.category && item.slug === route.slug)
+      : undefined;
+    if (cachedWork) {
+      setSelectedWorkId(cachedWork.id);
       return;
     }
-    setWorks((current) => [work, ...current.filter((item) => item.id !== work.id)]);
+
+    const work = await loadPublicWorkBySlug(route.category, route.slug);
+    if (!isCurrentRoute()) return;
+    if (!work) {
+      setSelectedWorkId(null);
+      setPage("works");
+      await loadWorks(route.category, 0, true);
+      return;
+    }
+    const nextWorks = [work, ...worksRef.current.filter((item) => item.id !== work.id)];
+    worksRef.current = nextWorks;
+    worksLoadedRef.current = true;
+    setWorks(nextWorks);
     setSelectedWorkId(work.id);
-    setPage("work-detail");
-  }, [refreshBlogs]);
+  }, [loadWorks, refreshBlogs]);
 
   const refreshAdminStats = useCallback(async () => {
     try {
@@ -232,14 +365,37 @@ export function RupantarSite() {
   useEffect(() => {
     document.title = "Rupantar Homes";
     let active = true;
+    const startupRoute = parseRoute(window.location.pathname);
 
-    void refreshContent()
-      .then(() => {
-        if (active) void applyBrowserRoute();
-      })
-      .catch((error) => {
+    void applyBrowserRoute().catch((error) => {
+      if (active) console.error("Unable to apply website route", error);
+    });
+
+    if (startupRoute.kind === "home") {
+      void refreshContent().catch((error) => {
         if (active) console.error("Unable to load website content", error);
       });
+    } else if (startupRoute.kind !== "admin") {
+      void loadPublicContent()
+        .then((content) => {
+          if (!active) return;
+          setReviews(content.reviews);
+          setSettings(content.settings);
+          homeWorksRef.current = content.works;
+          if (parseRoute(window.location.pathname).kind === "home") {
+            worksRequestIdRef.current += 1;
+            worksRef.current = content.works;
+            worksLoadedRef.current = true;
+            setWorks(content.works);
+            setWorksTotal(content.works.length);
+            setWorksLoading(false);
+          }
+        })
+        .catch((error) => {
+          if (active) console.error("Unable to load website shell content", error);
+        });
+    }
+
     void getCurrentAdminSession().then((session) => {
       if (!active || !session) return;
       setIsAdmin(true);
@@ -247,7 +403,7 @@ export function RupantarSite() {
       void Promise.all([refreshAdminStats(), refreshLeads(), refreshBlogs()]);
     });
 
-    const onPopState = () => void applyBrowserRoute();
+    const onPopState = () => void applyBrowserRoute().catch((error) => console.error("Unable to apply browser route", error));
     window.addEventListener("popstate", onPopState);
     return () => {
       active = false;
@@ -260,17 +416,23 @@ export function RupantarSite() {
   };
 
   const navigate = (nextPage: Page) => {
+    routeRequestIdRef.current += 1;
     if (nextPage.startsWith("admin-")) pushPath("/admin");
     else pushPath(pagePath(nextPage));
 
     if (nextPage.startsWith("admin-") && nextPage !== "admin-login" && !isAdmin) {
       setPage("admin-login");
     } else {
+      if (nextPage === "home") restoreHomeWorks();
       setPage(nextPage);
-      if (nextPage === "blog") { setSelectedBlogId(null); void refreshBlogs().catch((error) => console.error("Unable to load blog", error)); }
+      if (nextPage === "blog") {
+        setSelectedBlogId(null);
+        if (!blogsLoadedRef.current) void refreshBlogs().catch((error) => console.error("Unable to load blog", error));
+      }
       if (nextPage === "works") {
+        const categoryChanged = filter !== "all";
         setFilter("all");
-        void loadWorks("all", 0);
+        void loadWorks("all", 0, categoryChanged);
       }
       if (nextPage.startsWith("admin-") && nextPage !== "admin-login") {
         void refreshContent().catch((error) => console.error("Unable to refresh admin content", error));
@@ -283,8 +445,10 @@ export function RupantarSite() {
   };
 
   const goToEstimate = () => {
+    routeRequestIdRef.current += 1;
     if (page !== "home") {
       pushPath("/");
+      restoreHomeWorks();
       setPage("home");
       window.setTimeout(
         () => document.getElementById("estimate")?.scrollIntoView({ behavior: "smooth", block: "start" }),
@@ -296,26 +460,37 @@ export function RupantarSite() {
   };
 
   const openCategory = (category: string) => {
+    routeRequestIdRef.current += 1;
     pushPath(categoryPath(category));
+    const categoryChanged = category !== filter;
     setFilter(category);
     setPage("works");
-    void loadWorks(category, 0);
+    void loadWorks(category, 0, categoryChanged);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const openBlog = (id: string) => { const blog = blogs.find((item) => item.id === id); if (!blog) return; pushPath(blogArticlePath(blog.slug)); setSelectedBlogId(id); setPage("blog-detail"); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const openBlog = (id: string) => {
+    const blog = blogsRef.current.find((item) => item.id === id);
+    if (!blog) return;
+    routeRequestIdRef.current += 1;
+    pushPath(blogArticlePath(blog.slug));
+    setSelectedBlogId(id);
+    setPage("blog-detail");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const openWork = (id: string) => {
-    const work = works.find((item) => item.id === id);
+    const work = worksRef.current.find((item) => item.id === id);
     if (!work) return;
+    routeRequestIdRef.current += 1;
     pushPath(workPath(work));
     setSelectedWorkId(id);
     setPage("work-detail");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const selectedWork = works.find((work) => work.id === selectedWorkId) || works[0];
-  const selectedBlog = blogs.find((blog) => blog.id === selectedBlogId) || blogs[0];
+  const selectedWork = works.find((work) => work.id === selectedWorkId);
+  const selectedBlog = blogs.find((blog) => blog.id === selectedBlogId);
 
   const persistedDraftImageIds = () =>
     new Set(
@@ -358,6 +533,7 @@ export function RupantarSite() {
       setLeads([]);
       setAdminStats({ queries: 0, estimates: 0 });
       pushPath("/");
+      restoreHomeWorks();
       setPage("home");
     } catch (error) {
       window.alert(`Logout stopped: ${messageFrom(error)}`);
@@ -692,10 +868,10 @@ export function RupantarSite() {
           queryBusy={queryBusy}
         />
       )}
-      {page === "blog" && <Suspense fallback={<PageLoader />}><BlogIndexPage blogs={blogs} navigate={navigate} onBlog={openBlog} /></Suspense>}
-      {page === "blog-detail" && selectedBlog && <Suspense fallback={<PageLoader />}><BlogArticlePage blog={selectedBlog} navigate={navigate} /></Suspense>}
+      {page === "blog" && <Suspense fallback={<PageLoader />}><BlogIndexPage blogs={blogs} loading={!blogsLoaded || blogsLoading} navigate={navigate} onBlog={openBlog} /></Suspense>}
+      {page === "blog-detail" && (selectedBlog ? <Suspense fallback={<PageLoader />}><BlogArticlePage blog={selectedBlog} navigate={navigate} /></Suspense> : <PageLoader />)}
       {page === "works" && <Suspense fallback={<PageLoader />}><WorksPage works={works} total={worksTotal} loading={worksLoading} filter={filter} setFilter={openCategory} onLoadMore={() => void loadWorks(filter, works.length)} navigate={navigate} onWork={openWork} /></Suspense>}
-      {page === "work-detail" && selectedWork && (
+      {page === "work-detail" && (selectedWork ? (
         <Suspense fallback={<PageLoader />}><WorkDetailPage
           work={selectedWork}
           works={works}
@@ -703,7 +879,7 @@ export function RupantarSite() {
           onWork={openWork}
           onEstimate={goToEstimate}
         /></Suspense>
-      )}
+      ) : <PageLoader />)}
       {page === "about" && <Suspense fallback={<PageLoader />}><AboutPage navigate={navigate} settings={settings} /></Suspense>}
       {page === "contact" && <Suspense fallback={<PageLoader />}><ContactPage navigate={navigate} /></Suspense>}
       {page === "privacy" && <Suspense fallback={<PageLoader />}><PrivacyPage navigate={navigate} /></Suspense>}
