@@ -29,48 +29,48 @@ jobs:
           path = Path("app/rupantar/site.tsx")
           text = path.read_text(encoding="utf-8")
 
-          old_restore = '''  const restoreHomeWorks = () => {
-            const homeWorks = homeWorksRef.current;
-          '''.replace("            ", "")
-          new_restore = '''  const restoreHomeWorks = () => {
-            worksRequestIdRef.current += 1;
-            const homeWorks = homeWorksRef.current;
-          '''.replace("            ", "")
+          old_restore = """  const restoreHomeWorks = () => {
+    const homeWorks = homeWorksRef.current;
+"""
+          new_restore = """  const restoreHomeWorks = () => {
+    worksRequestIdRef.current += 1;
+    const homeWorks = homeWorksRef.current;
+"""
 
-          old_refresh = '''  const refreshContent = useCallback(async () => {
-            const requestId = ++worksRequestIdRef.current;
-            const content = await loadPublicContent();
-            setReviews(content.reviews);
-            setSettings(content.settings);
-            homeWorksRef.current = content.works;
-            if (requestId !== worksRequestIdRef.current) return;
-            worksRef.current = content.works;
-            worksLoadedRef.current = true;
-            setWorks(content.works);
-          }, []);
-          '''.replace("            ", "")
-          new_refresh = '''  const refreshContent = useCallback(async () => {
-            const content = await loadPublicContent();
-            setReviews(content.reviews);
-            setSettings(content.settings);
-            homeWorksRef.current = content.works;
+          old_refresh = """  const refreshContent = useCallback(async () => {
+    const requestId = ++worksRequestIdRef.current;
+    const content = await loadPublicContent();
+    setReviews(content.reviews);
+    setSettings(content.settings);
+    homeWorksRef.current = content.works;
+    if (requestId !== worksRequestIdRef.current) return;
+    worksRef.current = content.works;
+    worksLoadedRef.current = true;
+    setWorks(content.works);
+  }, []);
+"""
+          new_refresh = """  const refreshContent = useCallback(async () => {
+    const content = await loadPublicContent();
+    setReviews(content.reviews);
+    setSettings(content.settings);
+    homeWorksRef.current = content.works;
 
-            const route = parseRoute(window.location.pathname);
-            if (route.kind !== "home" && route.kind !== "admin") return;
+    const route = parseRoute(window.location.pathname);
+    if (route.kind !== \"home\" && route.kind !== \"admin\") return;
 
-            worksRequestIdRef.current += 1;
-            worksRef.current = content.works;
-            worksLoadedRef.current = true;
-            setWorks(content.works);
-            setWorksTotal(content.works.length);
-            setWorksLoading(false);
-          }, []);
-          '''.replace("            ", "")
+    worksRequestIdRef.current += 1;
+    worksRef.current = content.works;
+    worksLoadedRef.current = true;
+    setWorks(content.works);
+    setWorksTotal(content.works.length);
+    setWorksLoading(false);
+  }, []);
+"""
 
-          if old_restore not in text:
-              raise SystemExit("restoreHomeWorks target block not found; refusing broad edit")
-          if old_refresh not in text:
-              raise SystemExit("refreshContent target block not found; refusing broad edit")
+          if text.count(old_restore) != 1:
+              raise SystemExit("restoreHomeWorks target block not found exactly once; refusing broad edit")
+          if text.count(old_refresh) != 1:
+              raise SystemExit("refreshContent target block not found exactly once; refusing broad edit")
 
           text = text.replace(old_restore, new_restore, 1)
           text = text.replace(old_refresh, new_refresh, 1)
@@ -84,8 +84,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: package.json
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
