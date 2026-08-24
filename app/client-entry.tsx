@@ -34,6 +34,28 @@ createRoot(root).render(
 initWorkMediaEnhancements();
 initAdminLeadsEnhancements();
 
+function resetPageScroll() {
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    });
+  });
+}
+
+function initPageScrollReset() {
+  if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
+
+  const originalPushState = window.history.pushState;
+  window.history.pushState = function (data: unknown, unused: string, url?: string | URL | null) {
+    originalPushState.call(window.history, data, unused, url);
+    resetPageScroll();
+  };
+
+  window.addEventListener("popstate", resetPageScroll);
+}
+
+initPageScrollReset();
+
 const facebookUrl = "https://www.facebook.com/rupantarbygokulkunwar";
 
 function createFacebookIcon() {
