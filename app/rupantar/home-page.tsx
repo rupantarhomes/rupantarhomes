@@ -45,7 +45,16 @@ type HomePageProps = {
 };
 
 const morphWords = ["Spaces", "Kitchens", "Wardrobes", "Ceilings", "Homes", "Interiors"];
-const heroSlides = ["/hero-1.webp", "/hero-2.webp", "/hero-3.webp", "/hero-4.webp", "/hero-5.webp", "/hero-6.webp", "/hero-7.webp", "/hero-8.webp"] as const;
+const heroSlides = [
+  "/hero-real-1-v2.webp",
+  "/hero-real-2-v2.webp",
+  "/hero-real-3-v2.webp",
+  "/hero-real-4-v2.webp",
+  "/hero-real-5-v2.webp",
+  "/hero-real-6-v2.webp",
+  "/hero-real-7-v2.webp",
+  "/hero-real-8-v2.webp",
+] as const;
 const workSteps = [
   { step: "01", icon: ImageUp, title: "Send Photo", desc: "Share site photos, video & measurements on WhatsApp. Get instant budget range." },
   { step: "02", icon: Ruler, title: "Home Visit, Samples & 3D", desc: "We visit, show laminates, ply, handles. You get 3D design & final quote." },
