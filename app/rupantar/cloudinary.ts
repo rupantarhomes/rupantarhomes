@@ -100,7 +100,7 @@ function validateUploadedImage(uploaded: UploadResponse, signed: SignatureRespon
   if (!secureUrl || !publicId) throw new Error(`Cloudinary did not store ${file.name} correctly.`);
   if (format !== "webp") throw new Error(`${file.name} was not converted to WebP.`);
   if (!width || !height || !bytes) throw new Error(`${file.name} returned incomplete image details.`);
-  if (Math.max(width, height) > 1920 || Math.min(width, height) > 1080) {
+  if (width > 1920 || height > 1080) {
     throw new Error(`${file.name} was not reduced to the approved 1080p dimensions.`);
   }
 
