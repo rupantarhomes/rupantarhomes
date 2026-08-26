@@ -3,7 +3,7 @@ import { cloudinarySignature } from "../_lib/cloudinary";
 import { requireRuntimeEnv, type RuntimeEnv } from "../_lib/env";
 import { errorMessage, json } from "../_lib/http";
 
-const workImageTransformation = "c_limit,h_1080,w_1920/f_webp/q_auto:good";
+const workImageTransformation = "c_limit,h_1080,w_1920/q_auto:good";
 
 export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env }) => {
   try {
@@ -36,4 +36,3 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
     return json({ error: status === 401 ? "Unauthorized" : "Unable to authorize upload" }, status);
   }
 };
-

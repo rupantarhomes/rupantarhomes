@@ -22,7 +22,8 @@ test("keeps the work-image source and WebP output contract strict", async () => 
   assert.match(client, /if \(width > 1920 \|\| height > 1080\)/);
 
   assert.match(signature, /format: "webp"/);
-  assert.match(signature, /c_limit,h_1080,w_1920\/f_webp\/q_auto:good/);
+  assert.match(signature, /c_limit,h_1080,w_1920\/q_auto:good/);
+  assert.doesNotMatch(signature, /f_webp/);
 });
 
 test("rejects malformed or untrusted Cloudinary upload responses", async () => {
