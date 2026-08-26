@@ -2,14 +2,15 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("hero uses the six-image dissolve slideshow without changing hero geometry", async () => {
+test("hero uses the eight-image dissolve slideshow without changing hero geometry", async () => {
   const source = await readFile(new URL("../app/rupantar/home-page.tsx", import.meta.url), "utf8");
   const required = [
-    "/hero-1.webp", "/hero-2.webp", "/hero-3.webp", "/hero-4.webp", "/hero-5.webp", "/hero-6.webp",
+    "/hero-real-1-v2.webp", "/hero-real-2-v2.webp", "/hero-real-3-v2.webp", "/hero-real-4-v2.webp",
+    "/hero-real-5-v2.webp", "/hero-real-6-v2.webp", "/hero-real-7-v2.webp", "/hero-real-8-v2.webp",
     "const heroSlides", "new window.Image()", "setHeroSlideIndex(nextIndex)",
     "2000", "opacity 800ms ease-in-out", "data-hero-background=\"true\"",
     "position: \"absolute\"", "inset: 0", "width: \"100%\"",
-    "height: \"100%\", "objectFit: \"cover\"",
+    "height: \"100%\"", "objectFit: \"cover\"",
     "background: \"rgba(0, 0, 0, 0.38)\"",
     "min-height: calc(100vh - 201px)", "min-height: calc(100vh - 261px)"
   ];
