@@ -9,7 +9,7 @@ test("hero uses the six-image dissolve slideshow without changing hero geometry"
     "const heroSlides", "new window.Image()", "setHeroSlideIndex(nextIndex)",
     "2000", "opacity 800ms ease-in-out", "data-hero-background=\"true\"",
     "position: \"absolute\"", "inset: 0", "width: \"100%\"",
-    "height: \"100%\", "objectFit: \"cover\"",
+    "height: \"100%\"", "objectFit: \"cover\"",
     "background: \"rgba(0, 0, 0, 0.38)\"",
     "min-height: calc(100vh - 201px)", "min-height: calc(100vh - 261px)"
   ];
