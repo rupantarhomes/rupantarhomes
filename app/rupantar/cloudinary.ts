@@ -6,7 +6,7 @@ type SignatureResponse = {
   timestamp: number;
   apiKey: string;
   cloudName: string;
-  uploadPreset: string;
+  assetFolder: string;
   format: "webp";
   transformation: string;
 };
@@ -72,15 +72,15 @@ function parseSignature(body: unknown): SignatureResponse {
   const signature = nonEmptyString(body.signature);
   const apiKey = nonEmptyString(body.apiKey);
   const cloudName = nonEmptyString(body.cloudName);
-  const uploadPreset = nonEmptyString(body.uploadPreset);
+  const assetFolder = nonEmptyString(body.assetFolder);
   const format = nonEmptyString(body.format);
   const transformation = nonEmptyString(body.transformation);
   const timestamp = positiveInteger(body.timestamp);
-  if (!signature || !apiKey || !cloudName || !uploadPreset || !timestamp || format !== "webp" || !transformation) {
+  if (!signature || !apiKey || !cloudName || !assetFolder || !timestamp || format !== "webp" || !transformation) {
     throw new Error("The image upload authorization was incomplete.");
   }
   if (!/^[a-z0-9_-]+$/i.test(cloudName)) throw new Error("The Cloudinary cloud name was invalid.");
-  return { signature, timestamp, apiKey, cloudName, uploadPreset, format, transformation };
+  return { signature, timestamp, apiKey, cloudName, assetFolder, format, transformation };
 }
 
 async function requestUploadSignature(): Promise<SignatureResponse> {
@@ -134,7 +134,7 @@ async function uploadOne(file: File, sortOrder: number): Promise<WorkImage> {
   body.set("api_key", signed.apiKey);
   body.set("timestamp", String(signed.timestamp));
   body.set("signature", signed.signature);
-  body.set("upload_preset", signed.uploadPreset);
+  body.set("asset_folder", signed.assetFolder);
   body.set("format", signed.format);
   body.set("transformation", signed.transformation);
 
@@ -205,4 +205,3 @@ export async function deleteCloudinaryImages(publicIds: string[]): Promise<void>
     }
   }
 }
-

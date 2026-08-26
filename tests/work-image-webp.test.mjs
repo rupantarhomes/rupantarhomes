@@ -16,13 +16,18 @@ test("keeps the work-image source and WebP output contract strict", async () => 
   assert.match(client, /if \(file\.size <= 0\)/);
   assert.match(client, /file\.size > maximumBytes/);
   assert.match(client, /files\.length > maximumWorkImages/);
+  assert.match(client, /body\.set\("asset_folder", signed\.assetFolder\)/);
   assert.match(client, /body\.set\("format", signed\.format\)/);
   assert.match(client, /body\.set\("transformation", signed\.transformation\)/);
+  assert.doesNotMatch(client, /body\.set\("upload_preset"/);
   assert.match(client, /if \(format !== "webp"\) throw new Error\(`\$\{file\.name\} was not converted to WebP\.`\);/);
   assert.match(client, /if \(width > 1920 \|\| height > 1080\)/);
 
+  assert.match(signature, /asset_folder: workImageAssetFolder/);
+  assert.match(signature, /const workImageAssetFolder = "rupantar-homes\/works"/);
   assert.match(signature, /format: "webp"/);
   assert.match(signature, /c_limit,h_1080,w_1920\/q_auto:good/);
+  assert.doesNotMatch(signature, /upload_preset:/);
   assert.doesNotMatch(signature, /f_webp/);
 });
 
