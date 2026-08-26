@@ -1,0 +1,45 @@
+button[aria-label="Remove image"] {
+  position: absolute !important;
+  top: 10px !important;
+  right: 10px !important;
+  left: auto !important;
+  bottom: auto !important;
+  width: auto !important;
+  min-width: 78px !important;
+  height: 32px !important;
+  padding: 0 12px !important;
+  margin: 0 !important;
+  border: 1px solid rgba(255,255,255,0.28) !important;
+  border-radius: 9999px !important;
+  background: rgba(17,17,17,0.94) !important;
+  color: #fff !important;
+  font-size: 0 !important;
+  line-height: 1 !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 50 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  box-shadow: 0 5px 16px rgba(0,0,0,0.28) !important;
+}
+
+button[aria-label="Remove image"]::after {
+  content: "Remove" !important;
+  display: block !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+  color: #fff !important;
+}
+
+button[aria-label="Remove image"]:hover {
+  background: #ff1a3d !important;
+}
+
+button[aria-label="Remove image"]:disabled {
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+}
