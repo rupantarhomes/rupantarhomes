@@ -3,6 +3,7 @@ import { cloudinarySignature } from "../_lib/cloudinary";
 import { requireRuntimeEnv, type RuntimeEnv } from "../_lib/env";
 import { errorMessage, json } from "../_lib/http";
 
+const workImageAssetFolder = "rupantar-homes/works";
 const workImageTransformation = "c_limit,h_1080,w_1920/q_auto:good";
 
 export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env }) => {
@@ -12,10 +13,10 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
     const timestamp = Math.floor(Date.now() / 1000);
     const signature = await cloudinarySignature(
       {
+        asset_folder: workImageAssetFolder,
         format: "webp",
         timestamp,
         transformation: workImageTransformation,
-        upload_preset: runtime.CLOUDINARY_UPLOAD_PRESET,
       },
       runtime.CLOUDINARY_API_SECRET,
     );
@@ -25,7 +26,7 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
       timestamp,
       apiKey: runtime.CLOUDINARY_API_KEY,
       cloudName: runtime.CLOUDINARY_CLOUD_NAME,
-      uploadPreset: runtime.CLOUDINARY_UPLOAD_PRESET,
+      assetFolder: workImageAssetFolder,
       format: "webp",
       transformation: workImageTransformation,
     });
