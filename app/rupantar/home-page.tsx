@@ -46,15 +46,16 @@ type HomePageProps = {
 
 const morphWords = ["Spaces", "Kitchens", "Wardrobes", "Ceilings", "Homes", "Interiors"];
 const heroSlides = [
-  "/hero-real-1-v2.webp",
-  "/hero-real-2-v2.webp",
-  "/hero-real-3-v2.webp",
-  "/hero-real-4-v2.webp",
-  "/hero-real-5-v2.webp",
-  "/hero-real-6-v2.webp",
-  "/hero-real-7-v2.webp",
-  "/hero-real-8-v2.webp",
+  { desktop: "/hero-real-1-v2.webp", mobile: "/hero-real-1-mobile.webp" },
+  { desktop: "/hero-real-2-v2.webp", mobile: "/hero-real-2-mobile.webp" },
+  { desktop: "/hero-real-3-v2.webp", mobile: "/hero-real-3-mobile.webp" },
+  { desktop: "/hero-real-4-v2.webp", mobile: "/hero-real-4-mobile.webp" },
+  { desktop: "/hero-real-5-v2.webp", mobile: "/hero-real-5-mobile.webp" },
+  { desktop: "/hero-real-6-v2.webp", mobile: "/hero-real-6-mobile.webp" },
+  { desktop: "/hero-real-7-v2.webp", mobile: "/hero-real-7-mobile.webp" },
+  { desktop: "/hero-real-8-v2.webp", mobile: "/hero-real-8-mobile.webp" },
 ] as const;
+const mobileHeroMedia = "(max-width: 639px)";
 const workSteps = [
   { step: "01", icon: ImageUp, title: "Send Photo", desc: "Share site photos, video & measurements on WhatsApp. Get instant budget range." },
   { step: "02", icon: Ruler, title: "Home Visit, Samples & 3D", desc: "We visit, show laminates, ply, handles. You get 3D design & final quote." },
@@ -98,7 +99,9 @@ export function HomePage({
   const [wordIndex, setWordIndex] = useState(0);
   const [morphing, setMorphing] = useState(false);
   const [heroSlideIndex, setHeroSlideIndex] = useState(0);
-  const [heroSlidesReady, setHeroSlidesReady] = useState<Set<number>>(() => new Set([0]));
+  const [heroSlidesReady, setHeroSlidesReady] = useState<Set<string>>(
+    () => new Set([heroSlides[0].desktop, heroSlides[0].mobile]),
+  );
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -114,22 +117,25 @@ export function HomePage({
   useEffect(() => {
     let cancelled = false;
     const nextIndex = (heroSlideIndex + 1) % heroSlides.length;
+    const nextSource = window.matchMedia(mobileHeroMedia).matches
+      ? heroSlides[nextIndex].mobile
+      : heroSlides[nextIndex].desktop;
     const timer = window.setTimeout(() => {
-      if (heroSlidesReady.has(nextIndex)) return;
+      if (heroSlidesReady.has(nextSource)) return;
       const image = new window.Image();
       image.onload = () => {
         if (cancelled) return;
         setHeroSlidesReady((current) => {
-          if (current.has(nextIndex)) return current;
+          if (current.has(nextSource)) return current;
           const next = new Set(current);
-          next.add(nextIndex);
+          next.add(nextSource);
           return next;
         });
       };
-      image.src = heroSlides[nextIndex];
+      image.src = nextSource;
     }, 0);
 
-    if (!heroSlidesReady.has(nextIndex)) {
+    if (!heroSlidesReady.has(nextSource)) {
       return () => {
         cancelled = true;
         window.clearTimeout(timer);
@@ -174,27 +180,29 @@ export function HomePage({
             zIndex: 0,
           }}
         >
-          {Array.from(heroSlides).map((src, index) => (
-            heroSlidesReady.has(index) && (
-              <img
-                key={src}
-                src={src}
-                alt=""
-                loading={index === 0 ? "eager" : "lazy"}
-                decoding="async"
-                aria-hidden="true"
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  pointerEvents: "none",
-                  opacity: heroSlideIndex === index ? 1 : 0,
-                  transition: "opacity 800ms ease-in-out",
-                  zIndex: 0,
-                }}
-              />
+          {Array.from(heroSlides).map((slide, index) => (
+            (index === 0 || heroSlidesReady.has(slide.mobile) || heroSlidesReady.has(slide.desktop)) && (
+              <picture key={slide.desktop}>
+                <source media={mobileHeroMedia} srcSet={slide.mobile} type="image/webp" />
+                <img
+                  src={slide.desktop}
+                  alt=""
+                  loading={index === 0 ? "eager" : "lazy"}
+                  decoding="async"
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    pointerEvents: "none",
+                    opacity: heroSlideIndex === index ? 1 : 0,
+                    transition: "opacity 800ms ease-in-out",
+                    zIndex: 0,
+                  }}
+                />
+              </picture>
             )
           ))}
           <div
