@@ -24,11 +24,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '22.16.0'
+
+      - name: Enforce UI-only production boundary
+        if: ${{ github.event_name == 'pull_request' && startsWith(github.head_ref, 'enhancement/premium-motion-') }}
+        run: node scripts/check-ui-enhancement-diff.mjs "${{ github.event.pull_request.base.sha }}"
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
