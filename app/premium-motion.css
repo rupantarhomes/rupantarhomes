@@ -1,0 +1,526 @@
+/*
+ * Rupantar Homes — Premium Motion V1 / stronger preview
+ * Presentation-only layer. No layout, content, data, form, media, auth or backend behavior.
+ * Resting geometry and brand palette remain unchanged.
+ */
+
+:root {
+  --rh-motion-micro: 170ms;
+  --rh-motion-hover: 320ms;
+  --rh-motion-image: 780ms;
+  --rh-motion-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --rh-motion-ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+nav button,
+nav a,
+main button,
+main a,
+footer button,
+footer a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+nav button,
+main button,
+footer button,
+nav a,
+main a,
+footer a {
+  transition-timing-function: var(--rh-motion-ease);
+}
+
+nav button:active,
+main button:active,
+footer button:active,
+nav a:active,
+main a:active,
+footer a:active {
+  transform: scale(0.975);
+  transition-duration: var(--rh-motion-micro);
+}
+
+nav button:focus-visible,
+nav a:focus-visible,
+main button:focus-visible,
+main a:focus-visible,
+footer button:focus-visible,
+footer a:focus-visible,
+main input:focus-visible,
+main select:focus-visible,
+main textarea:focus-visible {
+  outline: 2px solid rgba(255, 26, 61, 0.42);
+  outline-offset: 3px;
+}
+
+/* ---------- Header / navigation ---------- */
+
+nav {
+  transition:
+    box-shadow var(--rh-motion-hover) var(--rh-motion-ease),
+    background-color var(--rh-motion-hover) var(--rh-motion-ease),
+    border-color var(--rh-motion-hover) var(--rh-motion-ease);
+}
+
+nav img {
+  transition:
+    transform var(--rh-motion-hover) var(--rh-motion-ease),
+    box-shadow var(--rh-motion-hover) var(--rh-motion-ease);
+  transform-origin: center;
+}
+
+nav svg {
+  transition: transform var(--rh-motion-hover) var(--rh-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  nav:hover {
+    box-shadow: 0 14px 42px rgba(0, 0, 0, 0.07);
+  }
+
+  nav button:hover img {
+    transform: translateY(-2px) scale(1.045);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.13);
+  }
+
+  nav .hidden.lg\:flex > button,
+  nav .hidden.lg\:flex > div > button {
+    position: relative;
+    transition:
+      color var(--rh-motion-hover) ease,
+      transform var(--rh-motion-hover) var(--rh-motion-ease);
+  }
+
+  nav .hidden.lg\:flex > button:hover,
+  nav .hidden.lg\:flex > div > button:hover {
+    transform: translateY(-1px);
+  }
+
+  nav .hidden.lg\:flex > button::after,
+  nav .hidden.lg\:flex > div > button::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    right: 50%;
+    bottom: -8px;
+    height: 2px;
+    border-radius: 999px;
+    background: #ff1a3d;
+    opacity: 0;
+    transition:
+      left var(--rh-motion-hover) var(--rh-motion-ease),
+      right var(--rh-motion-hover) var(--rh-motion-ease),
+      opacity var(--rh-motion-hover) ease;
+    pointer-events: none;
+  }
+
+  nav .hidden.lg\:flex > button:hover::after,
+  nav .hidden.lg\:flex > div > button:hover::after {
+    left: 5%;
+    right: 5%;
+    opacity: 1;
+  }
+
+  nav a:hover svg,
+  nav button:hover > svg:last-child {
+    transform: translateX(4px);
+  }
+
+  nav button[class*="bg-[#FF1A3D]"]:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 38px rgba(255, 26, 61, 0.34);
+  }
+}
+
+nav .group > .absolute > div {
+  transform-origin: 50% 0%;
+  transition:
+    transform var(--rh-motion-hover) var(--rh-motion-ease),
+    box-shadow var(--rh-motion-hover) var(--rh-motion-ease),
+    filter var(--rh-motion-hover) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  nav .group:hover > .absolute > div {
+    transform: translateY(5px) scale(1.01);
+    box-shadow: 0 28px 68px rgba(0, 0, 0, 0.15);
+    filter: saturate(1.02);
+  }
+}
+
+/* ---------- Premium pill/button response ---------- */
+
+main button[class*="rounded-full"],
+main a[class*="rounded-full"],
+footer button[class*="rounded-full"],
+footer a[class*="rounded-full"] {
+  transition:
+    transform var(--rh-motion-hover) var(--rh-motion-ease),
+    box-shadow var(--rh-motion-hover) var(--rh-motion-ease),
+    border-color var(--rh-motion-hover) ease,
+    background-color var(--rh-motion-hover) ease,
+    color var(--rh-motion-hover) ease,
+    filter var(--rh-motion-hover) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  main button[class*="rounded-full"]:hover,
+  main a[class*="rounded-full"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+  }
+}
+
+/* ---------- Hero controls ---------- */
+
+.rupantar-hero-section button {
+  transition:
+    transform var(--rh-motion-hover) var(--rh-motion-ease),
+    box-shadow var(--rh-motion-hover) var(--rh-motion-ease),
+    filter var(--rh-motion-hover) ease,
+    background-color var(--rh-motion-hover) ease,
+    border-color var(--rh-motion-hover) ease;
+}
+
+.rupantar-hero-section button svg {
+  transition: transform var(--rh-motion-hover) var(--rh-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rupantar-hero-section button:hover {
+    transform: translateY(-4px) scale(1.015);
+  }
+
+  .rupantar-hero-section button:first-of-type:hover {
+    box-shadow: 0 22px 48px rgba(255, 26, 61, 0.38);
+  }
+
+  .rupantar-hero-section button:last-of-type:hover {
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+  }
+
+  .rupantar-hero-section button:hover svg {
+    transform: translateX(5px);
+  }
+}
+
+/* ---------- Project / work cards ---------- */
+
+main article.group,
+main [role="button"].group,
+main .rh-work-card {
+  transform: translateZ(0);
+  transition:
+    transform var(--rh-motion-hover) var(--rh-motion-ease),
+    box-shadow 420ms var(--rh-motion-ease),
+    border-color var(--rh-motion-hover) ease,
+    filter var(--rh-motion-hover) ease;
+}
+
+main article.group img,
+main [role="button"].group img,
+main .rh-work-card img {
+  transition:
+    transform var(--rh-motion-image) var(--rh-motion-ease),
+    filter 520ms var(--rh-motion-ease) !important;
+  will-change: transform;
+}
+
+main article.group svg,
+main [role="button"].group svg,
+main .rh-work-card svg {
+  transition: transform var(--rh-motion-hover) var(--rh-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  main article.group:hover,
+  main [role="button"].group:hover {
+    transform: translateY(-7px) scale(1.008);
+    border-color: rgba(24, 24, 27, 0.17);
+    box-shadow: 0 32px 74px rgba(0, 0, 0, 0.13);
+  }
+
+  main .rh-work-card:hover {
+    transform: translateY(-7px) scale(1.008) !important;
+    border-color: rgba(24, 24, 27, 0.17) !important;
+    box-shadow: 0 32px 74px rgba(0, 0, 0, 0.13) !important;
+  }
+
+  main article.group:hover img,
+  main [role="button"].group:hover img {
+    transform: scale(1.055);
+    filter: saturate(1.06) contrast(1.025);
+  }
+
+  main .rh-work-card:hover .rh-work-media-slot img {
+    transform: scale(1.055) !important;
+    filter: saturate(1.06) contrast(1.025) !important;
+  }
+
+  main article.group:hover button svg,
+  main [role="button"].group:hover svg:last-child,
+  main .rh-work-card:hover svg:last-child {
+    transform: translateX(5px);
+  }
+}
+
+/* ---------- Service / category cards ---------- */
+
+main button.group[class*="rounded-[1.5rem]"] {
+  transition:
+    transform var(--rh-motion-hover) var(--rh-motion-ease),
+    box-shadow 420ms var(--rh-motion-ease),
+    border-color var(--rh-motion-hover) ease,
+    background-color var(--rh-motion-hover) ease,
+    filter var(--rh-motion-hover) ease;
+}
+
+main button.group[class*="rounded-[1.5rem]"] > div:first-child {
+  transition:
+    transform var(--rh-motion-hover) var(--rh-motion-ease),
+    box-shadow var(--rh-motion-hover) var(--rh-motion-ease),
+    background-color var(--rh-motion-hover) ease;
+}
+
+main button.group[class*="rounded-[1.5rem]"] svg {
+  transition: transform var(--rh-motion-hover) var(--rh-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  main button.group[class*="rounded-[1.5rem]"]:hover {
+    transform: translateY(-6px) scale(1.008);
+    border-color: rgba(24, 24, 27, 0.15);
+    box-shadow: 0 28px 64px rgba(0, 0, 0, 0.11);
+  }
+
+  main button.group[class*="rounded-[1.5rem]"]:hover > div:first-child {
+    transform: translateY(-3px) scale(1.09);
+    box-shadow: 0 14px 30px rgba(255, 26, 61, 0.17);
+  }
+
+  main button.group[class*="rounded-[1.5rem]"]:hover svg:last-child {
+    transform: translateX(5px);
+  }
+}
+
+/* ---------- Process cards ---------- */
+
+main section[class*="bg-zinc-50"] .grid.sm\:grid-cols-3 > div[class*="bg-white"][class*="rounded-[1.5rem]"] {
+  transition:
+    transform var(--rh-motion-hover) var(--rh-motion-ease),
+    box-shadow 420ms var(--rh-motion-ease),
+    border-color var(--rh-motion-hover) ease;
+}
+
+main section[class*="bg-zinc-50"] .grid.sm\:grid-cols-3 > div[class*="bg-white"][class*="rounded-[1.5rem]"] svg,
+main section[class*="bg-zinc-50"] .grid.sm\:grid-cols-3 > div[class*="bg-white"][class*="rounded-[1.5rem]"] > div:first-child > span {
+  transition: transform var(--rh-motion-hover) var(--rh-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  main section[class*="bg-zinc-50"] .grid.sm\:grid-cols-3 > div[class*="bg-white"][class*="rounded-[1.5rem]"]:hover {
+    transform: translateY(-5px) scale(1.006);
+    border-color: rgba(24, 24, 27, 0.14);
+    box-shadow: 0 24px 56px rgba(0, 0, 0, 0.10);
+  }
+
+  main section[class*="bg-zinc-50"] .grid.sm\:grid-cols-3 > div[class*="bg-white"][class*="rounded-[1.5rem]"]:hover svg {
+    transform: scale(1.09);
+  }
+
+  main section[class*="bg-zinc-50"] .grid.sm\:grid-cols-3 > div[class*="bg-white"][class*="rounded-[1.5rem]"]:hover > div:first-child > span {
+    transform: translateY(-3px);
+  }
+}
+
+/* ---------- Reviews: premium but calmer than project cards ---------- */
+
+main section .grid.sm\:grid-cols-2.lg\:grid-cols-4 > div[class*="rounded-[1.5rem]"] {
+  transition:
+    transform var(--rh-motion-hover) var(--rh-motion-ease),
+    box-shadow 420ms var(--rh-motion-ease),
+    border-color var(--rh-motion-hover) ease;
+}
+
+main section .grid.sm\:grid-cols-2.lg\:grid-cols-4 > div[class*="rounded-[1.5rem]"] svg {
+  transition: transform var(--rh-motion-hover) var(--rh-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  main section .grid.sm\:grid-cols-2.lg\:grid-cols-4 > div[class*="rounded-[1.5rem]"]:hover {
+    transform: translateY(-4px) scale(1.006);
+    border-color: rgba(24, 24, 27, 0.13);
+    box-shadow: 0 22px 48px rgba(0, 0, 0, 0.085);
+  }
+
+  main section .grid.sm\:grid-cols-2.lg\:grid-cols-4 > div[class*="rounded-[1.5rem]"]:hover svg {
+    transform: translateY(-1px) scale(1.07);
+  }
+}
+
+/* ---------- Form/UI polish without changing form behavior ---------- */
+
+main input,
+main select,
+main textarea,
+main label[class*="border-dashed"] {
+  transition:
+    border-color var(--rh-motion-hover) ease,
+    box-shadow var(--rh-motion-hover) var(--rh-motion-ease),
+    background-color var(--rh-motion-hover) ease,
+    transform var(--rh-motion-hover) var(--rh-motion-ease);
+}
+
+main input:focus,
+main select:focus,
+main textarea:focus {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 5px rgba(255, 26, 61, 0.085),
+    0 12px 30px rgba(0, 0, 0, 0.055);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  main input:hover,
+  main select:hover,
+  main textarea:hover {
+    border-color: rgba(255, 26, 61, 0.24);
+  }
+
+  main label[class*="border-dashed"]:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 26, 61, 0.45);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.075);
+  }
+}
+
+/* ---------- Related / compact cards ---------- */
+
+main button[class*="rounded-2xl"][class*="border"] {
+  transition:
+    transform var(--rh-motion-hover) var(--rh-motion-ease),
+    border-color var(--rh-motion-hover) ease,
+    box-shadow var(--rh-motion-hover) var(--rh-motion-ease),
+    background-color var(--rh-motion-hover) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  main button[class*="rounded-2xl"][class*="border"]:hover {
+    transform: translateX(3px) translateY(-2px);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.075);
+  }
+}
+
+/* ---------- Generic CTA arrows ---------- */
+
+main button > svg:last-child,
+main a > svg:last-child,
+footer button > svg:last-child,
+footer a > svg:last-child {
+  transition: transform var(--rh-motion-hover) var(--rh-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  main button:hover > svg:last-child,
+  main a:hover > svg:last-child,
+  footer button:hover > svg:last-child,
+  footer a:hover > svg:last-child {
+    transform: translateX(5px);
+  }
+}
+
+/* ---------- Footer ---------- */
+
+footer a,
+footer button {
+  transition:
+    color var(--rh-motion-hover) ease,
+    opacity var(--rh-motion-hover) ease,
+    transform var(--rh-motion-hover) var(--rh-motion-ease);
+}
+
+footer svg {
+  transition: transform var(--rh-motion-hover) var(--rh-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  footer a:hover,
+  footer button:hover {
+    transform: translateX(4px);
+  }
+
+  footer a:hover svg,
+  footer button:hover svg {
+    transform: scale(1.08);
+  }
+}
+
+/* ---------- CSS-only section arrival on supporting browsers ---------- */
+
+@supports (animation-timeline: view()) {
+  @keyframes rh-premium-section-reveal {
+    from {
+      opacity: 0.82;
+      transform: translateY(20px) scale(0.992);
+      filter: blur(1.5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+    }
+  }
+
+  main > section {
+    animation-name: rh-premium-section-reveal;
+    animation-duration: 1ms;
+    animation-fill-mode: both;
+    animation-timing-function: var(--rh-motion-ease-soft);
+    animation-timeline: view();
+    animation-range: entry 0% cover 24%;
+  }
+}
+
+/* ---------- Touch devices ---------- */
+
+@media (hover: none), (pointer: coarse) {
+  nav button:active,
+  main button:active,
+  footer button:active,
+  nav a:active,
+  main a:active,
+  footer a:active {
+    transform: scale(0.97);
+    filter: brightness(0.98);
+  }
+
+  main article.group:active,
+  main [role="button"].group:active,
+  main .rh-work-card:active {
+    transform: scale(0.985) !important;
+  }
+}
+
+/* Existing global reduced-motion policy is retained; this layer explicitly respects it too. */
+@media (prefers-reduced-motion: reduce) {
+  nav,
+  nav *,
+  main *,
+  footer * {
+    transition-duration: 0.01ms !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+
+  nav button:active,
+  main button:active,
+  footer button:active,
+  nav a:active,
+  main a:active,
+  footer a:active,
+  main article.group,
+  main [role="button"].group,
+  main .rh-work-card {
+    transform: none !important;
+  }
+}
