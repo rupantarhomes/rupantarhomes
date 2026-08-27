@@ -1,0 +1,357 @@
+/*
+ * Rupantar Homes — Premium Motion V1
+ * Presentation-only layer. No layout, content, data, form, media, auth or backend behavior.
+ * Resting geometry and brand palette remain unchanged.
+ */
+
+:root {
+  --rh-motion-micro: 160ms;
+  --rh-motion-hover: 260ms;
+  --rh-motion-image: 650ms;
+  --rh-motion-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --rh-motion-ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+nav button,
+nav a,
+main button,
+main a,
+footer button,
+footer a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+nav button,
+main button,
+footer button,
+nav a,
+main a,
+footer a {
+  transition-timing-function: var(--rh-motion-ease);
+}
+
+nav button:active,
+main button:active,
+footer button:active,
+nav a:active,
+main a:active,
+footer a:active {
+  transform: scale(0.985);
+  transition-duration: var(--rh-motion-micro);
+}
+
+nav button:focus-visible,
+nav a:focus-visible,
+main button:focus-visible,
+main a:focus-visible,
+footer button:focus-visible,
+footer a:focus-visible,
+main input:focus-visible,
+main select:focus-visible,
+main textarea:focus-visible {
+  outline: 2px solid rgba(255, 26, 61, 0.34);
+  outline-offset: 3px;
+}
+
+nav {
+  transition:
+    box-shadow var(--rh-motion-hover) var(--rh-motion-ease),
+    background-color var(--rh-motion-hover) var(--rh-motion-ease),
+    border-color var(--rh-motion-hover) var(--rh-motion-ease);
+}
+
+nav img {
+  transition:
+    transform var(--rh-motion-hover) var(--rh-motion-ease),
+    box-shadow var(--rh-motion-hover) var(--rh-motion-ease);
+  transform-origin: center;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  nav button:hover img {
+    transform: translateY(-1px) scale(1.025);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.10);
+  }
+
+  nav .hidden.lg\:flex > button,
+  nav .hidden.lg\:flex > div > button {
+    position: relative;
+  }
+
+  nav .hidden.lg\:flex > button::after,
+  nav .hidden.lg\:flex > div > button::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    right: 50%;
+    bottom: -7px;
+    height: 1.5px;
+    border-radius: 999px;
+    background: #ff1a3d;
+    opacity: 0;
+    transition:
+      left var(--rh-motion-hover) var(--rh-motion-ease),
+      right var(--rh-motion-hover) var(--rh-motion-ease),
+      opacity var(--rh-motion-hover) ease;
+    pointer-events: none;
+  }
+
+  nav .hidden.lg\:flex > button:hover::after,
+  nav .hidden.lg\:flex > div > button:hover::after {
+    left: 12%;
+    right: 12%;
+    opacity: 0.75;
+  }
+
+  nav a:hover svg,
+  nav button:hover > svg:last-child {
+    transform: translateX(2px);
+  }
+}
+
+nav svg {
+  transition: transform var(--rh-motion-hover) var(--rh-motion-ease);
+}
+
+nav .group > .absolute > div {
+  transform-origin: 50% 0%;
+  transition:
+    transform var(--rh-motion-hover) var(--rh-motion-ease),
+    box-shadow var(--rh-motion-hover) var(--rh-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  nav .group:hover > .absolute > div {
+    transform: translateY(2px);
+    box-shadow: 0 22px 54px rgba(0, 0, 0, 0.12);
+  }
+}
+
+.rupantar-hero-section button {
+  transition:
+    transform var(--rh-motion-hover) var(--rh-motion-ease),
+    box-shadow var(--rh-motion-hover) var(--rh-motion-ease),
+    filter var(--rh-motion-hover) ease,
+    background-color var(--rh-motion-hover) ease,
+    border-color var(--rh-motion-hover) ease;
+}
+
+.rupantar-hero-section button svg {
+  transition: transform var(--rh-motion-hover) var(--rh-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rupantar-hero-section button:hover {
+    transform: translateY(-2px);
+  }
+
+  .rupantar-hero-section button:first-of-type:hover {
+    box-shadow: 0 16px 34px rgba(255, 26, 61, 0.30);
+  }
+
+  .rupantar-hero-section button:hover svg {
+    transform: translateX(3px);
+  }
+}
+
+main article.group,
+main [role="button"].group {
+  transform: translateZ(0);
+  transition:
+    transform var(--rh-motion-hover) var(--rh-motion-ease),
+    box-shadow 360ms var(--rh-motion-ease),
+    border-color var(--rh-motion-hover) ease;
+}
+
+main article.group img,
+main [role="button"].group img {
+  transition: transform var(--rh-motion-image) var(--rh-motion-ease) !important;
+  will-change: transform;
+}
+
+main article.group svg,
+main [role="button"].group svg {
+  transition: transform var(--rh-motion-hover) var(--rh-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  main article.group:hover,
+  main [role="button"].group:hover {
+    transform: translateY(-3px);
+    border-color: rgba(24, 24, 27, 0.12);
+    box-shadow: 0 22px 52px rgba(0, 0, 0, 0.09);
+  }
+
+  main article.group:hover img,
+  main [role="button"].group:hover img {
+    transform: scale(1.03);
+  }
+
+  main article.group:hover button svg,
+  main [role="button"].group:hover svg:last-child {
+    transform: translateX(3px);
+  }
+}
+
+main button.group[class*="rounded-[1.5rem]"] {
+  transition:
+    transform var(--rh-motion-hover) var(--rh-motion-ease),
+    box-shadow 360ms var(--rh-motion-ease),
+    border-color var(--rh-motion-hover) ease,
+    background-color var(--rh-motion-hover) ease;
+}
+
+main button.group[class*="rounded-[1.5rem]"] > div:first-child {
+  transition:
+    transform var(--rh-motion-hover) var(--rh-motion-ease),
+    box-shadow var(--rh-motion-hover) var(--rh-motion-ease),
+    background-color var(--rh-motion-hover) ease;
+}
+
+main button.group[class*="rounded-[1.5rem]"] svg {
+  transition: transform var(--rh-motion-hover) var(--rh-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  main button.group[class*="rounded-[1.5rem]"]:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.075);
+  }
+
+  main button.group[class*="rounded-[1.5rem]"]:hover > div:first-child {
+    transform: translateY(-1px) scale(1.035);
+    box-shadow: 0 8px 18px rgba(255, 26, 61, 0.10);
+  }
+
+  main button.group[class*="rounded-[1.5rem]"]:hover svg:last-child {
+    transform: translateX(3px);
+  }
+}
+
+main section[class*="bg-zinc-50"] .grid.sm\:grid-cols-3 > div[class*="bg-white"][class*="rounded-[1.5rem]"] {
+  transition:
+    transform var(--rh-motion-hover) var(--rh-motion-ease),
+    box-shadow 360ms var(--rh-motion-ease),
+    border-color var(--rh-motion-hover) ease;
+}
+
+main section[class*="bg-zinc-50"] .grid.sm\:grid-cols-3 > div[class*="bg-white"][class*="rounded-[1.5rem]"] svg {
+  transition: transform var(--rh-motion-hover) var(--rh-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  main section[class*="bg-zinc-50"] .grid.sm\:grid-cols-3 > div[class*="bg-white"][class*="rounded-[1.5rem]"]:hover {
+    transform: translateY(-2px);
+    border-color: rgba(24, 24, 27, 0.10);
+    box-shadow: 0 16px 38px rgba(0, 0, 0, 0.065);
+  }
+
+  main section[class*="bg-zinc-50"] .grid.sm\:grid-cols-3 > div[class*="bg-white"][class*="rounded-[1.5rem]"]:hover svg {
+    transform: scale(1.045);
+  }
+}
+
+main section .grid.sm\:grid-cols-2.lg\:grid-cols-4 > div[class*="rounded-[1.5rem]"] {
+  transition:
+    transform var(--rh-motion-hover) var(--rh-motion-ease),
+    box-shadow 360ms var(--rh-motion-ease),
+    border-color var(--rh-motion-hover) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  main section .grid.sm\:grid-cols-2.lg\:grid-cols-4 > div[class*="rounded-[1.5rem]"]:hover {
+    transform: translateY(-2px);
+    border-color: rgba(24, 24, 27, 0.10);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.055);
+  }
+}
+
+main input,
+main select,
+main textarea,
+main label[class*="border-dashed"] {
+  transition:
+    border-color var(--rh-motion-hover) ease,
+    box-shadow var(--rh-motion-hover) var(--rh-motion-ease),
+    background-color var(--rh-motion-hover) ease,
+    transform var(--rh-motion-hover) var(--rh-motion-ease);
+}
+
+main input:focus,
+main select:focus,
+main textarea:focus {
+  box-shadow: 0 0 0 4px rgba(255, 26, 61, 0.075);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  main label[class*="border-dashed"]:hover {
+    border-color: rgba(255, 26, 61, 0.32);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.045);
+  }
+}
+
+main button > svg:last-child,
+main a > svg:last-child,
+footer button > svg:last-child,
+footer a > svg:last-child {
+  transition: transform var(--rh-motion-hover) var(--rh-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  main button:hover > svg:last-child,
+  main a:hover > svg:last-child,
+  footer button:hover > svg:last-child,
+  footer a:hover > svg:last-child {
+    transform: translateX(3px);
+  }
+}
+
+footer a,
+footer button {
+  transition:
+    color var(--rh-motion-hover) ease,
+    opacity var(--rh-motion-hover) ease,
+    transform var(--rh-motion-hover) var(--rh-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  footer a:hover,
+  footer button:hover {
+    transform: translateX(2px);
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  nav button:active,
+  main button:active,
+  footer button:active,
+  nav a:active,
+  main a:active,
+  footer a:active,
+  main article.group:active,
+  main [role="button"].group:active {
+    transform: scale(0.99);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  nav,
+  nav *,
+  main *,
+  footer * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  nav button:active,
+  main button:active,
+  footer button:active,
+  nav a:active,
+  main a:active,
+  footer a:active,
+  main article.group,
+  main [role="button"].group {
+    transform: none !important;
+  }
+}
