@@ -481,6 +481,13 @@ footer svg {
   }
 }
 
+/* Keep the first homepage section crisp on mobile while preserving its reveal motion. */
+@media (max-width: 639px) {
+  .rupantar-hero-section + main > section:first-child {
+    filter: none !important;
+  }
+}
+
 /* ---------- Touch devices ---------- */
 
 @media (hover: none), (pointer: coarse) {
