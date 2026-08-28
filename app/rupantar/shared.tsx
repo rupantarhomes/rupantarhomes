@@ -280,7 +280,6 @@ export function PublicFooter({
             <button onClick={() => navigate("contact")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Contact</button>
             <button onClick={() => navigate("privacy")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Privacy Policy</button>
             <button onClick={onEstimate} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Get Estimate</button>
-            <button onClick={() => navigate("admin-login")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Admin Login</button>
           </div>
         </div>
 
