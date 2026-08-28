@@ -1,0 +1,17 @@
+{
+  "name": "Rupantar Homes",
+  "short_name": "Rupantar Homes",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ff1a3d",
+  "theme_color": "#111111",
+  "icons": [
+    {
+      "src": "/assets/rupantar-favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
