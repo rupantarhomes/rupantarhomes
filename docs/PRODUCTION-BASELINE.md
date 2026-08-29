@@ -176,3 +176,8 @@ Accepted `app` fingerprint after this scoped update: `f018db8b57dedb4a7118e4ae3c
 Use this at the start of future implementation requests:
 
 > Preserve the Rupantar Homes production baseline. Make only the requested change. Do not modify Auth/RLS, Cloudinary Work image lifecycle, inquiry security, security headers, environment/deployment configuration, or GitHub production protection unless the task explicitly requires it. Start from the latest main branch, use a dedicated branch, run `npm run verify`, review the full diff, open a PR, merge only after CI passes, then perform the appropriate production regression from `docs/PRODUCTION-BASELINE.md`.
+
+
+## Accepted targeted homepage label/image update — 2026-08-30
+
+Scope is limited to the public homepage: the Recent Works heading is presented as lowercase white text in a rounded light-charcoal label, and the Connect With Us visual uses the approved user-supplied image optimized to approximately 50 KB WebP before upload. No section structure, routes, forms, Admin behavior, Auth/RLS, Supabase data, Cloudinary Work lifecycle, inquiry security, CSP/security headers, environment or deployment behavior is changed.
