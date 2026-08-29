@@ -9,6 +9,7 @@ import "./premium-architectural-theme.css";
 import "./public-display-typography.css";
 import "./review-cards-enhancer.css";
 import "./recent-works-mobile-reset.css";
+import "./recent-works-location-spacing.css";
 import { BrandIntro } from "./rupantar/brand-intro";
 import { RupantarSite } from "./rupantar/site";
 import { initWorkMediaEnhancements } from "./rupantar/work-media-enhancer";
