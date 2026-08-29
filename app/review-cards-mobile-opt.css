@@ -66,3 +66,15 @@
   border: 1px solid rgba(217, 17, 49, 0.18) !important;
   border-radius: 9999px !important;
 }
+
+/* Public Review section only: show at most six cards. */
+.rh-review-section > div.grid > .rh-review-card:nth-child(n + 7) {
+  display: none !important;
+}
+
+/* Desktop: three cards per row, two rows when all six are present. */
+@media (min-width: 1024px) {
+  .rh-review-section > div.grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
