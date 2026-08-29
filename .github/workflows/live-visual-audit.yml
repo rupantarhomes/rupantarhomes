@@ -1,0 +1,54 @@
+name: Live Visual Audit
+
+on:
+  push:
+    branches:
+      - audit/live-visual-20260830
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Resolve production endpoints
+        shell: bash
+        run: |
+          set -euxo pipefail
+          for url in \
+            https://rupantarhomes.com \
+            https://www.rupantarhomes.com \
+            https://c8ff9fbb.rupantarhomes.pages.dev
+          do
+            echo "===== $url ====="
+            curl -sSIL --max-time 20 "$url" || true
+          done
+
+      - name: Install Playwright Chromium
+        run: |
+          npx -y playwright@1.55.0 install --with-deps chromium
+
+      - name: Capture deployment screenshots
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p screenshots
+          TARGET="https://c8ff9fbb.rupantarhomes.pages.dev"
+          npx -y playwright@1.55.0 screenshot --browser=chromium --viewport-size="1440,1000" --full-page --wait-for-timeout=5000 "$TARGET" screenshots/home-desktop-1440.png
+          npx -y playwright@1.55.0 screenshot --browser=chromium --viewport-size="390,844" --full-page --wait-for-timeout=5000 "$TARGET" screenshots/home-mobile-390.png
+
+      - name: Capture likely custom domain when live
+        shell: bash
+        run: |
+          set -euxo pipefail
+          if curl -fsSIL --max-time 20 https://rupantarhomes.com >/dev/null; then
+            npx -y playwright@1.55.0 screenshot --browser=chromium --viewport-size="1440,1000" --full-page --wait-for-timeout=5000 https://rupantarhomes.com screenshots/custom-domain-desktop-1440.png
+            npx -y playwright@1.55.0 screenshot --browser=chromium --viewport-size="390,844" --full-page --wait-for-timeout=5000 https://rupantarhomes.com screenshots/custom-domain-mobile-390.png
+          fi
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: rupantar-live-visual-audit
+          path: screenshots/*.png
+          if-no-files-found: error
+          retention-days: 1
