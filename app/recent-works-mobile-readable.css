@@ -9,7 +9,7 @@
     gap: 4px !important;
     margin: 0 0 7px !important;
     padding: 4px 6px !important;
-    color: rgba(255, 255, 255, 0.92) !important;
+    color: #ffffff !important;
     font-size: 9.5px !important;
     line-height: 1.15 !important;
     font-weight: 500 !important;
@@ -32,8 +32,12 @@
     letter-spacing: 0.055em !important;
   }
 
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) > div:first-child span:first-child {
+    color: #ff1a3d !important;
+  }
+
   .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) > .font-heading {
-    font-size: 11px !important;
+    font-size: 10.45px !important;
     line-height: 1.22 !important;
     letter-spacing: -0.01em !important;
     -webkit-line-clamp: 2 !important;
