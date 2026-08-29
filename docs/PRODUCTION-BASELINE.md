@@ -160,6 +160,28 @@ In addition to `npm run verify`:
 - Cloudflare deploys the production site from `main`.
 - Supabase Leaked Password Protection is unavailable on the project's current Free plan. This is an acknowledged platform-plan limitation, not permission to weaken any other authentication control.
 
+## Accepted homepage brand refinement — 2026-08-30
+
+The approved homepage brand-refinement candidate was built from protected `main` commit `3e85967c79037e71ca6848eaf952a2fe7af452ca` and visually audited on the Cloudflare branch preview at 1440px desktop and 390px mobile before production approval.
+
+Scope is public homepage presentation only:
+
+- preserve the existing Rupantar bright red identity, header/footer structure, section order, routes, forms, Admin, data and integrations;
+- strengthen hero visual hierarchy without changing hero copy or section structure;
+- hide homepage Recent Works cards that have no project image while leaving the underlying Work data untouched;
+- remove universal homepage Featured-label noise;
+- flatten Services, How We Work and Review presentation without changing their information or links;
+- show only brand-ready homepage reviews and leave all review records untouched in storage/Admin;
+- correct the footer phrase to `All Rights Reserved` on the homepage;
+- reduce excessive mobile vertical density while preserving the responsive section sequence.
+
+Validated candidate fingerprints before merge:
+
+- `app`: `6c9ff48c105bee2955fac60a21ff067dcf571c1f`
+- `index.html`: `fe036fd9849e035000d6032880eca43a957787c5`
+
+All other handover-locked production objects remain at their previous accepted fingerprints. Auth/RLS, Supabase, Cloudinary Work lifecycle, inquiry handling, CSP/security headers, environment and deployment contracts are unchanged.
+
 ## AI/Codex instruction block
 
 Use this at the start of future implementation requests:
