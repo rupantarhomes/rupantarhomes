@@ -296,6 +296,7 @@ export type Database = {
       }
       works: {
         Row: {
+          blog_url: string | null
           category: string
           created_at: string
           featured: boolean
@@ -309,6 +310,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          blog_url?: string | null
           category: string
           created_at?: string
           featured?: boolean
@@ -322,6 +324,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          blog_url?: string | null
           category?: string
           created_at?: string
           featured?: boolean
@@ -349,6 +352,7 @@ export type Database = {
       }
       save_work_with_images: {
         Args: {
+          p_blog_url: string | null
           p_category: string
           p_featured: boolean
           p_images: Json
