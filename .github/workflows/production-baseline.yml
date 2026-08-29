@@ -32,6 +32,9 @@ jobs:
         with:
           node-version: '22.16.0'
 
+      - name: Enforce production handover lock
+        run: node scripts/verify-production-lock.mjs
+
       - name: Enforce UI-only production boundary
         if: ${{ github.event_name == 'pull_request' && startsWith(github.head_ref, 'enhancement/premium-motion-') }}
         run: node scripts/check-ui-enhancement-diff.mjs "${{ github.event.pull_request.base.sha }}"
