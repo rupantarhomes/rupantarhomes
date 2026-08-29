@@ -49,7 +49,7 @@
   z-index: 0;
   pointer-events: none;
   background: url("/connect-with-us.webp") center 56% / cover no-repeat;
-  opacity: 0.15;
+  opacity: 0.52;
 }
 
 .min-h-screen.bg-white.text-zinc-950 .rh-connect-panel.rh-connect-panel > * {
@@ -62,7 +62,7 @@
 }
 
 .min-h-screen.bg-white.text-zinc-950 .rh-connect-panel p {
-  color: rgba(255, 255, 255, 0.78) !important;
+  color: rgba(255, 255, 255, 0.88) !important;
 }
 
 .min-h-screen.bg-white.text-zinc-950 .rh-connect-panel .rh-social-actions > a {
