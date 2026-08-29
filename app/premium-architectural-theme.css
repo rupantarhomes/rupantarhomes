@@ -1,0 +1,161 @@
+/*
+ * Rupantar Homes — premium architectural theme layer.
+ * Theme-only overrides scoped to the public-site root.
+ * No layout, spacing, content, route, component hierarchy, or admin changes.
+ */
+
+.min-h-screen.bg-white.text-zinc-950 {
+  --rh-canvas: #f7f5f0;
+  --rh-surface: #fffdfa;
+  --rh-surface-soft: #f3f0ea;
+  --rh-ink: #1b1916;
+  --rh-ink-soft: #47423b;
+  --rh-muted: #766f65;
+  --rh-faint: #a49b90;
+  --rh-line: #e9e2d8;
+  --rh-line-strong: #ddd3c6;
+  --rh-dark: #171614;
+  --rh-dark-soft: #211f1c;
+  --rh-red: #ff1a3d;
+
+  background: var(--rh-canvas) !important;
+  color: var(--rh-ink) !important;
+}
+
+/* Header and top navigation: warm glass, not cold white. */
+.min-h-screen.bg-white.text-zinc-950 > nav.sticky {
+  background: rgba(255, 253, 250, 0.94) !important;
+  border-color: rgba(221, 211, 198, 0.82) !important;
+  box-shadow: 0 1px 0 rgba(39, 34, 28, 0.02), 0 12px 34px rgba(45, 37, 28, 0.045);
+}
+
+.min-h-screen.bg-white.text-zinc-950 > div:first-child {
+  background: var(--rh-dark) !important;
+  border-color: var(--rh-red) !important;
+}
+
+/* Porcelain surfaces over a warm architectural canvas. */
+.min-h-screen.bg-white.text-zinc-950 [class~="bg-white"] {
+  background-color: var(--rh-surface) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 [class~="bg-zinc-50"] {
+  background-color: var(--rh-surface-soft) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 [class~="bg-zinc-900"] {
+  background-color: var(--rh-dark-soft) !important;
+}
+
+/* Neutral hierarchy: ink -> stone -> whisper. */
+.min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-950"],
+.min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-900"] {
+  color: var(--rh-ink) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-700"] {
+  color: var(--rh-ink-soft) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-600"] {
+  color: #605a52 !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-500"] {
+  color: var(--rh-muted) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-400"] {
+  color: var(--rh-faint) !important;
+}
+
+/* Borders: visible enough to define surfaces, quiet enough to feel architectural. */
+.min-h-screen.bg-white.text-zinc-950 [class~="border-zinc-100"],
+.min-h-screen.bg-white.text-zinc-950 [class~="border-zinc-100/90"] {
+  border-color: var(--rh-line) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 [class~="border-zinc-200"] {
+  border-color: var(--rh-line-strong) !important;
+}
+
+/* Keep pale brand chips warm rather than pink-white. */
+.min-h-screen.bg-white.text-zinc-950 [class~="bg-[#FFF0F2]"] {
+  background-color: #fff1f2 !important;
+}
+
+/* Cards: restrained depth, with the photography staying visually dominant. */
+.min-h-screen.bg-white.text-zinc-950 article[class*="rounded"],
+.min-h-screen.bg-white.text-zinc-950 button[class*="rounded"][class*="border"] {
+  border-color: var(--rh-line) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 article[class*="shadow"] {
+  box-shadow: 0 8px 28px rgba(45, 37, 28, 0.045) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .min-h-screen.bg-white.text-zinc-950 article[class*="shadow"]:hover {
+    border-color: var(--rh-line-strong) !important;
+    box-shadow: 0 20px 48px rgba(45, 37, 28, 0.085) !important;
+  }
+}
+
+/* Form fields and controls inherit the same calm surface language. */
+.min-h-screen.bg-white.text-zinc-950 input:not([type="file"]),
+.min-h-screen.bg-white.text-zinc-950 textarea,
+.min-h-screen.bg-white.text-zinc-950 select {
+  background-color: var(--rh-surface) !important;
+  border-color: var(--rh-line-strong) !important;
+  color: var(--rh-ink) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 input::placeholder,
+.min-h-screen.bg-white.text-zinc-950 textarea::placeholder {
+  color: #999084 !important;
+}
+
+/* Premium, accessible focus treatment using the existing brand red. */
+.min-h-screen.bg-white.text-zinc-950 button:focus-visible,
+.min-h-screen.bg-white.text-zinc-950 a:focus-visible,
+.min-h-screen.bg-white.text-zinc-950 input:focus-visible,
+.min-h-screen.bg-white.text-zinc-950 textarea:focus-visible,
+.min-h-screen.bg-white.text-zinc-950 select:focus-visible {
+  outline: 2px solid rgba(255, 26, 61, 0.72) !important;
+  outline-offset: 3px !important;
+}
+
+/* Footer: warm charcoal rather than neutral black, preserving existing layout. */
+.min-h-screen.bg-white.text-zinc-950 footer {
+  background: var(--rh-dark) !important;
+  color: #f8f4ee !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 footer [class~="text-zinc-300"] {
+  color: #d9d1c7 !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 footer [class~="text-zinc-400"] {
+  color: #aaa197 !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 footer [class~="border-gray-800"] {
+  border-color: #302d29 !important;
+}
+
+/* Keep red singular and intentional: no hue replacement of the brand accent. */
+.min-h-screen.bg-white.text-zinc-950 [class*="hover:bg-zinc-50"]:hover {
+  background-color: #f1ede6 !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 [class*="hover:border-zinc-200"]:hover {
+  border-color: var(--rh-line-strong) !important;
+}
+
+@media (prefers-contrast: more) {
+  .min-h-screen.bg-white.text-zinc-950 {
+    --rh-muted: #5f594f;
+    --rh-line: #d7cec2;
+    --rh-line-strong: #c8bdae;
+  }
+}
