@@ -17,7 +17,7 @@ jobs:
           for url in \
             https://rupantarhomes.com \
             https://www.rupantarhomes.com \
-            https://c8ff9fbb.rupantarhomes.pages.dev
+            https://eab62929.rupantarhomes.pages.dev
           do
             echo "===== $url ====="
             curl -sSIL --max-time 20 "$url" || true
@@ -27,16 +27,27 @@ jobs:
         run: |
           npx -y playwright@1.55.0 install --with-deps chromium
 
-      - name: Capture deployment screenshots
+      - name: Capture current production build
         shell: bash
         run: |
           set -euxo pipefail
           mkdir -p screenshots
-          TARGET="https://c8ff9fbb.rupantarhomes.pages.dev"
-          npx -y playwright@1.55.0 screenshot --browser=chromium --viewport-size="1440,1000" --full-page --wait-for-timeout=5000 "$TARGET" screenshots/home-desktop-1440.png
-          npx -y playwright@1.55.0 screenshot --browser=chromium --viewport-size="390,844" --full-page --wait-for-timeout=5000 "$TARGET" screenshots/home-mobile-390.png
+          TARGET="https://eab62929.rupantarhomes.pages.dev"
+          npx -y playwright@1.55.0 screenshot --browser=chromium --viewport-size="1440,1000" --full-page --wait-for-timeout=5000 "$TARGET" screenshots/rollback-production-desktop-1440.png
+          npx -y playwright@1.55.0 screenshot --browser=chromium --viewport-size="390,844" --full-page --wait-for-timeout=5000 "$TARGET" screenshots/rollback-production-mobile-390.png
 
-      - name: Capture likely custom domain when live
+      - name: Inspect HTML marker
+        shell: bash
+        run: |
+          set -euxo pipefail
+          html="$(curl -fsSL --max-time 20 https://eab62929.rupantarhomes.pages.dev)"
+          if printf '%s' "$html" | grep -q 'home-brand-refinement'; then
+            echo 'ERROR: post-stage homepage refinement marker is still present'
+            exit 1
+          fi
+          echo 'OK: post-stage homepage refinement marker is absent'
+
+      - name: Capture custom domain when accessible
         shell: bash
         run: |
           set -euxo pipefail
@@ -48,7 +59,7 @@ jobs:
       - name: Upload screenshots
         uses: actions/upload-artifact@v4
         with:
-          name: rupantar-live-visual-audit
+          name: rupantar-rollback-live-audit
           path: screenshots/*.png
           if-no-files-found: error
           retention-days: 1
