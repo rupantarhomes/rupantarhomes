@@ -33,7 +33,7 @@
 }
 
 /* Connect With Us: charcoal brand panel with official social platform colors. */
-.min-h-screen.bg-white.text-zinc-950 .rh-connect-panel {
+.min-h-screen.bg-white.text-zinc-950 .rh-connect-panel.rh-connect-panel {
   background: #211f1c !important;
   border-color: #34302b !important;
   color: #ffffff !important;
