@@ -100,6 +100,8 @@ function ensureFacebookLinks() {
   const connectPanel = connectHeading?.parentElement?.parentElement;
   const connectActions = connectPanel?.lastElementChild;
 
+  if (connectPanel instanceof HTMLElement) connectPanel.classList.add("rh-connect-panel");
+
   if (connectActions instanceof HTMLElement) {
     connectActions.classList.add("rh-social-actions");
     if (!connectActions.querySelector('[data-rh-facebook-link="connect"]')) {
@@ -127,7 +129,9 @@ function ensureFacebookLinks() {
 
 function normalizeVisibleCopy() {
   const replacements: Array<[RegExp, string]> = [
-    [/\b8 core services\b/gi, "9 core services"],
+    [/\b8 core services\b/gi, "3 core services"],
+    [/\b9 core services\b/gi, "3 core services"],
+    [/Follow Rupantar Homes on Instagram & TikTok\./gi, "Follow Rupantar Homes on Instagram, TikTok & Facebook."],
     [/\b3D sample\b/gi, "design preview"],
     [/\b3D design\b/gi, "design preview"],
     [/\b3D visualization\b/gi, "design preview"],
@@ -136,7 +140,7 @@ function normalizeVisibleCopy() {
     [/\bworkshop direct\b/gi, "direct"],
     [/\bKathmandu workshop\b/gi, "Kathmandu studio"],
     [/\bworkshop\b/gi, "studio"],
-    [/9 core services from our Kathmandu studio\. Click any card to see works\./gi, "9 core services. Click any card to see works."],
+    [/3 core services from our Kathmandu studio\. Click any card to see works\./gi, "3 core services. Click any card to see works."],
     [/Factory finish at Kathmandu studio\. Clean install in 7-21 days\./gi, "Proper Finishing. Clean installation."],
   ];
 
