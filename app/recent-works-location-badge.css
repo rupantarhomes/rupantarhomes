@@ -50,17 +50,59 @@
 }
 
 @media (max-width: 639px) {
+  /* Three-across mobile cards need tighter internal rhythm than desktop. */
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) {
+    margin-top: -104px !important;
+    padding: 11px 10px 12px !important;
+  }
+
   .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card .rh-work-location-source {
+    max-width: calc(100% - 2px);
     gap: 3px !important;
-    margin-bottom: 7px !important;
-    padding: 4px 6px !important;
+    margin: 0 0 6px !important;
+    padding: 3px 5px !important;
     border-color: rgba(255, 26, 61, 0.2) !important;
     background: rgba(255, 255, 255, 0.075) !important;
-    font-size: 8px !important;
-    line-height: 1.15 !important;
+    font-size: clamp(7px, 2vw, 8px) !important;
+    line-height: 1.1 !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 
   .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card .rh-work-location-source svg {
+    width: 8px !important;
+    height: 8px !important;
+    min-width: 8px;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) > div:first-child {
+    margin-bottom: 5px !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) > div:first-child span {
+    font-size: 7.5px !important;
+    line-height: 1.15 !important;
+    letter-spacing: 0.075em !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) > .font-heading {
+    font-size: 11.5px !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.012em !important;
+    -webkit-line-clamp: 2 !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) > button {
+    margin-top: 7px !important;
+    font-size: 8.5px !important;
+    line-height: 1.2 !important;
+    gap: 3px !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) > button svg {
     width: 9px !important;
     height: 9px !important;
   }
