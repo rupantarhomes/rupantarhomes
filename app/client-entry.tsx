@@ -6,6 +6,7 @@ import "./work-media-enhancer.css";
 import "./social-links-enhancer.css";
 import "./admin-leads-enhancer.css";
 import "./premium-architectural-theme.css";
+import "./public-display-typography.css";
 import { BrandIntro } from "./rupantar/brand-intro";
 import { RupantarSite } from "./rupantar/site";
 import { initWorkMediaEnhancements } from "./rupantar/work-media-enhancer";

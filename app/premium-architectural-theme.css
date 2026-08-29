@@ -1,32 +1,63 @@
 /*
- * Rupantar Homes — premium architectural theme layer.
+ * Rupantar Homes — final premium architectural design-system layer.
  * Theme-only overrides scoped to the public-site root.
  * No layout, spacing, content, route, component hierarchy, or admin changes.
  */
 
 .min-h-screen.bg-white.text-zinc-950 {
+  /* Core surfaces */
   --rh-canvas: #f7f5f0;
   --rh-surface: #fffdfa;
   --rh-surface-soft: #f3f0ea;
+  --rh-surface-muted: #eee8df;
+
+  /* Typography */
   --rh-ink: #1b1916;
   --rh-ink-soft: #47423b;
   --rh-muted: #766f65;
-  --rh-faint: #a49b90;
+  --rh-faint: #7c7368;
+
+  /* Lines */
   --rh-line: #e9e2d8;
   --rh-line-strong: #ddd3c6;
+
+  /* Dark family */
   --rh-dark: #171614;
   --rh-dark-soft: #211f1c;
+  --rh-dark-line: #34302b;
+
+  /* Brand family: expressive red + accessible functional red */
   --rh-red: #ff1a3d;
+  --rh-red-functional: #d91131;
+  --rh-red-functional-hover: #c90d2b;
+  --rh-brand-wash: #f4eee9;
+
+  /* One restrained elevation system */
+  --rh-shadow-subtle: 0 4px 18px rgba(45, 37, 28, 0.035);
+  --rh-shadow-card: 0 8px 28px rgba(45, 37, 28, 0.05);
+  --rh-shadow-hover: 0 18px 44px rgba(45, 37, 28, 0.085);
+  --rh-shadow-brand: 0 10px 26px rgba(217, 17, 49, 0.2);
 
   background: var(--rh-canvas) !important;
   color: var(--rh-ink) !important;
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+}
+
+/* Typography is deliberately two-family: Space Grotesk for brand/display, Inter for body/UI. */
+.min-h-screen.bg-white.text-zinc-950 h1,
+.min-h-screen.bg-white.text-zinc-950 h2,
+.min-h-screen.bg-white.text-zinc-950 h3,
+.min-h-screen.bg-white.text-zinc-950 h4,
+.min-h-screen.bg-white.text-zinc-950 .font-heading {
+  font-family: "Space Grotesk", sans-serif !important;
 }
 
 /* Header and top navigation: warm glass, not cold white. */
 .min-h-screen.bg-white.text-zinc-950 > nav.sticky {
   background: rgba(255, 253, 250, 0.94) !important;
   border-color: rgba(221, 211, 198, 0.82) !important;
-  box-shadow: 0 1px 0 rgba(39, 34, 28, 0.02), 0 12px 34px rgba(45, 37, 28, 0.045);
+  box-shadow: 0 1px 0 rgba(39, 34, 28, 0.025), 0 12px 34px rgba(45, 37, 28, 0.045) !important;
 }
 
 .min-h-screen.bg-white.text-zinc-950 > div:first-child {
@@ -39,15 +70,17 @@
   background-color: var(--rh-surface) !important;
 }
 
-.min-h-screen.bg-white.text-zinc-950 [class~="bg-zinc-50"] {
+.min-h-screen.bg-white.text-zinc-950 [class~="bg-zinc-50"],
+.min-h-screen.bg-white.text-zinc-950 [class~="bg-[#F8F8F8]"] {
   background-color: var(--rh-surface-soft) !important;
 }
 
-.min-h-screen.bg-white.text-zinc-950 [class~="bg-zinc-900"] {
+.min-h-screen.bg-white.text-zinc-950 [class~="bg-zinc-900"],
+.min-h-screen.bg-white.text-zinc-950 [class~="bg-[#111111]"] {
   background-color: var(--rh-dark-soft) !important;
 }
 
-/* Neutral hierarchy: ink -> stone -> whisper. */
+/* Neutral hierarchy: ink -> stone -> quiet text. */
 .min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-950"],
 .min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-900"] {
   color: var(--rh-ink) !important;
@@ -69,35 +102,69 @@
   color: var(--rh-faint) !important;
 }
 
-/* Borders: visible enough to define surfaces, quiet enough to feel architectural. */
+.min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-300"] {
+  color: #d9d1c7 !important;
+}
+
+/* Borders: visible enough to define material surfaces, never UI-heavy. */
 .min-h-screen.bg-white.text-zinc-950 [class~="border-zinc-100"],
 .min-h-screen.bg-white.text-zinc-950 [class~="border-zinc-100/90"] {
   border-color: var(--rh-line) !important;
 }
 
-.min-h-screen.bg-white.text-zinc-950 [class~="border-zinc-200"] {
+.min-h-screen.bg-white.text-zinc-950 [class~="border-zinc-200"],
+.min-h-screen.bg-white.text-zinc-950 [class~="border-zinc-200/80"] {
   border-color: var(--rh-line-strong) !important;
 }
 
-/* Keep pale brand chips warm rather than pink-white. */
+/* Former pale-pink utility becomes a restrained warm brand wash. Red stays in the icon/text. */
 .min-h-screen.bg-white.text-zinc-950 [class~="bg-[#FFF0F2]"] {
-  background-color: #fff1f2 !important;
+  background-color: var(--rh-brand-wash) !important;
 }
 
-/* Cards: restrained depth, with the photography staying visually dominant. */
-.min-h-screen.bg-white.text-zinc-950 article[class*="rounded"],
-.min-h-screen.bg-white.text-zinc-950 button[class*="rounded"][class*="border"] {
-  border-color: var(--rh-line) !important;
+/* Accessible functional red for small text and text-bearing controls. Large/decorative red remains #FF1A3D. */
+.min-h-screen.bg-white.text-zinc-950 :is(span, div, a, button, p)[class~="text-[#FF1A3D]"][class*="text-["] {
+  color: var(--rh-red-functional) !important;
 }
 
-.min-h-screen.bg-white.text-zinc-950 article[class*="shadow"] {
-  box-shadow: 0 8px 28px rgba(45, 37, 28, 0.045) !important;
+.min-h-screen.bg-white.text-zinc-950 [class*="hover:text-[#FF1A3D]"]:hover,
+.min-h-screen.bg-white.text-zinc-950 [class*="group-hover:text-[#FF1A3D]"]:hover {
+  color: var(--rh-red-functional) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 button[class~="bg-[#FF1A3D]"],
+.min-h-screen.bg-white.text-zinc-950 a[class~="bg-[#FF1A3D]"],
+.min-h-screen.bg-white.text-zinc-950 span[class~="bg-[#FF1A3D]"][class~="text-white"] {
+  background-color: var(--rh-red-functional) !important;
+  border-color: var(--rh-red-functional) !important;
+  box-shadow: var(--rh-shadow-brand) !important;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .min-h-screen.bg-white.text-zinc-950 article[class*="shadow"]:hover {
+  .min-h-screen.bg-white.text-zinc-950 button[class~="bg-[#FF1A3D]"]:hover,
+  .min-h-screen.bg-white.text-zinc-950 a[class~="bg-[#FF1A3D]"]:hover {
+    background-color: var(--rh-red-functional-hover) !important;
+    border-color: var(--rh-red-functional-hover) !important;
+  }
+}
+
+/* One card/elevation language across article, div, button and form cards. */
+.min-h-screen.bg-white.text-zinc-950 :is(article, div, button, form)[class~="bg-white"][class*="rounded"][class*="border"][class*="shadow"] {
+  border-color: var(--rh-line) !important;
+  box-shadow: var(--rh-shadow-card) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 :is(article, div, button, form)[class*="rounded"][class*="border"] {
+  border-color: var(--rh-line) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .min-h-screen.bg-white.text-zinc-950 :is(article, div, button)[class~="bg-white"][class*="rounded"][class*="border"]:hover {
     border-color: var(--rh-line-strong) !important;
-    box-shadow: 0 20px 48px rgba(45, 37, 28, 0.085) !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 :is(article, div, button)[class~="bg-white"][class*="rounded"][class*="shadow"]:hover {
+    box-shadow: var(--rh-shadow-hover) !important;
   }
 }
 
@@ -112,20 +179,72 @@
 
 .min-h-screen.bg-white.text-zinc-950 input::placeholder,
 .min-h-screen.bg-white.text-zinc-950 textarea::placeholder {
-  color: #999084 !important;
+  color: var(--rh-muted) !important;
 }
 
-/* Premium, accessible focus treatment using the existing brand red. */
+/* Premium, accessible focus treatment uses the functional brand red. */
 .min-h-screen.bg-white.text-zinc-950 button:focus-visible,
 .min-h-screen.bg-white.text-zinc-950 a:focus-visible,
 .min-h-screen.bg-white.text-zinc-950 input:focus-visible,
 .min-h-screen.bg-white.text-zinc-950 textarea:focus-visible,
-.min-h-screen.bg-white.text-zinc-950 select:focus-visible {
-  outline: 2px solid rgba(255, 26, 61, 0.72) !important;
+.min-h-screen.bg-white.text-zinc-950 select:focus-visible,
+.min-h-screen.bg-white.text-zinc-950 [role="button"]:focus-visible {
+  outline: 2px solid var(--rh-red-functional) !important;
   outline-offset: 3px !important;
 }
 
-/* Footer: warm charcoal rather than neutral black, preserving existing layout. */
+/* Warm hover states for neutral controls. */
+.min-h-screen.bg-white.text-zinc-950 [class*="hover:bg-zinc-50"]:hover {
+  background-color: #f1ede6 !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 [class*="hover:border-zinc-200"]:hover,
+.min-h-screen.bg-white.text-zinc-950 [class*="hover:border-zinc-300"]:hover {
+  border-color: var(--rh-line-strong) !important;
+}
+
+/* Editorial pages previously carried a cool-grey visual system. Reconcile them into the architectural tokens. */
+.min-h-screen.bg-white.text-zinc-950 main.max-w-\[1280px\] > div.max-w-\[800px\] > div.mt-14.divide-y > article {
+  background: var(--rh-surface) !important;
+  border-color: var(--rh-line) !important;
+  box-shadow: var(--rh-shadow-card) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .min-h-screen.bg-white.text-zinc-950 main.max-w-\[1280px\] > div.max-w-\[800px\] > div.mt-14.divide-y > article:hover {
+    border-color: var(--rh-line-strong) !important;
+    box-shadow: var(--rh-shadow-hover) !important;
+  }
+}
+
+.min-h-screen.bg-white.text-zinc-950 main.max-w-\[1280px\] > div.max-w-\[800px\] > button.mt-12 {
+  background: var(--rh-surface) !important;
+  border-color: var(--rh-line-strong) !important;
+  color: var(--rh-ink-soft) !important;
+  box-shadow: var(--rh-shadow-subtle) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main.max-w-\[1280px\] > article.max-w-\[800px\] > h1 + div {
+  color: var(--rh-ink-soft) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main.max-w-\[1280px\] > article.max-w-\[800px\] > button.mt-12 {
+  background: var(--rh-dark-soft) !important;
+  border-color: var(--rh-dark-soft) !important;
+  color: #ffffff !important;
+  box-shadow: var(--rh-shadow-card) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > h1 + div + section {
+  background: var(--rh-surface-soft) !important;
+  border-color: var(--rh-line) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > section:last-of-type > div > div {
+  border-color: var(--rh-line) !important;
+}
+
+/* Footer: one warm charcoal family across footer, dark utility blocks and separators. */
 .min-h-screen.bg-white.text-zinc-950 footer {
   background: var(--rh-dark) !important;
   color: #f8f4ee !important;
@@ -140,21 +259,18 @@
 }
 
 .min-h-screen.bg-white.text-zinc-950 footer [class~="border-gray-800"] {
-  border-color: #302d29 !important;
+  border-color: var(--rh-dark-line) !important;
 }
 
-/* Keep red singular and intentional: no hue replacement of the brand accent. */
-.min-h-screen.bg-white.text-zinc-950 [class*="hover:bg-zinc-50"]:hover {
-  background-color: #f1ede6 !important;
-}
-
-.min-h-screen.bg-white.text-zinc-950 [class*="hover:border-zinc-200"]:hover {
-  border-color: var(--rh-line-strong) !important;
+/* Disabled controls: quiet and stable, without residual elevation. */
+.min-h-screen.bg-white.text-zinc-950 :is(button, input, select, textarea):disabled {
+  box-shadow: none !important;
 }
 
 @media (prefers-contrast: more) {
   .min-h-screen.bg-white.text-zinc-950 {
     --rh-muted: #5f594f;
+    --rh-faint: #5f594f;
     --rh-line: #d7cec2;
     --rh-line-strong: #c8bdae;
   }
