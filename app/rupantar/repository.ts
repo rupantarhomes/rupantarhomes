@@ -18,7 +18,7 @@ import type {
 
 type WorkRow = Pick<
   Tables<"works">,
-  "id" | "title" | "slug" | "category" | "location" | "short_description" | "long_description" | "featured"
+  "id" | "title" | "slug" | "category" | "location" | "short_description" | "long_description" | "featured" | "blog_url"
 >;
 type WorkImageRow = Pick<
   Tables<"work_images">,
@@ -161,6 +161,7 @@ function mapWork(row: WorkRow, images: WorkImage[]): Work {
     shortDesc: row.short_description,
     longDesc: row.long_description,
     featured: Boolean(row.featured),
+    blogUrl: row.blog_url ?? "",
     images,
   };
 }
@@ -215,7 +216,7 @@ export async function loadPublicWorkBySlug(category: string, slug: string): Prom
   const supabase = getSupabase();
   const workResult = await supabase
     .from("works")
-    .select("id,title,slug,category,location,short_description,long_description,featured")
+    .select("id,title,slug,category,location,short_description,long_description,featured,blog_url")
     .eq("category", category)
     .eq("slug", slug)
     .maybeSingle();
@@ -236,7 +237,7 @@ export async function loadPublicWorksPage(offset = 0, limit = 12, category = "al
   const supabase = getSupabase();
   let query = supabase
     .from("works")
-    .select("id,title,slug,category,location,short_description,long_description,featured", { count: "exact" })
+    .select("id,title,slug,category,location,short_description,long_description,featured,blog_url", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
   if (category !== "all") query = query.eq("category", category);
@@ -361,6 +362,7 @@ export async function saveWork(form: WorkForm, editingId: string | null): Promis
     p_short_description: trimmed(form.shortDesc) || "Custom designed space",
     p_long_description: trimmed(form.longDesc) || "Detailed project description coming soon. Crafted at Rupantar workshop.",
     p_featured: Boolean(form.featured),
+    p_blog_url: httpsUrl(form.blogUrl, "Project blog URL", true),
     p_images: imagePayload,
     p_work_id: editingId ? databaseId(editingId, "work ID") : null,
   });

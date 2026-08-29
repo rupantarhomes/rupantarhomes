@@ -607,6 +607,17 @@ function AdminWorks({
             <input value={workForm.location} onChange={(event) => setWorkForm((value) => ({ ...value, location: event.target.value }))} placeholder="Location" className="w-full h-10 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]" />
             <input value={workForm.shortDesc} onChange={(event) => setWorkForm((value) => ({ ...value, shortDesc: event.target.value }))} placeholder="Short Description" className="w-full h-10 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]" />
             <textarea value={workForm.longDesc} onChange={(event) => setWorkForm((value) => ({ ...value, longDesc: event.target.value }))} placeholder="Long Description" rows={3} className="w-full px-4 py-3 rounded-2xl border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D] resize-none" />
+            <div>
+              <label className="text-[12px] font-medium text-zinc-700">Project Blog URL</label>
+              <input
+                type="url"
+                value={workForm.blogUrl ?? ""}
+                onChange={(event) => setWorkForm((value) => ({ ...value, blogUrl: event.target.value }))}
+                placeholder="https://rupantarhomes.com/blog/..."
+                className="mt-1 w-full h-10 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]"
+              />
+              <div className="mt-1 text-[10px] text-zinc-500">Paste this project’s Rupantar Homes blog article URL. Leave blank if there is no detailed article.</div>
+            </div>
 
             <div className="space-y-4 pt-2">
               <label
@@ -773,4 +784,3 @@ function SettingField({ label, type = "text", value, onChange }: { label: string
 export function resetWorkForm(setWorkForm: Dispatch<SetStateAction<WorkForm>>) {
   setWorkForm(emptyWork);
 }
-

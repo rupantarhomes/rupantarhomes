@@ -238,6 +238,19 @@ export function WorkDetailPage({
               Get Similar Estimate <ArrowRight className="w-4 h-4" />
             </button>
           </div>
+          {work.blogUrl && (
+            <div className="mt-6 rounded-[1.75rem] border border-zinc-100 bg-[#fffdfa] p-6 sm:p-7 shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
+              <div className="text-[10px] uppercase tracking-[0.16em] font-semibold text-[#FF1A3D]">Project Story</div>
+              <h3 className="font-heading font-bold text-[17px] mt-2">A Detail Blog for this Project</h3>
+              <p className="text-[13px] leading-6 text-zinc-600 mt-2">Read the detailed story, planning, design decisions, and execution behind this project.</p>
+              <a
+                href={work.blogUrl}
+                className="mt-5 h-10 px-5 rounded-full bg-zinc-900 text-white text-[12px] font-semibold inline-flex items-center gap-2 hover:bg-[#FF1A3D] transition"
+              >
+                Read More <ArrowRight className="w-4 h-4" />
+              </a>
+            </div>
+          )}
           <div className="mt-6">
             <h4 className="font-heading font-semibold text-[14px] mb-3">Related Works</h4>
             <div className="space-y-3">

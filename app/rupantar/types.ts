@@ -27,6 +27,7 @@ export type Work = {
   shortDesc: string;
   longDesc: string;
   featured: boolean;
+  blogUrl?: string;
   images: WorkImage[];
 };
 

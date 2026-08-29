@@ -663,6 +663,7 @@ export function RupantarSite() {
       shortDesc: work.shortDesc,
       longDesc: work.longDesc,
       featured: work.featured,
+      blogUrl: work.blogUrl ?? "",
       images: work.images,
     });
     setEditingWorkId(work.id);
