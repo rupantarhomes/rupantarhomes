@@ -185,6 +185,17 @@ Accepted fingerprints after this scoped update:
 - `app`: `92cddbadf7a258cabe1f5afa3f44f542d67d3828`
 - `public`: `0536c426ff9be2776c277c71fd7bea91257ed0f8`
 
+## Corrected Recent Works casing / Connect image visibility — 2026-08-30
+
+This correction changes only the two requested presentation details from the immediately previous update:
+
+- restore the homepage heading text to exactly `Recent Works` in title case;
+- preserve the original heading font sizes already provided by the component (`18px` mobile and `30px` from the `sm` breakpoint) and add only a tight light-charcoal rounded background with white text;
+- keep `/connect-with-us.webp` as the Connect With Us image and increase only its presentation opacity so the supplied image is clearly visible;
+- preserve the four-review layout, Connect content/buttons, all other homepage presentation, and all production systems unchanged.
+
+Accepted `app` fingerprint after this correction: `0b93bc16a05930f503a8495ef9a0e2569207b656`.
+
 ## AI/Codex instruction block
 
 Use this at the start of future implementation requests:
