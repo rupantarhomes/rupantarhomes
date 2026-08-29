@@ -67,14 +67,19 @@
   border-radius: 9999px !important;
 }
 
-/* Public Review section only: show at most six cards. */
-.rh-review-section > div.grid > .rh-review-card:nth-child(n + 7) {
+/* Public Review section only: show at most four cards. */
+.rh-review-section > div.grid > .rh-review-card:nth-child(n + 5) {
   display: none !important;
 }
 
-/* Desktop: three cards per row, two rows when all six are present. */
+/* Desktop: all four review cards stay in one row. */
 @media (min-width: 1024px) {
   .rh-review-section > div.grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   }
+}
+
+/* Homepage Recent Works heading only: display in capitals. */
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child > div:first-child > h3 {
+  text-transform: uppercase;
 }

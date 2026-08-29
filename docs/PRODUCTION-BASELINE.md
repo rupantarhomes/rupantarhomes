@@ -160,6 +160,17 @@ In addition to `npm run verify`:
 - Cloudflare deploys the production site from `main`.
 - Supabase Leaked Password Protection is unavailable on the project's current Free plan. This is an acknowledged platform-plan limitation, not permission to weaken any other authentication control.
 
+## Accepted homepage review/connect/heading update — 2026-08-30
+
+Scope is limited to the public homepage presentation:
+
+- show at most four Client Review cards, with all four in one row at desktop widths;
+- preserve the existing charcoal `Connect With Us` panel and add the existing interior asset `/hero-real-1-v2.webp` as a 15% opacity background layer behind its content;
+- display the homepage `Recent Works` heading as `RECENT WORKS`;
+- preserve all other homepage layout, styling, copy, behavior and production systems unchanged.
+
+Accepted `app` fingerprint after this scoped update: `f018db8b57dedb4a7118e4ae3c1c1f2aede4e13f`.
+
 ## AI/Codex instruction block
 
 Use this at the start of future implementation requests:
