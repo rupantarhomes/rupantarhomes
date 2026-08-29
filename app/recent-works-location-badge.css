@@ -1,0 +1,67 @@
+/* Recent Works location refinement only.
+ * Uses the original semantic location row as the single location treatment.
+ */
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card .rh-work-location {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) {
+  display: flex !important;
+  flex-direction: column;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card .rh-work-location-source {
+  order: -1;
+  align-self: flex-start;
+  display: inline-flex !important;
+  width: auto !important;
+  max-width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 5px !important;
+  margin: 0 0 10px !important;
+  padding: 6px 9px !important;
+  border: 1px solid rgba(255, 26, 61, 0.18) !important;
+  border-radius: 9999px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ff5d75 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-size: 10.5px !important;
+  line-height: 1.2 !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.005em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card .rh-work-location-source svg {
+  display: block !important;
+  width: 12px !important;
+  height: 12px !important;
+  flex: 0 0 auto;
+  color: #ff1a3d !important;
+  stroke-width: 2.2;
+}
+
+@media (max-width: 639px) {
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card .rh-work-location-source {
+    gap: 3px !important;
+    margin-bottom: 7px !important;
+    padding: 4px 6px !important;
+    border-color: rgba(255, 26, 61, 0.2) !important;
+    background: rgba(255, 255, 255, 0.075) !important;
+    font-size: 8px !important;
+    line-height: 1.15 !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card .rh-work-location-source svg {
+    width: 9px !important;
+    height: 9px !important;
+  }
+}
