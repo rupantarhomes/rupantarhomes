@@ -123,6 +123,18 @@ div[class*="grid-cols-[1.6fr_1fr]"][class*="grid-rows-2"] > div {
   align-self: auto !important;
 }
 
+/* Desktop only: keep the square stack, but stop it from dominating the page. */
+@media (min-width: 1024px) {
+  main .aspect-\[16\/10\],
+  main div.grid.grid-cols-2.gap-3.mt-3 {
+    max-width: 520px;
+  }
+
+  div[class*="grid-cols-[1.6fr_1fr]"][class*="grid-rows-2"] {
+    max-width: 360px;
+  }
+}
+
 .rh-work-lightbox {
   position: fixed;
   inset: 0;
