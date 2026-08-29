@@ -32,6 +32,53 @@
   flex: 0 0 auto;
 }
 
+/* Connect With Us: charcoal brand panel with official social platform colors. */
+.min-h-screen.bg-white.text-zinc-950 .rh-connect-panel {
+  background: #211f1c !important;
+  border-color: #34302b !important;
+  color: #ffffff !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 .rh-connect-panel h3 {
+  color: #ffffff !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 .rh-connect-panel p {
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 .rh-connect-panel .rh-social-actions > a {
+  border-width: 1px !important;
+  box-shadow: none !important;
+}
+
+/* Instagram official pink family. Icon is unchanged. */
+.min-h-screen.bg-white.text-zinc-950 .rh-connect-panel .rh-social-actions > a:nth-child(1) {
+  background: #e1306c !important;
+  border-color: #e1306c !important;
+  color: #ffffff !important;
+}
+
+/* TikTok stays clean white with the existing icon. */
+.min-h-screen.bg-white.text-zinc-950 .rh-connect-panel .rh-social-actions > a:nth-child(2) {
+  background: #ffffff !important;
+  border-color: #ffffff !important;
+  color: #111111 !important;
+}
+
+/* Facebook official blue. Icon is unchanged. */
+.min-h-screen.bg-white.text-zinc-950 .rh-connect-panel .rh-social-actions > a[data-rh-facebook-link="connect"] {
+  background: #1877f2 !important;
+  border-color: #1877f2 !important;
+  color: #ffffff !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .min-h-screen.bg-white.text-zinc-950 .rh-connect-panel .rh-social-actions > a:hover {
+    filter: brightness(0.96);
+  }
+}
+
 @media (max-width: 639px) {
   .rh-social-actions {
     width: 100%;
