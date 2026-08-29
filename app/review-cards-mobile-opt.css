@@ -78,14 +78,3 @@
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   }
 }
-
-/* Homepage Recent Works only: exact source text/size, with a snug light-charcoal rounded box. */
-.min-h-screen > main > section:first-child > div:first-child > h3 {
-  display: inline-flex !important;
-  align-items: center !important;
-  padding: 6px 12px !important;
-  border-radius: 9999px !important;
-  background-color: #4a4844 !important;
-  color: #ffffff !important;
-  text-transform: none !important;
-}
