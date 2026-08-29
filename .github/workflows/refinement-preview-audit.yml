@@ -1,0 +1,31 @@
+name: Refinement Preview Audit
+
+on:
+  push:
+    branches:
+      - audit/refinement-v2-preview
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Install Playwright Chromium
+        run: npx -y playwright@1.55.0 install --with-deps chromium
+
+      - name: Capture screenshots
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p screenshots
+          TARGET="https://design-brand-refinement-v2.rupantarhomes.pages.dev"
+          npx -y playwright@1.55.0 screenshot --browser=chromium --viewport-size="1440,1000" --full-page --wait-for-timeout=5000 "$TARGET" screenshots/refined-desktop-1440.png
+          npx -y playwright@1.55.0 screenshot --browser=chromium --viewport-size="390,844" --full-page --wait-for-timeout=5000 "$TARGET" screenshots/refined-mobile-390.png
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: rupantar-refinement-v2-preview
+          path: screenshots/*.png
+          if-no-files-found: error
+          retention-days: 1
