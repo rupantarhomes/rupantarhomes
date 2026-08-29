@@ -46,10 +46,15 @@
   content: "";
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
   pointer-events: none;
   background: url("/hero-real-1-v2.webp") center 56% / cover no-repeat;
   opacity: 0.15;
+}
+
+.min-h-screen.bg-white.text-zinc-950 .rh-connect-panel.rh-connect-panel > * {
+  position: relative;
+  z-index: 1;
 }
 
 .min-h-screen.bg-white.text-zinc-950 .rh-connect-panel h3 {
