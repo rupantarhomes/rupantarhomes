@@ -106,3 +106,45 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
+
+/* Public card click targets only: keep the existing visible CTA, but let its click area cover the whole card. */
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card,
+.min-h-screen.bg-white.text-zinc-950 main.max-w-\[1280px\] > div.max-w-\[800px\] > div.mt-14.divide-y > article {
+  position: relative !important;
+  cursor: pointer;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) > button,
+.min-h-screen.bg-white.text-zinc-950 main.max-w-\[1280px\] > div.max-w-\[800px\] > div.mt-14.divide-y > article > button {
+  position: static !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) > button::before,
+.min-h-screen.bg-white.text-zinc-950 main.max-w-\[1280px\] > div.max-w-\[800px\] > div.mt-14.divide-y > article > button::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 8;
+  display: block !important;
+  background: transparent !important;
+  cursor: pointer;
+}
+
+/* Desktop Recent Works only: remove the thin hover divider above View Details. */
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) > button,
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card:hover > div:nth-child(2) > button {
+    border: 0 !important;
+    border-top: 0 !important;
+    box-shadow: none !important;
+    background-image: none !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) > button::after,
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card:hover > div:nth-child(2) > button::after {
+    content: none !important;
+    display: none !important;
+  }
+}
