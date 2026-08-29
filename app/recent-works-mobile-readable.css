@@ -147,4 +147,19 @@
     content: none !important;
     display: none !important;
   }
+
+  /* The visible seam is the WorkPhoto/placeholder edge, not the CTA. Remove only that desktop media edge. */
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card .rh-work-media-slot,
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card:hover .rh-work-media-slot {
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    --tw-ring-offset-shadow: 0 0 #0000 !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card .rh-work-media-slot::before,
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card:hover .rh-work-media-slot::before {
+    content: none !important;
+    display: none !important;
+  }
 }
