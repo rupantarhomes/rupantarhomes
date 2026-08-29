@@ -7,6 +7,7 @@ import "./social-links-enhancer.css";
 import "./admin-leads-enhancer.css";
 import "./premium-architectural-theme.css";
 import "./public-display-typography.css";
+import "./review-cards-enhancer.css";
 import { BrandIntro } from "./rupantar/brand-intro";
 import { RupantarSite } from "./rupantar/site";
 import { initWorkMediaEnhancements } from "./rupantar/work-media-enhancer";
@@ -127,6 +128,38 @@ function ensureFacebookLinks() {
   }
 }
 
+function ensureReviewCardClasses() {
+  const heading = Array.from(document.querySelectorAll<HTMLElement>("h3")).find(
+    (element) => element.textContent?.trim() === "Real Homes, Real Reviews",
+  );
+  const section = heading?.closest("section");
+  if (!(section instanceof HTMLElement)) return;
+
+  section.classList.add("rh-review-section");
+  const grid = Array.from(section.querySelectorAll<HTMLElement>("div.grid")).find((element) => element.children.length > 0);
+  if (!grid) return;
+
+  for (const card of Array.from(grid.children)) {
+    if (!(card instanceof HTMLElement)) continue;
+    card.classList.add("rh-review-card");
+    const children = Array.from(card.children);
+    if (children[1] instanceof HTMLElement) children[1].classList.add("rh-review-stars");
+    if (children[2] instanceof HTMLElement) children[2].classList.add("rh-review-quote");
+    if (children[3] instanceof HTMLElement) {
+      children[3].classList.add("rh-review-author");
+      const authorChildren = Array.from(children[3].children);
+      if (authorChildren[0] instanceof HTMLElement) authorChildren[0].classList.add("rh-review-monogram");
+      if (authorChildren[1] instanceof HTMLElement) {
+        const identity = Array.from(authorChildren[1].children);
+        if (identity[0] instanceof HTMLElement) identity[0].classList.add("rh-review-author-name");
+        if (identity[1] instanceof HTMLElement) identity[1].classList.add("rh-review-location");
+      }
+    }
+    const link = card.querySelector<HTMLElement>("a");
+    if (link) link.classList.add("rh-review-link");
+  }
+}
+
 function normalizeVisibleCopy() {
   const replacements: Array<[RegExp, string]> = [
     [/\b8 core services\b/gi, "3 core services"],
@@ -182,6 +215,7 @@ function normalizeVisibleCopy() {
   normalizeNode(document.body);
   normalizeFooter();
   ensureFacebookLinks();
+  ensureReviewCardClasses();
 
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
@@ -189,6 +223,7 @@ function normalizeVisibleCopy() {
     }
     normalizeFooter();
     ensureFacebookLinks();
+    ensureReviewCardClasses();
   });
 
   observer.observe(document.body, { childList: true, subtree: true });
