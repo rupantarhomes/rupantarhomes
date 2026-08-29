@@ -12,6 +12,7 @@ List the files/surfaces intentionally changed.
 - [ ] The change is limited to the requested scope.
 - [ ] I reviewed the complete diff for unrelated changes.
 - [ ] No production secrets were added to source control.
+- [ ] `node scripts/verify-production-lock.mjs` passes, or every intentionally changed production fingerprint is updated only after complete verification.
 - [ ] Auth/RLS/Admin authorization is unchanged unless explicitly required by this PR.
 - [ ] Cloudinary Work upload/WebP/remove/cancel/update lifecycle is unchanged unless explicitly required by this PR.
 - [ ] Public inquiry/form validation, server-side secrets, and rate limiting are unchanged unless explicitly required by this PR.
@@ -28,10 +29,10 @@ List the files/surfaces intentionally changed.
 
 ## Locked-system impact
 
-Does this PR intentionally modify a locked production system?
+Does this PR intentionally modify a locked production system or handover fingerprint?
 
 - [ ] No
-- [ ] Yes — explain why, blast radius, rollback plan, and targeted regression below.
+- [ ] Yes — explain why, blast radius, rollback plan, targeted regression, and the exact `.github/production-lock.json` fingerprint(s) updated below.
 
 ### Explanation / rollback / regression evidence
 
