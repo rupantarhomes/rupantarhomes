@@ -33,69 +33,48 @@
 }
 
 /* Connect With Us: charcoal brand panel with official social platform colors. */
-.min-h-screen .rh-connect-panel.rh-connect-panel {
-  position: relative !important;
-  overflow: hidden !important;
-  isolation: isolate !important;
-  background-color: #211f1c !important;
+.min-h-screen.bg-white.text-zinc-950 .rh-connect-panel.rh-connect-panel {
+  background: #211f1c !important;
   border-color: #34302b !important;
   color: #ffffff !important;
 }
 
-.min-h-screen .rh-connect-panel.rh-connect-panel::before {
-  content: "" !important;
-  position: absolute !important;
-  inset: 0 !important;
-  z-index: 0 !important;
-  pointer-events: none !important;
-  background-image: url("/connect-with-us.webp") !important;
-  background-position: center 56% !important;
-  background-size: cover !important;
-  background-repeat: no-repeat !important;
-  opacity: 0.52 !important;
-}
-
-.min-h-screen .rh-connect-panel.rh-connect-panel > * {
-  position: relative !important;
-  z-index: 1 !important;
-}
-
-.min-h-screen .rh-connect-panel h3 {
+.min-h-screen.bg-white.text-zinc-950 .rh-connect-panel h3 {
   color: #ffffff !important;
 }
 
-.min-h-screen .rh-connect-panel p {
-  color: rgba(255, 255, 255, 0.88) !important;
+.min-h-screen.bg-white.text-zinc-950 .rh-connect-panel p {
+  color: rgba(255, 255, 255, 0.78) !important;
 }
 
-.min-h-screen .rh-connect-panel .rh-social-actions > a {
+.min-h-screen.bg-white.text-zinc-950 .rh-connect-panel .rh-social-actions > a {
   border-width: 1px !important;
   box-shadow: none !important;
 }
 
 /* Instagram official pink family. Icon is unchanged. */
-.min-h-screen .rh-connect-panel .rh-social-actions > a:nth-child(1) {
+.min-h-screen.bg-white.text-zinc-950 .rh-connect-panel .rh-social-actions > a:nth-child(1) {
   background: #e1306c !important;
   border-color: #e1306c !important;
   color: #ffffff !important;
 }
 
 /* TikTok stays clean white with the existing icon. */
-.min-h-screen .rh-connect-panel .rh-social-actions > a:nth-child(2) {
+.min-h-screen.bg-white.text-zinc-950 .rh-connect-panel .rh-social-actions > a:nth-child(2) {
   background: #ffffff !important;
   border-color: #ffffff !important;
   color: #111111 !important;
 }
 
 /* Facebook official blue. Icon is unchanged. */
-.min-h-screen .rh-connect-panel .rh-social-actions > a[data-rh-facebook-link="connect"] {
+.min-h-screen.bg-white.text-zinc-950 .rh-connect-panel .rh-social-actions > a[data-rh-facebook-link="connect"] {
   background: #1877f2 !important;
   border-color: #1877f2 !important;
   color: #ffffff !important;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .min-h-screen .rh-connect-panel .rh-social-actions > a:hover {
+  .min-h-screen.bg-white.text-zinc-950 .rh-connect-panel .rh-social-actions > a:hover {
     filter: brightness(0.96);
   }
 }

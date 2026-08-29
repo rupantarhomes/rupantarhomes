@@ -207,6 +207,16 @@ This correction addresses the fact that the previous deployed CSS was not visibl
 
 Accepted `app` fingerprint after this correction: `356eecba63fa61ffe7aa7a6acb9e22448449eab9`.
 
+## Reverted Recent Works and Connect image — 2026-08-30
+
+This rollback removes only the two presentation changes requested for reversal:
+
+- restore the homepage `Recent Works` heading to its original plain title-case treatment with its existing component sizing and no added charcoal pill/background;
+- remove the added background image layer from the `Connect With Us` panel and restore the prior charcoal-only panel presentation;
+- preserve the four-review layout, Connect text/social buttons, all other homepage presentation, and all locked production systems unchanged.
+
+Accepted `app` fingerprint after this rollback: `0abca3ab8f80d72ab9ad2ce90f08ac64f898832e`.
+
 ## AI/Codex instruction block
 
 Use this at the start of future implementation requests:
