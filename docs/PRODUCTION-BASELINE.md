@@ -171,6 +171,20 @@ Scope is limited to the public homepage presentation:
 
 Accepted `app` fingerprint after this scoped update: `f018db8b57dedb4a7118e4ae3c1c1f2aede4e13f`.
 
+## Accepted Recent Works label / Connect image refinement — 2026-08-30
+
+Scope remains limited to the same public homepage presentation:
+
+- preserve the four-review layout from the previous accepted update unchanged;
+- display the homepage `Recent Works` label in lowercase inside a rounded light-charcoal box with white text;
+- replace only the `Connect With Us` background image with `/connect-with-us.webp`, generated from the user-provided interior image at 51,448 bytes (about 50 KB), while preserving the existing 15% opacity treatment and all Connect panel content/buttons;
+- preserve all other homepage layout, styling, copy, behavior and production systems unchanged.
+
+Accepted fingerprints after this scoped update:
+
+- `app`: `92cddbadf7a258cabe1f5afa3f44f542d67d3828`
+- `public`: `0536c426ff9be2776c277c71fd7bea91257ed0f8`
+
 ## AI/Codex instruction block
 
 Use this at the start of future implementation requests:
