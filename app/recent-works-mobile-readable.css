@@ -162,4 +162,14 @@
     content: none !important;
     display: none !important;
   }
+
+  /* Exact screenshot source: the Photo Coming Soon slot uses Tailwind's dashed border. */
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card .rh-work-media-slot.border-dashed,
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card:hover .rh-work-media-slot.border-dashed {
+    border: 0 !important;
+    border-width: 0 !important;
+    border-style: none !important;
+    border-color: transparent !important;
+    outline: 0 !important;
+  }
 }
