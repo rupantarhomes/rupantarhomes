@@ -79,7 +79,19 @@
   }
 }
 
-/* Homepage Recent Works heading only: display in capitals. */
+/* Homepage Recent Works heading only: lowercase white text in a light-charcoal rounded box. */
 .min-h-screen.bg-white.text-zinc-950 main > section:first-child > div:first-child > h3 {
-  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  background: #4a4844;
+  color: #ffffff !important;
+  text-transform: lowercase;
+}
+
+@media (min-width: 640px) {
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child > div:first-child > h3 {
+    padding: 9px 17px;
+  }
 }
