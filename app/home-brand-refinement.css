@@ -20,7 +20,7 @@
   transition-duration: 1100ms !important;
 }
 
-/* Recent Works: show completed-photo cards only on the homepage. */
+/* Recent Works: six fixed visual positions; photo-ready projects first. */
 .rh-brand-home main > section:first-child .rh-work-card[data-rh-brand-ready="false"] {
   display: none !important;
 }
@@ -36,6 +36,69 @@
 
 .rh-brand-home main > section:first-child .rh-work-card > div:nth-child(2) > button {
   opacity: 0.92;
+}
+
+.rh-brand-home main > section:first-child .rh-brand-reserve-slot {
+  min-height: 310px;
+  overflow: hidden;
+  border: 1px solid #e4e0d9;
+  border-radius: 24px;
+  background: #f6f3ee;
+  display: flex;
+  flex-direction: column;
+}
+
+.rh-brand-home main > section:first-child .rh-brand-reserve-media {
+  margin: 12px 12px 0;
+  min-height: 190px;
+  border-radius: 18px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0)),
+    #20201f;
+  display: grid;
+  place-items: center;
+}
+
+.rh-brand-home main > section:first-child .rh-brand-reserve-mark {
+  width: 54px;
+  height: 54px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.9);
+  display: grid;
+  place-items: center;
+  font-family: "Instrument Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.rh-brand-home main > section:first-child .rh-brand-reserve-copy {
+  padding: 18px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rh-brand-home main > section:first-child .rh-brand-reserve-kicker {
+  color: #d91131;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.rh-brand-home main > section:first-child .rh-brand-reserve-copy strong {
+  color: #1c1b1a;
+  font-family: "Instrument Sans", sans-serif;
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.rh-brand-home main > section:first-child .rh-brand-reserve-copy > span:last-child {
+  color: #77716a;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 /* Service cards: quieter, flatter and more architectural. */
@@ -123,6 +186,20 @@
   .rh-brand-home main > section:first-child {
     padding-top: 18px !important;
     padding-bottom: 34px !important;
+  }
+
+  .rh-brand-home main > section:first-child .rh-brand-reserve-slot {
+    min-height: 0;
+    border-radius: 20px;
+  }
+
+  .rh-brand-home main > section:first-child .rh-brand-reserve-media {
+    min-height: 168px;
+    border-radius: 15px;
+  }
+
+  .rh-brand-home main > section:first-child .rh-brand-reserve-copy {
+    padding: 15px 17px 18px;
   }
 
   .rh-brand-home #services {
