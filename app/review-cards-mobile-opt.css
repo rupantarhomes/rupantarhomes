@@ -78,3 +78,8 @@
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   }
 }
+
+/* Homepage Recent Works heading only: display in capitals. */
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child > div:first-child > h3 {
+  text-transform: uppercase;
+}
