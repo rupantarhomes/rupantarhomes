@@ -1,0 +1,13 @@
+/* Public display typography only. Admin and layout remain unchanged. */
+.min-h-screen.bg-white.text-zinc-950 h1,
+.min-h-screen.bg-white.text-zinc-950 h2,
+.min-h-screen.bg-white.text-zinc-950 h3,
+.min-h-screen.bg-white.text-zinc-950 h4,
+.min-h-screen.bg-white.text-zinc-950 .font-heading,
+.min-h-screen.bg-white.text-zinc-950 [class*="Space_Grotesk"] {
+  font-family: "Instrument Sans", "Inter", sans-serif !important;
+}
+
+.brand-intro__name {
+  font-family: "Instrument Sans", "Inter", sans-serif !important;
+}
