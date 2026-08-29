@@ -196,6 +196,17 @@ This correction changes only the two requested presentation details from the imm
 
 Accepted `app` fingerprint after this correction: `0b93bc16a05930f503a8495ef9a0e2569207b656`.
 
+## Direct homepage selector correction — 2026-08-30
+
+This correction addresses the fact that the previous deployed CSS was not visibly applying on the live homepage:
+
+- keep the source text exactly `Recent Works` and preserve the existing component font sizes;
+- strengthen only the homepage heading selector so the same-size heading receives the requested tight light-charcoal rounded box and white text;
+- keep the existing `/connect-with-us.webp` asset unchanged and strengthen only the Connect panel background-image layer so it cannot be overridden by later theme styles;
+- preserve the four-review layout, Connect content/buttons, all other homepage layout/behavior, and all locked production systems unchanged.
+
+Accepted `app` fingerprint after this correction: `356eecba63fa61ffe7aa7a6acb9e22448449eab9`.
+
 ## AI/Codex instruction block
 
 Use this at the start of future implementation requests:
