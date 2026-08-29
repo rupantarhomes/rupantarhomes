@@ -1,0 +1,51 @@
+@media (max-width: 639px) {
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) {
+    margin-top: -112px !important;
+    padding: 12px 11px 13px !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card .rh-work-location-source {
+    max-width: 100%;
+    gap: 4px !important;
+    margin: 0 0 7px !important;
+    padding: 4px 6px !important;
+    font-size: 9.5px !important;
+    line-height: 1.15 !important;
+    font-weight: 500 !important;
+    letter-spacing: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card .rh-work-location-source svg {
+    width: 10px !important;
+    height: 10px !important;
+    min-width: 10px;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) > div:first-child span {
+    font-size: 8.5px !important;
+    line-height: 1.15 !important;
+    letter-spacing: 0.07em !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) > .font-heading {
+    font-size: 13px !important;
+    line-height: 1.22 !important;
+    letter-spacing: -0.015em !important;
+    -webkit-line-clamp: 2 !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) > button {
+    margin-top: 8px !important;
+    font-size: 9.5px !important;
+    line-height: 1.2 !important;
+    gap: 4px !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) > button svg {
+    width: 10px !important;
+    height: 10px !important;
+  }
+}
