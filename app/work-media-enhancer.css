@@ -92,6 +92,16 @@
   outline-offset: -4px;
 }
 
+/* Work detail + Admin Works image slots: ratio only. Existing order and stack positions stay unchanged. */
+main .aspect-\[16\/10\] {
+  aspect-ratio: 1 / 1 !important;
+}
+
+div[class*="grid-cols-[1.6fr_1fr]"][class*="grid-rows-2"] > div:first-child {
+  aspect-ratio: 1 / 1 !important;
+  align-self: start;
+}
+
 .rh-work-lightbox {
   position: fixed;
   inset: 0;
