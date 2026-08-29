@@ -25,15 +25,15 @@
   }
 
   .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) > div:first-child span {
-    font-size: 8.5px !important;
+    font-size: 9.5px !important;
     line-height: 1.15 !important;
-    letter-spacing: 0.07em !important;
+    letter-spacing: 0.055em !important;
   }
 
   .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) > .font-heading {
-    font-size: 13px !important;
-    line-height: 1.22 !important;
-    letter-spacing: -0.015em !important;
+    font-size: 9.5px !important;
+    line-height: 1.25 !important;
+    letter-spacing: -0.005em !important;
     -webkit-line-clamp: 2 !important;
   }
 
