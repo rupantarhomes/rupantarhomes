@@ -1,0 +1,264 @@
+/*
+ * Rupantar Homes — Charcoal Editorial art-direction layer.
+ *
+ * Loaded last on the public site only. This file intentionally changes visual
+ * treatment, not layout, section order, copy, component hierarchy, routes,
+ * responsive structure, data, forms, media behavior, or Admin behavior.
+ */
+
+.min-h-screen.bg-white.text-zinc-950 {
+  /* Core architectural palette */
+  --rh-editorial-canvas: #f7f6f2;
+  --rh-editorial-surface: #fffefa;
+  --rh-editorial-stone: #efede8;
+  --rh-editorial-stone-deep: #e7e4de;
+  --rh-editorial-ink: #181817;
+  --rh-editorial-ink-soft: #494743;
+  --rh-editorial-muted: #6c6963;
+  --rh-editorial-line: #dedbd4;
+  --rh-editorial-line-soft: #e9e6df;
+  --rh-editorial-charcoal: #1a1a19;
+  --rh-editorial-charcoal-soft: #232321;
+  --rh-editorial-deep: #111110;
+  --rh-editorial-dark-line: rgba(255, 255, 255, 0.12);
+  --rh-editorial-red: #9f242a;
+  --rh-editorial-red-hover: #861c21;
+  --rh-editorial-red-dark: #dc5a61;
+  --rh-editorial-red-wash: #f2e9e7;
+  --rh-editorial-on-dark: #f6f4ef;
+  --rh-editorial-on-dark-muted: #bbb7af;
+
+  /* Restrained elevation. Architecture, spacing and imagery do the work. */
+  --rh-editorial-shadow: 0 8px 28px rgba(20, 19, 17, 0.045);
+  --rh-editorial-shadow-hover: 0 16px 40px rgba(20, 19, 17, 0.075);
+  --rh-editorial-shadow-red: 0 9px 24px rgba(159, 36, 42, 0.18);
+
+  background: var(--rh-editorial-canvas) !important;
+  color: var(--rh-editorial-ink) !important;
+}
+
+/* Header: quiet warm-white material, almost no chrome. */
+.min-h-screen.bg-white.text-zinc-950 > nav.sticky {
+  background: rgba(255, 254, 250, 0.955) !important;
+  border-color: rgba(222, 219, 212, 0.9) !important;
+  box-shadow: 0 1px 0 rgba(24, 24, 23, 0.025), 0 10px 28px rgba(24, 24, 23, 0.035) !important;
+  backdrop-filter: blur(14px) saturate(115%);
+  -webkit-backdrop-filter: blur(14px) saturate(115%);
+}
+
+/* Existing top utility strip becomes a true charcoal brand surface. */
+.min-h-screen.bg-white.text-zinc-950 > div:first-child {
+  background: var(--rh-editorial-deep) !important;
+  border-color: var(--rh-editorial-red) !important;
+}
+
+/* Light-section rhythm: warm white + stone, not cold zinc. */
+.min-h-screen.bg-white.text-zinc-950 [class~="bg-white"] {
+  background-color: var(--rh-editorial-surface) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 [class~="bg-zinc-50"],
+.min-h-screen.bg-white.text-zinc-950 [class~="bg-[#F8F8F8]"] {
+  background-color: var(--rh-editorial-stone) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 [class~="bg-[#FFF0F2]"] {
+  background-color: var(--rh-editorial-red-wash) !important;
+}
+
+/* Dark sections are charcoal, never flat black. */
+.min-h-screen.bg-white.text-zinc-950 [class~="bg-zinc-900"],
+.min-h-screen.bg-white.text-zinc-950 [class~="bg-[#111111]"] {
+  background-color: var(--rh-editorial-charcoal) !important;
+}
+
+/* Neutral typography hierarchy. */
+.min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-950"],
+.min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-900"] {
+  color: var(--rh-editorial-ink) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-700"] {
+  color: var(--rh-editorial-ink-soft) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-600"] {
+  color: #5d5a55 !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-500"],
+.min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-400"] {
+  color: var(--rh-editorial-muted) !important;
+}
+
+/* One quiet line language. */
+.min-h-screen.bg-white.text-zinc-950 [class~="border-zinc-100"],
+.min-h-screen.bg-white.text-zinc-950 [class~="border-zinc-100/90"] {
+  border-color: var(--rh-editorial-line-soft) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 [class~="border-zinc-200"],
+.min-h-screen.bg-white.text-zinc-950 [class~="border-zinc-200/80"] {
+  border-color: var(--rh-editorial-line) !important;
+}
+
+/* Brand red is a signature, not a field color. */
+.min-h-screen.bg-white.text-zinc-950 [class~="text-[#FF1A3D]"] {
+  color: var(--rh-editorial-red) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 :is(button, a, span)[class~="bg-[#FF1A3D]"] {
+  background-color: var(--rh-editorial-red) !important;
+  border-color: var(--rh-editorial-red) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 :is(button, a)[class~="bg-[#FF1A3D]"] {
+  box-shadow: var(--rh-editorial-shadow-red) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .min-h-screen.bg-white.text-zinc-950 :is(button, a)[class~="bg-[#FF1A3D]"]:hover {
+    background-color: var(--rh-editorial-red-hover) !important;
+    border-color: var(--rh-editorial-red-hover) !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 [class*="hover:text-[#FF1A3D]"]:hover,
+  .min-h-screen.bg-white.text-zinc-950 [class*="group-hover:text-[#FF1A3D]"]:hover {
+    color: var(--rh-editorial-red) !important;
+  }
+}
+
+/* Dark/photo surfaces use a slightly lifted red for legibility, still restrained. */
+.min-h-screen.bg-white.text-zinc-950 .rupantar-hero-section [class~="text-[#FF1A3D]"],
+.min-h-screen.bg-white.text-zinc-950 #estimate [class~="text-[#FF1A3D]"] {
+  color: var(--rh-editorial-red-dark) !important;
+}
+
+/* Hero stays photographic; only the brand accent is retuned. */
+.min-h-screen.bg-white.text-zinc-950 .rupantar-hero-section [data-hero-background="true"] > div:last-child {
+  background: rgba(10, 10, 9, 0.41) !important;
+}
+
+/* Existing project-cover system stays intact; only its palette/elevation is refined. */
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card {
+  background: var(--rh-editorial-charcoal) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 10px 30px rgba(17, 17, 16, 0.075) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) > div:first-child span + span,
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card .rh-work-location-source svg {
+  color: var(--rh-editorial-red-dark) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card:hover {
+    transform: translateY(-2px) !important;
+    border-color: rgba(255, 255, 255, 0.16) !important;
+    box-shadow: 0 18px 44px rgba(17, 17, 16, 0.12) !important;
+  }
+}
+
+/* Reduce template-like roundness without touching geometry or spacing. */
+.min-h-screen.bg-white.text-zinc-950 [class~="rounded-[1.5rem]"] {
+  border-radius: 14px !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 [class~="rounded-[2rem]"] {
+  border-radius: 16px !important;
+}
+
+/* One restrained card language across the public experience. */
+.min-h-screen.bg-white.text-zinc-950 :is(article, div, button, form)[class~="bg-white"][class*="rounded"][class*="shadow"] {
+  box-shadow: var(--rh-editorial-shadow) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .min-h-screen.bg-white.text-zinc-950 :is(article, div, button)[class~="bg-white"][class*="rounded"][class*="shadow"]:hover {
+    box-shadow: var(--rh-editorial-shadow-hover) !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 .card-hover:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: var(--rh-editorial-shadow-hover) !important;
+  }
+}
+
+/* How We Work remains the soft-stone pause in the homepage rhythm. */
+.min-h-screen.bg-white.text-zinc-950 main > section[class~="bg-zinc-50"] {
+  background: var(--rh-editorial-stone) !important;
+  border-color: var(--rh-editorial-line-soft) !important;
+}
+
+/* Estimate is the principal dark editorial moment. */
+.min-h-screen.bg-white.text-zinc-950 #estimate > div {
+  background: var(--rh-editorial-charcoal) !important;
+  color: var(--rh-editorial-on-dark) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 #estimate > div [class~="text-zinc-300"] {
+  color: var(--rh-editorial-on-dark-muted) !important;
+}
+
+/* Social-connect panel becomes a calm material surface instead of a pink panel. */
+.min-h-screen.bg-white.text-zinc-950 main > section [class~="bg-[#FFF0F2]"][class*="border"] {
+  background: var(--rh-editorial-stone) !important;
+  border-color: var(--rh-editorial-line) !important;
+}
+
+/* Forms: clean porcelain fields with a single red focus signal. */
+.min-h-screen.bg-white.text-zinc-950 input:not([type="file"]),
+.min-h-screen.bg-white.text-zinc-950 textarea,
+.min-h-screen.bg-white.text-zinc-950 select {
+  background: var(--rh-editorial-surface) !important;
+  border-color: var(--rh-editorial-line) !important;
+  color: var(--rh-editorial-ink) !important;
+  box-shadow: none !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 input::placeholder,
+.min-h-screen.bg-white.text-zinc-950 textarea::placeholder {
+  color: #88847d !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 :is(button, a, input, textarea, select, [role="button"]):focus-visible {
+  outline: 2px solid var(--rh-editorial-red) !important;
+  outline-offset: 3px !important;
+}
+
+/* Brand intro uses the mature brand red rather than the previous neon red. */
+.brand-intro {
+  background: var(--rh-editorial-red, #9f242a) !important;
+}
+
+.whatsapp-icon-only::before {
+  background-color: var(--rh-editorial-red, #9f242a) !important;
+  box-shadow: 0 4px 12px rgba(159, 36, 42, 0.18) !important;
+}
+
+/* Footer closes the composition in deep charcoal. */
+.min-h-screen.bg-white.text-zinc-950 footer {
+  background: var(--rh-editorial-deep) !important;
+  color: var(--rh-editorial-on-dark) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 footer [class~="text-zinc-300"] {
+  color: #d2cec6 !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 footer [class~="text-zinc-400"] {
+  color: #aaa69f !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 footer [class~="border-gray-800"] {
+  border-color: var(--rh-editorial-dark-line) !important;
+}
+
+/* Accessibility: stronger separators/muted text only when requested by the user agent. */
+@media (prefers-contrast: more) {
+  .min-h-screen.bg-white.text-zinc-950 {
+    --rh-editorial-muted: #55524d;
+    --rh-editorial-line: #c8c4bc;
+    --rh-editorial-line-soft: #d5d1ca;
+  }
+}
