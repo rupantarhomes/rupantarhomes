@@ -144,11 +144,13 @@ export function PublicHeader({
   navigate,
   onCategory,
   onEstimate,
+  onPublicNavigationIntent,
 }: {
   page: Page;
   navigate: (page: Page) => void;
   onCategory: (category: string) => void;
   onEstimate: () => void;
+  onPublicNavigationIntent: (page: Page) => void;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -161,6 +163,11 @@ export function PublicHeader({
     onCategory(category);
     setOpen(false);
   };
+
+  const intent = (page: Page) => ({
+    onPointerDown: () => onPublicNavigationIntent(page),
+    onPointerEnter: () => onPublicNavigationIntent(page),
+  });
 
   return (
     <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-zinc-100">
@@ -175,22 +182,22 @@ export function PublicHeader({
 
         <div className="hidden lg:flex items-center gap-8">
           <button onClick={() => go("home")} className={`text-[14px] font-medium transition ${page === "home" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>Home</button>
-          <button onClick={() => goCategory("architect")} className="text-[14px] font-medium text-zinc-700 hover:text-[#FF1A3D] transition">Architecture</button>
+          <button {...intent("works")} onClick={() => goCategory("architect")} className="text-[14px] font-medium text-zinc-700 hover:text-[#FF1A3D] transition">Architecture</button>
           <div className="relative group">
-            <button onClick={() => go("interior-design")} className={`text-[14px] font-medium transition ${page === "interior-design" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>Interior Design</button>
+            <button {...intent("interior-design")} onClick={() => go("interior-design")} className={`text-[14px] font-medium transition ${page === "interior-design" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>Interior Design</button>
             <div className="absolute left-1/2 top-full z-50 hidden -translate-x-1/2 pt-3 group-hover:block">
               <div className="w-56 rounded-2xl border border-zinc-100 bg-white p-2 shadow-xl">
-                <button onClick={() => go("interior-design")} className="w-full rounded-xl px-3 py-2 text-left text-[13px] font-semibold hover:bg-zinc-50">All Interior Design</button>
+                <button {...intent("interior-design")} onClick={() => go("interior-design")} className="w-full rounded-xl px-3 py-2 text-left text-[13px] font-semibold hover:bg-zinc-50">All Interior Design</button>
                 {interiorDesignCategories.map((category) => (
-                  <button key={category.slug} onClick={() => goCategory(category.slug)} className="w-full rounded-xl px-3 py-2 text-left text-[13px] hover:bg-zinc-50">{category.name}</button>
+                  <button {...intent("works")} key={category.slug} onClick={() => goCategory(category.slug)} className="w-full rounded-xl px-3 py-2 text-left text-[13px] hover:bg-zinc-50">{category.name}</button>
                 ))}
               </div>
             </div>
           </div>
-          <button onClick={() => goCategory("home-construction")} className="text-[14px] font-medium text-zinc-700 hover:text-[#FF1A3D] transition">Home Construction</button>
-          <button onClick={() => go("blog")} className={`text-[14px] font-medium transition ${page === "blog" || page === "blog-detail" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>Blog</button>
-          <button onClick={() => go("about")} className={`text-[14px] font-medium transition ${page === "about" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>About</button>
-          <button onClick={() => go("contact")} className={"text-[14px] font-medium transition "+(page === "contact" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]")}>Contact</button>
+          <button {...intent("works")} onClick={() => goCategory("home-construction")} className="text-[14px] font-medium text-zinc-700 hover:text-[#FF1A3D] transition">Home Construction</button>
+          <button {...intent("blog")} onClick={() => go("blog")} className={`text-[14px] font-medium transition ${page === "blog" || page === "blog-detail" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>Blog</button>
+          <button {...intent("about")} onClick={() => go("about")} className={`text-[14px] font-medium transition ${page === "about" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]"}`}>About</button>
+          <button {...intent("contact")} onClick={() => go("contact")} className={"text-[14px] font-medium transition "+(page === "contact" ? "text-[#FF1A3D]" : "text-zinc-700 hover:text-[#FF1A3D]")}>Contact</button>
         </div>
 
         <div className="flex items-center gap-3">
@@ -206,17 +213,17 @@ export function PublicHeader({
       {open && (
         <div className="lg:hidden border-t border-zinc-100 bg-white px-4 py-4 space-y-1">
           <button onClick={() => go("home")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Home</button>
-          <button onClick={() => goCategory("architect")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Architecture</button>
-          <button onClick={() => go("interior-design")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Interior Design</button>
+          <button {...intent("works")} onClick={() => goCategory("architect")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Architecture</button>
+          <button {...intent("interior-design")} onClick={() => go("interior-design")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Interior Design</button>
           <div className="pl-4 pb-2">
             {interiorDesignCategories.map((category) => (
-              <button key={category.slug} onClick={() => goCategory(category.slug)} className="w-full text-left py-2 px-4 rounded-xl text-[13px] text-zinc-600 hover:bg-zinc-50">{category.name}</button>
+              <button {...intent("works")} key={category.slug} onClick={() => goCategory(category.slug)} className="w-full text-left py-2 px-4 rounded-xl text-[13px] text-zinc-600 hover:bg-zinc-50">{category.name}</button>
             ))}
           </div>
-          <button onClick={() => goCategory("home-construction")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Home Construction</button>
-          <button onClick={() => go("blog")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Blog</button>
-          <button onClick={() => go("about")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">About</button>
-          <button onClick={() => go("contact")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Contact</button>
+          <button {...intent("works")} onClick={() => goCategory("home-construction")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Home Construction</button>
+          <button {...intent("blog")} onClick={() => go("blog")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Blog</button>
+          <button {...intent("about")} onClick={() => go("about")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">About</button>
+          <button {...intent("contact")} onClick={() => go("contact")} className="w-full text-left py-3 px-4 rounded-2xl text-[14px] font-medium hover:bg-zinc-50">Contact</button>
           <button
             onClick={() => {
               setOpen(false);
@@ -237,12 +244,19 @@ export function PublicFooter({
   onCategory,
   onEstimate,
   settings,
+  onPublicNavigationIntent,
 }: {
   navigate: (page: Page) => void;
   onCategory: (category: string) => void;
   onEstimate: () => void;
   settings: SiteSettings;
+  onPublicNavigationIntent: (page: Page) => void;
 }) {
+  const intent = (page: Page) => ({
+    onPointerDown: () => onPublicNavigationIntent(page),
+    onPointerEnter: () => onPublicNavigationIntent(page),
+  });
+
   return (
     <footer className="mt-16 bg-[#111111] text-[#FEFEFE]">
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-14 grid sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10">
@@ -265,7 +279,7 @@ export function PublicFooter({
           <div className="font-heading font-semibold text-[13px] uppercase tracking-wide text-[#FEFEFE]">Categories</div>
           <div className="mt-4 grid grid-cols-1 gap-2.5">
             {categories.filter((category) => category.slug !== "interior").map((category) => (
-              <button key={category.slug} onClick={() => onCategory(category.slug)} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D] transition">{category.name}</button>
+              <button {...intent("works")} key={category.slug} onClick={() => onCategory(category.slug)} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D] transition">{category.name}</button>
             ))}
           </div>
         </div>
@@ -274,11 +288,11 @@ export function PublicFooter({
           <div className="font-heading font-semibold text-[13px] uppercase tracking-wide text-[#FEFEFE]">Quick Links</div>
           <div className="mt-4 flex flex-col gap-2.5">
             <button onClick={() => navigate("home")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Home</button>
-            <button onClick={() => navigate("works")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">All Works</button>
-            <button onClick={() => navigate("blog")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Blog</button>
-            <button onClick={() => navigate("about")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">About Us</button>
-            <button onClick={() => navigate("contact")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Contact</button>
-            <button onClick={() => navigate("privacy")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Privacy Policy</button>
+            <button {...intent("works")} onClick={() => navigate("works")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">All Works</button>
+            <button {...intent("blog")} onClick={() => navigate("blog")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Blog</button>
+            <button {...intent("about")} onClick={() => navigate("about")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">About Us</button>
+            <button {...intent("contact")} onClick={() => navigate("contact")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Contact</button>
+            <button {...intent("privacy")} onClick={() => navigate("privacy")} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Privacy Policy</button>
             <button onClick={onEstimate} className="text-left text-[13px] text-zinc-400 hover:text-[#FF1A3D]">Get Estimate</button>
           </div>
         </div>
