@@ -1,50 +1,39 @@
 /*
- * Rupantar Homes — final premium architectural design-system layer.
+ * Rupantar Homes — Charcoal Editorial art-direction layer.
  * Theme-only overrides scoped to the public-site root.
- * No layout, spacing, content, route, component hierarchy, or admin changes.
+ * No layout, spacing, content, route, component hierarchy, admin, or behavior changes.
  */
 
 .min-h-screen.bg-white.text-zinc-950 {
-  /* Core surfaces */
-  --rh-canvas: #f7f5f0;
-  --rh-surface: #fffdfa;
-  --rh-surface-soft: #f3f0ea;
-  --rh-surface-muted: #eee8df;
+  --rh-editorial-canvas: #f7f6f2;
+  --rh-editorial-surface: #fffefa;
+  --rh-editorial-stone: #efede8;
+  --rh-editorial-stone-deep: #e7e4de;
+  --rh-editorial-ink: #181817;
+  --rh-editorial-ink-soft: #494743;
+  --rh-editorial-muted: #6c6963;
+  --rh-editorial-line: #dedbd4;
+  --rh-editorial-line-soft: #e9e6df;
+  --rh-editorial-charcoal: #1a1a19;
+  --rh-editorial-charcoal-soft: #232321;
+  --rh-editorial-deep: #111110;
+  --rh-editorial-dark-line: rgba(255, 255, 255, 0.12);
+  --rh-editorial-red: #9f242a;
+  --rh-editorial-red-hover: #861c21;
+  --rh-editorial-red-dark: #dc5a61;
+  --rh-editorial-red-wash: #f2e9e7;
+  --rh-editorial-on-dark: #f6f4ef;
+  --rh-editorial-on-dark-muted: #bbb7af;
+  --rh-editorial-shadow: 0 8px 28px rgba(20, 19, 17, 0.045);
+  --rh-editorial-shadow-hover: 0 16px 40px rgba(20, 19, 17, 0.075);
+  --rh-editorial-shadow-red: 0 9px 24px rgba(159, 36, 42, 0.18);
 
-  /* Typography */
-  --rh-ink: #1b1916;
-  --rh-ink-soft: #47423b;
-  --rh-muted: #766f65;
-  --rh-faint: #7c7368;
-
-  /* Lines */
-  --rh-line: #e9e2d8;
-  --rh-line-strong: #ddd3c6;
-
-  /* Dark family */
-  --rh-dark: #171614;
-  --rh-dark-soft: #211f1c;
-  --rh-dark-line: #34302b;
-
-  /* Brand family: expressive red + accessible functional red */
-  --rh-red: #ff1a3d;
-  --rh-red-functional: #d91131;
-  --rh-red-functional-hover: #c90d2b;
-  --rh-brand-wash: #f4eee9;
-
-  /* One restrained elevation system */
-  --rh-shadow-subtle: 0 4px 18px rgba(45, 37, 28, 0.035);
-  --rh-shadow-card: 0 8px 28px rgba(45, 37, 28, 0.05);
-  --rh-shadow-hover: 0 18px 44px rgba(45, 37, 28, 0.085);
-  --rh-shadow-brand: 0 10px 26px rgba(217, 17, 49, 0.2);
-
-  background: var(--rh-canvas) !important;
-  color: var(--rh-ink) !important;
+  background: var(--rh-editorial-canvas) !important;
+  color: var(--rh-editorial-ink) !important;
   font-family: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
 }
 
-/* Typography is deliberately two-family: Space Grotesk for brand/display, Inter for body/UI. */
 .min-h-screen.bg-white.text-zinc-950 h1,
 .min-h-screen.bg-white.text-zinc-950 h2,
 .min-h-screen.bg-white.text-zinc-950 h3,
@@ -53,225 +42,265 @@
   font-family: "Space Grotesk", sans-serif !important;
 }
 
-/* Header and top navigation: warm glass, not cold white. */
 .min-h-screen.bg-white.text-zinc-950 > nav.sticky {
-  background: rgba(255, 253, 250, 0.94) !important;
-  border-color: rgba(221, 211, 198, 0.82) !important;
-  box-shadow: 0 1px 0 rgba(39, 34, 28, 0.025), 0 12px 34px rgba(45, 37, 28, 0.045) !important;
+  background: rgba(255, 254, 250, 0.955) !important;
+  border-color: rgba(222, 219, 212, 0.9) !important;
+  box-shadow: 0 1px 0 rgba(24, 24, 23, 0.025), 0 10px 28px rgba(24, 24, 23, 0.035) !important;
+  backdrop-filter: blur(14px) saturate(115%);
+  -webkit-backdrop-filter: blur(14px) saturate(115%);
 }
 
 .min-h-screen.bg-white.text-zinc-950 > div:first-child {
-  background: var(--rh-dark) !important;
-  border-color: var(--rh-red) !important;
+  background: var(--rh-editorial-deep) !important;
+  border-color: var(--rh-editorial-red) !important;
 }
 
-/* Porcelain surfaces over a warm architectural canvas. */
 .min-h-screen.bg-white.text-zinc-950 [class~="bg-white"] {
-  background-color: var(--rh-surface) !important;
+  background-color: var(--rh-editorial-surface) !important;
 }
 
 .min-h-screen.bg-white.text-zinc-950 [class~="bg-zinc-50"],
 .min-h-screen.bg-white.text-zinc-950 [class~="bg-[#F8F8F8]"] {
-  background-color: var(--rh-surface-soft) !important;
+  background-color: var(--rh-editorial-stone) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 [class~="bg-[#FFF0F2]"] {
+  background-color: var(--rh-editorial-red-wash) !important;
 }
 
 .min-h-screen.bg-white.text-zinc-950 [class~="bg-zinc-900"],
 .min-h-screen.bg-white.text-zinc-950 [class~="bg-[#111111]"] {
-  background-color: var(--rh-dark-soft) !important;
+  background-color: var(--rh-editorial-charcoal) !important;
 }
 
-/* Neutral hierarchy: ink -> stone -> quiet text. */
 .min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-950"],
 .min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-900"] {
-  color: var(--rh-ink) !important;
+  color: var(--rh-editorial-ink) !important;
 }
 
 .min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-700"] {
-  color: var(--rh-ink-soft) !important;
+  color: var(--rh-editorial-ink-soft) !important;
 }
 
 .min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-600"] {
-  color: #605a52 !important;
+  color: #5d5a55 !important;
 }
 
-.min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-500"] {
-  color: var(--rh-muted) !important;
-}
-
+.min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-500"],
 .min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-400"] {
-  color: var(--rh-faint) !important;
+  color: var(--rh-editorial-muted) !important;
 }
 
 .min-h-screen.bg-white.text-zinc-950 [class~="text-zinc-300"] {
-  color: #d9d1c7 !important;
+  color: #d5d1ca !important;
 }
 
-/* Borders: visible enough to define material surfaces, never UI-heavy. */
 .min-h-screen.bg-white.text-zinc-950 [class~="border-zinc-100"],
 .min-h-screen.bg-white.text-zinc-950 [class~="border-zinc-100/90"] {
-  border-color: var(--rh-line) !important;
+  border-color: var(--rh-editorial-line-soft) !important;
 }
 
 .min-h-screen.bg-white.text-zinc-950 [class~="border-zinc-200"],
 .min-h-screen.bg-white.text-zinc-950 [class~="border-zinc-200/80"] {
-  border-color: var(--rh-line-strong) !important;
+  border-color: var(--rh-editorial-line) !important;
 }
 
-/* Former pale-pink utility becomes a restrained warm brand wash. Red stays in the icon/text. */
-.min-h-screen.bg-white.text-zinc-950 [class~="bg-[#FFF0F2]"] {
-  background-color: var(--rh-brand-wash) !important;
+.min-h-screen.bg-white.text-zinc-950 [class~="text-[#FF1A3D]"] {
+  color: var(--rh-editorial-red) !important;
 }
 
-/* Accessible functional red for small text and text-bearing controls. Large/decorative red remains #FF1A3D. */
-.min-h-screen.bg-white.text-zinc-950 :is(span, div, a, button, p)[class~="text-[#FF1A3D]"][class*="text-["] {
-  color: var(--rh-red-functional) !important;
+.min-h-screen.bg-white.text-zinc-950 :is(button, a, span)[class~="bg-[#FF1A3D]"] {
+  background-color: var(--rh-editorial-red) !important;
+  border-color: var(--rh-editorial-red) !important;
 }
 
-.min-h-screen.bg-white.text-zinc-950 [class*="hover:text-[#FF1A3D]"]:hover,
-.min-h-screen.bg-white.text-zinc-950 [class*="group-hover:text-[#FF1A3D]"]:hover {
-  color: var(--rh-red-functional) !important;
-}
-
-.min-h-screen.bg-white.text-zinc-950 button[class~="bg-[#FF1A3D]"],
-.min-h-screen.bg-white.text-zinc-950 a[class~="bg-[#FF1A3D]"],
-.min-h-screen.bg-white.text-zinc-950 span[class~="bg-[#FF1A3D]"][class~="text-white"] {
-  background-color: var(--rh-red-functional) !important;
-  border-color: var(--rh-red-functional) !important;
-  box-shadow: var(--rh-shadow-brand) !important;
+.min-h-screen.bg-white.text-zinc-950 :is(button, a)[class~="bg-[#FF1A3D]"] {
+  box-shadow: var(--rh-editorial-shadow-red) !important;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .min-h-screen.bg-white.text-zinc-950 button[class~="bg-[#FF1A3D]"]:hover,
-  .min-h-screen.bg-white.text-zinc-950 a[class~="bg-[#FF1A3D]"]:hover {
-    background-color: var(--rh-red-functional-hover) !important;
-    border-color: var(--rh-red-functional-hover) !important;
+  .min-h-screen.bg-white.text-zinc-950 :is(button, a)[class~="bg-[#FF1A3D]"]:hover {
+    background-color: var(--rh-editorial-red-hover) !important;
+    border-color: var(--rh-editorial-red-hover) !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 [class*="hover:text-[#FF1A3D]"]:hover,
+  .min-h-screen.bg-white.text-zinc-950 [class*="group-hover:text-[#FF1A3D]"]:hover {
+    color: var(--rh-editorial-red) !important;
   }
 }
 
-/* One card/elevation language across article, div, button and form cards. */
-.min-h-screen.bg-white.text-zinc-950 :is(article, div, button, form)[class~="bg-white"][class*="rounded"][class*="border"][class*="shadow"] {
-  border-color: var(--rh-line) !important;
-  box-shadow: var(--rh-shadow-card) !important;
+.min-h-screen.bg-white.text-zinc-950 .rupantar-hero-section [class~="text-[#FF1A3D]"],
+.min-h-screen.bg-white.text-zinc-950 #estimate [class~="text-[#FF1A3D]"] {
+  color: var(--rh-editorial-red-dark) !important;
 }
 
-.min-h-screen.bg-white.text-zinc-950 :is(article, div, button, form)[class*="rounded"][class*="border"] {
-  border-color: var(--rh-line) !important;
+.min-h-screen.bg-white.text-zinc-950 .rupantar-hero-section [data-hero-background="true"] > div:last-child {
+  background: rgba(10, 10, 9, 0.41) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card {
+  background: var(--rh-editorial-charcoal) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 10px 30px rgba(17, 17, 16, 0.075) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) > div:first-child span + span,
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card .rh-work-location-source svg {
+  color: var(--rh-editorial-red-dark) !important;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .min-h-screen.bg-white.text-zinc-950 :is(article, div, button)[class~="bg-white"][class*="rounded"][class*="border"]:hover {
-    border-color: var(--rh-line-strong) !important;
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card:hover {
+    transform: translateY(-2px) !important;
+    border-color: rgba(255, 255, 255, 0.16) !important;
+    box-shadow: 0 18px 44px rgba(17, 17, 16, 0.12) !important;
   }
+}
 
+.min-h-screen.bg-white.text-zinc-950 [class~="rounded-[1.5rem]"] {
+  border-radius: 14px !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 [class~="rounded-[2rem]"] {
+  border-radius: 16px !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 :is(article, div, button, form)[class~="bg-white"][class*="rounded"][class*="border"] {
+  border-color: var(--rh-editorial-line-soft) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 :is(article, div, button, form)[class~="bg-white"][class*="rounded"][class*="shadow"] {
+  box-shadow: var(--rh-editorial-shadow) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
   .min-h-screen.bg-white.text-zinc-950 :is(article, div, button)[class~="bg-white"][class*="rounded"][class*="shadow"]:hover {
-    box-shadow: var(--rh-shadow-hover) !important;
+    box-shadow: var(--rh-editorial-shadow-hover) !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 :is(article, div, button)[class~="bg-white"][class*="rounded"][class*="border"]:hover {
+    border-color: var(--rh-editorial-line) !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 .card-hover:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: var(--rh-editorial-shadow-hover) !important;
   }
 }
 
-/* Form fields and controls inherit the same calm surface language. */
+.min-h-screen.bg-white.text-zinc-950 main > section[class~="bg-zinc-50"] {
+  background: var(--rh-editorial-stone) !important;
+  border-color: var(--rh-editorial-line-soft) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 #estimate > div {
+  background: var(--rh-editorial-charcoal) !important;
+  color: var(--rh-editorial-on-dark) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 #estimate > div [class~="text-zinc-300"] {
+  color: var(--rh-editorial-on-dark-muted) !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section [class~="bg-[#FFF0F2]"][class*="border"] {
+  background: var(--rh-editorial-stone) !important;
+  border-color: var(--rh-editorial-line) !important;
+}
+
 .min-h-screen.bg-white.text-zinc-950 input:not([type="file"]),
 .min-h-screen.bg-white.text-zinc-950 textarea,
 .min-h-screen.bg-white.text-zinc-950 select {
-  background-color: var(--rh-surface) !important;
-  border-color: var(--rh-line-strong) !important;
-  color: var(--rh-ink) !important;
+  background: var(--rh-editorial-surface) !important;
+  border-color: var(--rh-editorial-line) !important;
+  color: var(--rh-editorial-ink) !important;
+  box-shadow: none !important;
 }
 
 .min-h-screen.bg-white.text-zinc-950 input::placeholder,
 .min-h-screen.bg-white.text-zinc-950 textarea::placeholder {
-  color: var(--rh-muted) !important;
+  color: #88847d !important;
 }
 
-/* Premium, accessible focus treatment uses the functional brand red. */
-.min-h-screen.bg-white.text-zinc-950 button:focus-visible,
-.min-h-screen.bg-white.text-zinc-950 a:focus-visible,
-.min-h-screen.bg-white.text-zinc-950 input:focus-visible,
-.min-h-screen.bg-white.text-zinc-950 textarea:focus-visible,
-.min-h-screen.bg-white.text-zinc-950 select:focus-visible,
-.min-h-screen.bg-white.text-zinc-950 [role="button"]:focus-visible {
-  outline: 2px solid var(--rh-red-functional) !important;
+.min-h-screen.bg-white.text-zinc-950 :is(button, a, input, textarea, select, [role="button"]):focus-visible {
+  outline: 2px solid var(--rh-editorial-red) !important;
   outline-offset: 3px !important;
 }
 
-/* Warm hover states for neutral controls. */
 .min-h-screen.bg-white.text-zinc-950 [class*="hover:bg-zinc-50"]:hover {
-  background-color: #f1ede6 !important;
+  background-color: #ece9e3 !important;
 }
 
 .min-h-screen.bg-white.text-zinc-950 [class*="hover:border-zinc-200"]:hover,
 .min-h-screen.bg-white.text-zinc-950 [class*="hover:border-zinc-300"]:hover {
-  border-color: var(--rh-line-strong) !important;
+  border-color: var(--rh-editorial-line) !important;
 }
 
-/* Editorial pages previously carried a cool-grey visual system. Reconcile them into the architectural tokens. */
 .min-h-screen.bg-white.text-zinc-950 main.max-w-\[1280px\] > div.max-w-\[800px\] > div.mt-14.divide-y > article {
-  background: var(--rh-surface) !important;
-  border-color: var(--rh-line) !important;
-  box-shadow: var(--rh-shadow-card) !important;
+  background: var(--rh-editorial-surface) !important;
+  border-color: var(--rh-editorial-line-soft) !important;
+  box-shadow: var(--rh-editorial-shadow) !important;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .min-h-screen.bg-white.text-zinc-950 main.max-w-\[1280px\] > div.max-w-\[800px\] > div.mt-14.divide-y > article:hover {
-    border-color: var(--rh-line-strong) !important;
-    box-shadow: var(--rh-shadow-hover) !important;
+    border-color: var(--rh-editorial-line) !important;
+    box-shadow: var(--rh-editorial-shadow-hover) !important;
   }
 }
 
 .min-h-screen.bg-white.text-zinc-950 main.max-w-\[1280px\] > div.max-w-\[800px\] > button.mt-12 {
-  background: var(--rh-surface) !important;
-  border-color: var(--rh-line-strong) !important;
-  color: var(--rh-ink-soft) !important;
-  box-shadow: var(--rh-shadow-subtle) !important;
+  background: var(--rh-editorial-surface) !important;
+  border-color: var(--rh-editorial-line) !important;
+  color: var(--rh-editorial-ink-soft) !important;
+  box-shadow: var(--rh-editorial-shadow) !important;
 }
 
 .min-h-screen.bg-white.text-zinc-950 main.max-w-\[1280px\] > article.max-w-\[800px\] > h1 + div {
-  color: var(--rh-ink-soft) !important;
+  color: var(--rh-editorial-ink-soft) !important;
 }
 
 .min-h-screen.bg-white.text-zinc-950 main.max-w-\[1280px\] > article.max-w-\[800px\] > button.mt-12 {
-  background: var(--rh-dark-soft) !important;
-  border-color: var(--rh-dark-soft) !important;
+  background: var(--rh-editorial-charcoal) !important;
+  border-color: var(--rh-editorial-charcoal) !important;
   color: #ffffff !important;
-  box-shadow: var(--rh-shadow-card) !important;
+  box-shadow: var(--rh-editorial-shadow) !important;
 }
 
 .min-h-screen.bg-white.text-zinc-950 main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > h1 + div + section {
-  background: var(--rh-surface-soft) !important;
-  border-color: var(--rh-line) !important;
+  background: var(--rh-editorial-stone) !important;
+  border-color: var(--rh-editorial-line-soft) !important;
 }
 
 .min-h-screen.bg-white.text-zinc-950 main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > section:last-of-type > div > div {
-  border-color: var(--rh-line) !important;
+  border-color: var(--rh-editorial-line-soft) !important;
 }
 
-/* Footer: one warm charcoal family across footer, dark utility blocks and separators. */
 .min-h-screen.bg-white.text-zinc-950 footer {
-  background: var(--rh-dark) !important;
-  color: #f8f4ee !important;
+  background: var(--rh-editorial-deep) !important;
+  color: var(--rh-editorial-on-dark) !important;
 }
 
 .min-h-screen.bg-white.text-zinc-950 footer [class~="text-zinc-300"] {
-  color: #d9d1c7 !important;
+  color: #d2cec6 !important;
 }
 
 .min-h-screen.bg-white.text-zinc-950 footer [class~="text-zinc-400"] {
-  color: #aaa197 !important;
+  color: #aaa69f !important;
 }
 
 .min-h-screen.bg-white.text-zinc-950 footer [class~="border-gray-800"] {
-  border-color: var(--rh-dark-line) !important;
+  border-color: var(--rh-editorial-dark-line) !important;
 }
 
-/* Disabled controls: quiet and stable, without residual elevation. */
 .min-h-screen.bg-white.text-zinc-950 :is(button, input, select, textarea):disabled {
   box-shadow: none !important;
 }
 
 @media (prefers-contrast: more) {
   .min-h-screen.bg-white.text-zinc-950 {
-    --rh-muted: #5f594f;
-    --rh-faint: #5f594f;
-    --rh-line: #d7cec2;
-    --rh-line-strong: #c8bdae;
+    --rh-editorial-muted: #55524d;
+    --rh-editorial-line: #c8c4bc;
+    --rh-editorial-line-soft: #d5d1ca;
   }
 }
