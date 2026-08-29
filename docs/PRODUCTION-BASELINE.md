@@ -182,6 +182,16 @@ Validated candidate fingerprints before merge:
 
 All other handover-locked production objects remain at their previous accepted fingerprints. Auth/RLS, Supabase, Cloudinary Work lifecycle, inquiry handling, CSP/security headers, environment and deployment contracts are unchanged.
 
+## Accepted Recent Works six-slot baseline — 2026-08-30
+
+The homepage Recent Works section now guarantees exactly six visual positions. Photo-ready Work cards fill the grid first; if fewer than six photo-ready projects are available, the remaining positions render as non-interactive branded reserve slots until real project imagery is available. No Work records, database data, media lifecycle logic, Admin behavior, routes, or backend integrations are changed.
+
+Validated application fingerprint for this change:
+
+- `app`: `e9a2d35e128c3edf29daff2efdb7a70cb27525e2`
+
+All other production-lock fingerprints remain unchanged.
+
 ## AI/Codex instruction block
 
 Use this at the start of future implementation requests:
