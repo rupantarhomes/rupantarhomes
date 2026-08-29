@@ -172,4 +172,17 @@
     border-color: transparent !important;
     outline: 0 !important;
   }
+
+  /* Real remaining source: the cover-gradient bottom edge rendered against a different dark card surface during hover compositing. */
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card .rh-work-media-slot::after,
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card:hover .rh-work-media-slot::after {
+    background: linear-gradient(
+      to top,
+      #171614 0%,
+      rgba(16, 15, 14, 0.78) 24%,
+      rgba(16, 15, 14, 0.34) 48%,
+      rgba(16, 15, 14, 0.05) 72%,
+      rgba(16, 15, 14, 0) 100%
+    ) !important;
+  }
 }
