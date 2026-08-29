@@ -27,6 +27,7 @@ import {
   loadPublicContent,
   loadPublicWorksPage,
   loadPublicWorkBySlug,
+  type PublicWorksPage,
   saveBlog,
   saveReview,
   saveSettings,
@@ -51,16 +52,20 @@ import type {
   WorkForm,
 } from "./types";
 
-const AdminLogin = lazy(() => import("./admin").then((module) => ({ default: module.AdminLogin })));
-const AdminPortal = lazy(() => import("./admin").then((module) => ({ default: module.AdminPortal })));
-const AboutPage = lazy(() => import("./public-pages").then((module) => ({ default: module.AboutPage })));
-const ContactPage = lazy(() => import("./public-pages").then((module) => ({ default: module.ContactPage })));
-const PrivacyPage = lazy(() => import("./public-pages").then((module) => ({ default: module.PrivacyPage })));
-const InteriorDesignPage = lazy(() => import("./public-pages").then((module) => ({ default: module.InteriorDesignPage })));
-const WorkDetailPage = lazy(() => import("./public-pages").then((module) => ({ default: module.WorkDetailPage })));
-const WorksPage = lazy(() => import("./public-pages").then((module) => ({ default: module.WorksPage })));
-const BlogIndexPage = lazy(() => import("./blog-pages").then((module) => ({ default: module.BlogIndexPage })));
-const BlogArticlePage = lazy(() => import("./blog-pages").then((module) => ({ default: module.BlogArticlePage })));
+const loadAdmin = () => import("./admin");
+const loadPublicPages = () => import("./public-pages");
+const loadBlogPages = () => import("./blog-pages");
+
+const AdminLogin = lazy(() => loadAdmin().then((module) => ({ default: module.AdminLogin })));
+const AdminPortal = lazy(() => loadAdmin().then((module) => ({ default: module.AdminPortal })));
+const AboutPage = lazy(() => loadPublicPages().then((module) => ({ default: module.AboutPage })));
+const ContactPage = lazy(() => loadPublicPages().then((module) => ({ default: module.ContactPage })));
+const PrivacyPage = lazy(() => loadPublicPages().then((module) => ({ default: module.PrivacyPage })));
+const InteriorDesignPage = lazy(() => loadPublicPages().then((module) => ({ default: module.InteriorDesignPage })));
+const WorkDetailPage = lazy(() => loadPublicPages().then((module) => ({ default: module.WorkDetailPage })));
+const WorksPage = lazy(() => loadPublicPages().then((module) => ({ default: module.WorksPage })));
+const BlogIndexPage = lazy(() => loadBlogPages().then((module) => ({ default: module.BlogIndexPage })));
+const BlogArticlePage = lazy(() => loadBlogPages().then((module) => ({ default: module.BlogArticlePage })));
 
 function PageLoader() {
   return <div className="min-h-[40vh]" aria-busy="true" aria-label="Loading page" />;
@@ -69,6 +74,19 @@ function PageLoader() {
 const publicPages: Page[] = ["home", "works", "work-detail", "about", "contact", "privacy", "interior-design", "blog", "blog-detail"];
 
 type BrowserRoute = ReturnType<typeof parseRoute>;
+
+function prefetchPublicPageModules() {
+  void loadPublicPages();
+  void loadBlogPages();
+}
+
+function prefetchPublicRoute(page: Page) {
+  if (page === "blog" || page === "blog-detail") {
+    void loadBlogPages();
+  } else if (publicPages.includes(page) && page !== "home") {
+    void loadPublicPages();
+  }
+}
 
 function pageForRoute(route: BrowserRoute): Page {
   if (route.kind === "about") return "about";
@@ -136,6 +154,9 @@ export function RupantarSite() {
   const worksRef = useRef(works);
   const worksLoadedRef = useRef(false);
   const worksRequestIdRef = useRef(0);
+  const worksPageCacheRef = useRef(new Map<string, PublicWorksPage>());
+  const worksPageRequestsRef = useRef(new Map<string, Promise<PublicWorksPage>>());
+  const worksCacheVersionRef = useRef(0);
   const blogsRef = useRef(blogs);
   const blogsLoadedRef = useRef(false);
   const blogsRequestIdRef = useRef(0);
@@ -162,17 +183,13 @@ export function RupantarSite() {
       requestIdleCallback?: (callback: () => void) => number;
       cancelIdleCallback?: (handle: number) => void;
     };
-    const prefetchPublicPages = () => {
-      void import("./public-pages");
-      void import("./blog-pages");
-    };
 
     if (idleWindow.requestIdleCallback) {
-      const handle = idleWindow.requestIdleCallback(prefetchPublicPages);
+      const handle = idleWindow.requestIdleCallback(prefetchPublicPageModules);
       return () => idleWindow.cancelIdleCallback?.(handle);
     }
 
-    const timer = window.setTimeout(prefetchPublicPages, 150);
+    const timer = window.setTimeout(prefetchPublicPageModules, 150);
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -187,6 +204,9 @@ export function RupantarSite() {
   };
 
   const refreshContent = useCallback(async () => {
+    worksCacheVersionRef.current += 1;
+    worksPageCacheRef.current.clear();
+    worksPageRequestsRef.current.clear();
     const content = await loadPublicContent();
     setReviews(content.reviews);
     setSettings(content.settings);
@@ -220,14 +240,34 @@ export function RupantarSite() {
 
   const loadWorks = useCallback(async (category: string, offset: number, clearCurrent = false) => {
     const requestId = ++worksRequestIdRef.current;
+    const cacheKey = `${category}:${offset}`;
+    const cached = worksPageCacheRef.current.get(cacheKey);
+
+    if (cached) {
+      const nextWorks = offset === 0 ? cached.works : [...worksRef.current, ...cached.works];
+      worksRef.current = nextWorks;
+      worksLoadedRef.current = true;
+      setWorksTotal(cached.total);
+      setWorks(nextWorks);
+      setWorksLoading(false);
+      return;
+    }
+
     if (clearCurrent) {
       worksRef.current = [];
       setWorks([]);
       setWorksTotal(0);
     }
     setWorksLoading(true);
+    const cacheVersion = worksCacheVersionRef.current;
+    let request = worksPageRequestsRef.current.get(cacheKey);
+    if (!request) {
+      request = loadPublicWorksPage(offset, 12, category);
+      worksPageRequestsRef.current.set(cacheKey, request);
+    }
     try {
-      const result = await loadPublicWorksPage(offset, 12, category);
+      const result = await request;
+      if (cacheVersion === worksCacheVersionRef.current) worksPageCacheRef.current.set(cacheKey, result);
       if (requestId !== worksRequestIdRef.current) return;
       const nextWorks = offset === 0 ? result.works : [...worksRef.current, ...result.works];
       worksRef.current = nextWorks;
@@ -235,6 +275,7 @@ export function RupantarSite() {
       setWorksTotal(result.total);
       setWorks(nextWorks);
     } finally {
+      if (worksPageRequestsRef.current.get(cacheKey) === request) worksPageRequestsRef.current.delete(cacheKey);
       if (requestId === worksRequestIdRef.current) setWorksLoading(false);
     }
   }, []);
@@ -417,6 +458,7 @@ export function RupantarSite() {
 
   const navigate = (nextPage: Page) => {
     routeRequestIdRef.current += 1;
+    prefetchPublicRoute(nextPage);
     if (nextPage.startsWith("admin-")) pushPath("/admin");
     else pushPath(pagePath(nextPage));
 
@@ -461,6 +503,7 @@ export function RupantarSite() {
 
   const openCategory = (category: string) => {
     routeRequestIdRef.current += 1;
+    prefetchPublicRoute("works");
     pushPath(categoryPath(category));
     const categoryChanged = category !== filter;
     setFilter(category);
@@ -473,6 +516,7 @@ export function RupantarSite() {
     const blog = blogsRef.current.find((item) => item.id === id);
     if (!blog) return;
     routeRequestIdRef.current += 1;
+    prefetchPublicRoute("blog-detail");
     pushPath(blogArticlePath(blog.slug));
     setSelectedBlogId(id);
     setPage("blog-detail");
@@ -483,6 +527,7 @@ export function RupantarSite() {
     const work = worksRef.current.find((item) => item.id === id);
     if (!work) return;
     routeRequestIdRef.current += 1;
+    prefetchPublicRoute("work-detail");
     pushPath(workPath(work));
     setSelectedWorkId(id);
     setPage("work-detail");
@@ -847,7 +892,7 @@ export function RupantarSite() {
   return (
     <div className="min-h-screen bg-white text-zinc-950">
       {publicPage && <TopBar settings={settings} />}
-      {publicPage && <PublicHeader page={page} navigate={navigate} onCategory={openCategory} onEstimate={goToEstimate} />}
+      {publicPage && <PublicHeader page={page} navigate={navigate} onCategory={openCategory} onEstimate={goToEstimate} onPublicNavigationIntent={prefetchPublicRoute} />}
 
       {page === "home" && (
         <HomePage
@@ -885,7 +930,7 @@ export function RupantarSite() {
       {page === "privacy" && <Suspense fallback={<PageLoader />}><PrivacyPage navigate={navigate} /></Suspense>}
       {page === "interior-design" && <Suspense fallback={<PageLoader />}><InteriorDesignPage navigate={navigate} onCategory={openCategory} /></Suspense>}
 
-      {publicPage && <PublicFooter navigate={navigate} onCategory={openCategory} onEstimate={goToEstimate} settings={settings} />}
+      {publicPage && <PublicFooter navigate={navigate} onCategory={openCategory} onEstimate={goToEstimate} settings={settings} onPublicNavigationIntent={prefetchPublicRoute} />}
 
       {estimateSaved && typeof document !== "undefined" && createPortal(
         <div
@@ -923,7 +968,7 @@ export function RupantarSite() {
             <p
               style={{
                 margin: 0,
-                fontFamily: '"Space Grotesk", sans-serif',
+                fontFamily: '\"Space Grotesk\", sans-serif',
                 fontSize: "clamp(20px, 2vw, 24px)",
                 fontWeight: 600,
                 lineHeight: 1.45,
