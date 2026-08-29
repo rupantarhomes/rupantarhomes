@@ -1,6 +1,6 @@
 @media (max-width: 639px) {
   /* Mobile intentionally mirrors the desktop Recent Works hierarchy and placement.
-   * The only content-density exception is that descriptions and Featured are hidden.
+   * The only content-density exception is that descriptions are hidden.
    */
   .min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) {
     margin-top: -142px !important;
@@ -88,4 +88,21 @@
     width: 14px !important;
     height: 14px !important;
   }
+}
+
+/* Recent Works only: show the same red Featured text on every card, desktop and mobile. */
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) > div:first-child span + span {
+  display: none !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card > div:nth-child(2) > div:first-child::after {
+  content: "Featured";
+  display: inline-flex;
+  align-items: center;
+  color: #ff1a3d;
+  font-size: 9.5px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
