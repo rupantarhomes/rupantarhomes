@@ -160,14 +160,6 @@ In addition to `npm run verify`:
 - Cloudflare deploys the production site from `main`.
 - Supabase Leaked Password Protection is unavailable on the project's current Free plan. This is an acknowledged platform-plan limitation, not permission to weaken any other authentication control.
 
-## Accepted post-handover visual baseline — 2026-08-30
-
-The Charcoal Editorial update is an intentionally scoped public visual-system change. The accepted application tree is `62e8af4baeb40ed2e8764a08f9908f87a226513a`, produced from design commit `beaae35196382327dae33073dfd6b176c61939b0` on branch `design/charcoal-editorial-upgrade` before lock-metadata updates.
-
-Scope is restricted to `app/premium-architectural-theme.css`. The update retunes the public palette to warm white, stone, charcoal, deep charcoal and restrained architectural red; reduces visual chrome, shadow strength and excessive roundness; and refines public header, hero accents, project cards, light/dark surfaces, forms and footer styling. Layout, section order, visible copy, routing, component hierarchy, responsive structure, Admin behavior, Auth/RLS, Cloudinary lifecycle, inquiry security, headers, environment configuration and deployment behavior are intentionally unchanged.
-
-Future production work must treat this visual tree as the accepted public-site baseline once the reviewed PR passes CI and is merged.
-
 ## AI/Codex instruction block
 
 Use this at the start of future implementation requests:
