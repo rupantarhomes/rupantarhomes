@@ -92,14 +92,35 @@
   outline-offset: -4px;
 }
 
-/* Work detail + Admin Works image slots: ratio only. Existing order and stack positions stay unchanged. */
+/* Dedicated Work Detail: three 1:1 images stacked vertically. */
 main .aspect-\[16\/10\] {
   aspect-ratio: 1 / 1 !important;
 }
 
-div[class*="grid-cols-[1.6fr_1fr]"][class*="grid-rows-2"] > div:first-child {
+main .aspect-\[16\/10\] + * {
+  width: 100%;
+}
+
+main div.grid.grid-cols-2.gap-3.mt-3 {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+main div.grid.grid-cols-2.gap-3.mt-3 > * {
+  width: 100%;
   aspect-ratio: 1 / 1 !important;
-  align-self: start;
+}
+
+/* Admin Works: three 1:1 upload/preview slots stacked vertically. */
+div[class*="grid-cols-[1.6fr_1fr]"][class*="grid-rows-2"] {
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-rows: none !important;
+}
+
+div[class*="grid-cols-[1.6fr_1fr]"][class*="grid-rows-2"] > div {
+  width: 100%;
+  aspect-ratio: 1 / 1 !important;
+  grid-row: auto !important;
+  align-self: auto !important;
 }
 
 .rh-work-lightbox {
