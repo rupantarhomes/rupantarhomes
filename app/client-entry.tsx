@@ -8,6 +8,7 @@ import "./admin-leads-enhancer.css";
 import "./premium-architectural-theme.css";
 import "./public-display-typography.css";
 import "./review-cards-enhancer.css";
+import "./review-cards-mobile-opt.css";
 import "./recent-works-unified-covers.css";
 import "./recent-works-location-badge.css";
 import "./recent-works-mobile-readable.css";
