@@ -134,3 +134,154 @@
     font-size: 14px !important;
   }
 }
+
+/* Recent Works: image-first architectural project covers. Existing six-card grid and behavior are preserved. */
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child article {
+  position: relative;
+  min-height: 100%;
+  background: #171614 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 10px 30px rgba(45, 37, 28, 0.06) !important;
+  isolation: isolate;
+  transition: transform 260ms ease, box-shadow 260ms ease, border-color 260ms ease !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child article > div:first-child {
+  position: relative;
+  z-index: 0;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child article > div:first-child::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(16, 15, 14, 0.88) 0%, rgba(16, 15, 14, 0.48) 34%, rgba(16, 15, 14, 0.06) 68%, rgba(16, 15, 14, 0) 100%);
+  transition: background 260ms ease;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child article > div:first-child img {
+  width: 100%;
+  transform: scale(1.001);
+  transition: transform 500ms cubic-bezier(0.2, 0.7, 0.2, 1), filter 260ms ease !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child article > div:nth-child(2) {
+  position: relative;
+  z-index: 3;
+  margin-top: -112px;
+  padding: 18px 20px 20px !important;
+  color: #ffffff;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child article > div:nth-child(2) > div:first-child {
+  margin-bottom: 7px !important;
+  gap: 8px !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child article > div:nth-child(2) > div:first-child span {
+  height: auto !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.82) !important;
+  font-size: 9.5px !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.13em !important;
+  text-transform: uppercase;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child article > div:nth-child(2) > div:first-child span + span {
+  color: #ff6d82 !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child article > div:nth-child(2) > .font-heading {
+  color: #ffffff !important;
+  font-size: 18px !important;
+  line-height: 1.18 !important;
+  font-weight: 650 !important;
+  letter-spacing: -0.025em;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child article > div:nth-child(2) > div[class*="text-[12px]"] {
+  color: rgba(255, 255, 255, 0.68) !important;
+  margin-top: 6px !important;
+  font-size: 11.5px !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child article > div:nth-child(2) > div[class*="text-[13px]"] {
+  color: rgba(255, 255, 255, 0.72) !important;
+  margin-top: 9px !important;
+  line-height: 1.55 !important;
+  -webkit-line-clamp: 1 !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child article > div:nth-child(2) > button {
+  margin-top: 12px !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em;
+  transform: translateY(0);
+  transition: color 220ms ease, transform 220ms ease !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child article > div:nth-child(2) > button svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child article:hover {
+    transform: translateY(-3px) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 24px 54px rgba(45, 37, 28, 0.14) !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child article:hover > div:first-child img {
+    transform: scale(1.035);
+    filter: saturate(1.03) contrast(1.01);
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child article:hover > div:first-child::after {
+    background: linear-gradient(to top, rgba(16, 15, 14, 0.92) 0%, rgba(16, 15, 14, 0.54) 36%, rgba(16, 15, 14, 0.08) 70%, rgba(16, 15, 14, 0) 100%);
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child article:hover > div:nth-child(2) > button {
+    color: #ffffff !important;
+    transform: translateX(2px);
+  }
+}
+
+@media (max-width: 639px) {
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child article > div:nth-child(2) {
+    margin-top: -92px;
+    padding: 12px 11px 13px !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child article > div:nth-child(2) > .font-heading {
+    font-size: 13px !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child article > div:nth-child(2) > div[class*="text-[12px]"] {
+    font-size: 9px !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child article > div:nth-child(2) > div[class*="text-[13px]"],
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child article > div:nth-child(2) > button,
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child article > div:nth-child(2) > div:first-child span + span {
+    display: none !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child article > div:nth-child(2) > div:first-child {
+    margin-bottom: 4px !important;
+  }
+
+  .min-h-screen.bg-white.text-zinc-950 main > section:first-child article > div:nth-child(2) > div:first-child span {
+    font-size: 8px !important;
+    letter-spacing: 0.1em !important;
+  }
+}
