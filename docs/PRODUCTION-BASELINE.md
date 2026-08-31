@@ -245,6 +245,20 @@ Accepted fingerprints for this scoped update:
 - `app`: `e1de1d5bc0faf562ede91ed286f21020ed9c35a6`
 - `index.html`: `fc419a4bd532547deada34fc931c86245f0d8e6f`
 
+## Review readability and mobile Admin refinement — 2026-08-31
+
+Scope remains limited to the existing review carousel and mobile `/admin` presentation:
+
+- preserve the ten-review horizontal carousel, three-card desktop viewport, card styling, and slider behavior unchanged;
+- remove quote line-clamping so review text is fully readable instead of being cut off;
+- keep Admin input controls at a mobile-safe 16px font size and retain the admin-only no-zoom viewport behavior;
+- refine only the mobile Admin shell/header/content widths and spacing to prevent cramped or drifting layouts;
+- expose the existing `View Site` action in the mobile Admin header alongside Logout;
+- preserve the intentional horizontally scrollable Admin tab strip and normal vertical page scrolling;
+- preserve desktop Admin, authentication/session logic, data, forms, Supabase, Cloudinary, routes, public content, and unrelated production presentation unchanged.
+
+Accepted `app` fingerprint after this scoped refinement: `a71e0cdd002011ed59310e1cce76bf3f5adcec63`.
+
 ## AI/Codex instruction block
 
 Use this at the start of future implementation requests:
