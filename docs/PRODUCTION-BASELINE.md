@@ -217,6 +217,17 @@ This rollback removes only the two presentation changes requested for reversal:
 
 Accepted `app` fingerprint after this rollback: `0abca3ab8f80d72ab9ad2ce90f08ac64f898832e`.
 
+## Accepted full-card click targets — 2026-08-31
+
+Scope is limited to click-target behavior for existing public cards:
+
+- make every homepage Recent Works card open its existing Work detail destination when any point inside the card is clicked;
+- make every Blog listing card open its existing article destination when any point inside the card is clicked;
+- preserve the All Works cards unchanged because they were already fully clickable;
+- preserve all layout, typography, colors, content, routes, hover presentation, Admin behavior, data behavior, and locked production systems unchanged.
+
+Accepted `app` fingerprint after this scoped update: `db11d85e9b9ac763bccbf6e72c0232785f1d4be5`.
+
 ## AI/Codex instruction block
 
 Use this at the start of future implementation requests:
