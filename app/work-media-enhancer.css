@@ -240,6 +240,32 @@ div[class*="grid-cols-[1.6fr_1fr]"][class*="grid-rows-2"] > div {
   letter-spacing: 0.04em;
 }
 
+/* Make the complete homepage Recent Works cards clickable through their existing View Details button. */
+main > section:first-of-type article {
+  position: relative;
+  cursor: pointer;
+}
+
+main > section:first-of-type article button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+}
+
+/* Make the complete Blog listing cards clickable through their existing Read Article button. */
+main[aria-busy] article {
+  position: relative;
+  cursor: pointer;
+}
+
+main[aria-busy] article > button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+}
+
 @media (max-width: 639px) {
   .rh-work-location {
     left: 8px;
