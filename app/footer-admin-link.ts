@@ -5,21 +5,26 @@ function ensureFooterAdminLink() {
   const bottomBar = footer.querySelector(".border-t.border-gray-800 > div");
   if (!(bottomBar instanceof HTMLElement)) return;
 
+  const separator = document.createElement("span");
+  separator.textContent = "•";
+  separator.dataset.rhFooterAdminSeparator = "true";
+  separator.style.margin = "0 8px";
+  separator.style.color = "#a1a1aa";
+
   const link = document.createElement("a");
   link.href = "/admin";
   link.textContent = "000";
   link.dataset.rhFooterAdminLink = "true";
   link.setAttribute("aria-label", "Open admin portal");
-  link.style.marginLeft = "12px";
-  link.style.color = "#71717a";
-  link.style.fontSize = "10px";
+  link.style.color = "#a1a1aa";
+  link.style.fontSize = "11px";
   link.style.lineHeight = "1";
   link.style.textDecoration = "none";
   link.style.transition = "color 160ms ease";
   link.addEventListener("mouseenter", () => { link.style.color = "#ffffff"; });
-  link.addEventListener("mouseleave", () => { link.style.color = "#71717a"; });
+  link.addEventListener("mouseleave", () => { link.style.color = "#a1a1aa"; });
 
-  bottomBar.appendChild(link);
+  bottomBar.append(separator, link);
 }
 
 const observer = new MutationObserver(ensureFooterAdminLink);
