@@ -228,6 +228,23 @@ Scope is limited to click-target behavior for existing public cards:
 
 Accepted `app` fingerprint after this scoped update: `db11d85e9b9ac763bccbf6e72c0232785f1d4be5`.
 
+## Review carousel and mobile Admin stability — 2026-08-31
+
+Scope is limited to the public Client Reviews presentation and mobile Admin viewport behavior:
+
+- keep the existing review-card visual design unchanged;
+- expose at most ten existing review cards on the homepage in one horizontal track;
+- show three review cards in the initial desktop viewport, two at tablet widths, and one comfortable card at mobile widths;
+- preserve smooth touch/trackpad horizontal scrolling with snap alignment and no visible scrollbar;
+- on `/admin` only, prevent mobile input-focus zoom and page-wide horizontal drift while preserving normal vertical scrolling and the existing intentional horizontal Admin tab strip;
+- restore the normal public-site viewport behavior immediately after leaving `/admin`;
+- preserve all Admin authentication, data, forms, Supabase, Cloudinary, routes, public layout, typography, colors, content, and unrelated production behavior unchanged.
+
+Accepted fingerprints for this scoped update:
+
+- `app`: `e1de1d5bc0faf562ede91ed286f21020ed9c35a6`
+- `index.html`: `fc419a4bd532547deada34fc931c86245f0d8e6f`
+
 ## AI/Codex instruction block
 
 Use this at the start of future implementation requests:
