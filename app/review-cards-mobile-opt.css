@@ -67,14 +67,48 @@
   border-radius: 9999px !important;
 }
 
-/* Public Review section only: show at most four cards. */
-.rh-review-section > div.grid > .rh-review-card:nth-child(n + 5) {
+/* Public Review section only: expose at most ten existing review cards. */
+.rh-review-section > div.grid > .rh-review-card:nth-child(n + 11) {
   display: none !important;
 }
 
-/* Desktop: all four review cards stay in one row. */
-@media (min-width: 1024px) {
+/* One-line smooth review carousel. Desktop opens with three breathing cards in view. */
+.rh-review-section > div.grid {
+  display: grid !important;
+  grid-template-columns: none !important;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - 40px) / 3);
+  gap: 20px !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px 2px 14px;
+}
+
+.rh-review-section > div.grid::-webkit-scrollbar {
+  display: none;
+}
+
+.rh-review-section > div.grid > .rh-review-card {
+  min-width: 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
   .rh-review-section > div.grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    grid-auto-columns: calc((100% - 20px) / 2);
+  }
+}
+
+@media (max-width: 639px) {
+  .rh-review-section > div.grid {
+    grid-auto-columns: min(88%, 320px);
+    gap: 14px !important;
+    padding-bottom: 10px;
   }
 }
