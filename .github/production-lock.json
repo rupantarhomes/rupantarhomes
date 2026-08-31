@@ -7,7 +7,7 @@
   "objects": {
     ".cloudflare-deploy-trigger": "b941e05a0ecdaa9c6620b70f73aa28424ccff6b4",
     ".env.example": "c943e3d73a9cf8cde378dfdd76074a52fe3133b0",
-    "app": "0abca3ab8f80d72ab9ad2ce90f08ac64f898832e",
+    "app": "db11d85e9b9ac763bccbf6e72c0232785f1d4be5",
     "eslint.config.mjs": "d05a345e02fbe57675a0c568a95275c98ad66d9c",
     "functions": "93a01f847b4dfe665ee5d4d7df7b8eae518efd04",
     "index.html": "aa6c4acd5840c112b126efe1567f6b87fda65a4d",
