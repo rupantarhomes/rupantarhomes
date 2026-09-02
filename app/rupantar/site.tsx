@@ -486,6 +486,7 @@ export function RupantarSite() {
         setFilter("all");
         void loadWorks("all", 0, categoryChanged);
       }
+      if (nextPage === "admin-dashboard") void refreshAdminStats();
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
