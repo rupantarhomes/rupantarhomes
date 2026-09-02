@@ -315,18 +315,40 @@ This audit extends the same Admin reliability scope across Admin Login, Dashboar
 - selected Work and Blog detail records are pinned independently from mutable paginated lists so a late list response cannot blank or replace a just-clicked detail page;
 - public Works/Blog/Admin content reads use request-generation guards so stale in-flight responses cannot overwrite a newer confirmed mutation;
 - Login, Admin mutations, Work image upload/removal, estimate submission, and query submission reject duplicate in-flight handler calls, protecting rapid taps/double clicks before React can render a disabled state;
-- existing full-card Recent Works and Blog click behavior remains protected from nested-control double firing, while All Works cards retain their existing full-card navigation;
 - no Supabase Auth/RLS/grant/schema/RPC/category changes, no Cloudinary configuration changes, no deployment/security-header changes, and no visual redesign were made in this audit;
 - live Supabase API inspection during the audit showed healthy successful API responses, so the removed delays were client-side redundant reads/state races rather than a database outage.
 
 Accepted scoped fingerprints after the complete audit:
 
-- `app`: `4d3e682de7537295b9723d55156aea072f4bf7d4`
-- `tests`: `236750c3b9990056a8aab04f6d20609880f58946`
 - `supabase`: unchanged at `0ebbd43b8c4f09e975c5aa1df7297780c0f8f7a8`
 - `functions`: unchanged at `93a01f847b4dfe665ee5d4d7df7b8eae518efd04`
 
 The accepted behavior is: once the required network write is confirmed successful, the affected Admin/public in-memory state is updated immediately from that confirmed result without an additional blocking list/content reload. Network persistence itself is still a real request and therefore is not treated as zero-time.
+
+## Final Admin edge hardening — 2026-09-03
+
+The final hardening pass closes the remaining slow-network, rapid-touch, first-load, and direct-route edge cases without changing layout, colors, public copy, data contracts, or security boundaries:
+
+- Work save and Work image upload/removal are mutually exclusive at handler level, so an image cannot begin uploading after the save payload has already been committed in flight;
+- Work, Blog, Review, and Settings saves use immutable form snapshots captured at the moment Save is accepted, preventing later UI edits from changing which version is persisted;
+- Admin controls and navigation are temporarily disabled while a confirmed Admin mutation or Work upload is active, preventing tab changes or `View Site` from unloading the page before an operation finishes;
+- controls that were already disabled for their own logical reason are not incorrectly re-enabled when the temporary mutation lock ends;
+- if a Work is saved before the initial full Admin Works list has finished loading, the confirmed Work still appears immediately and a non-blocking full Admin Works reconciliation restores the complete list afterward;
+- if a Blog is saved before the initial Blog list has finished loading, the confirmed article appears immediately and a non-blocking Blog reconciliation restores the complete list afterward;
+- Recent Works and Blog listing full-card interactions now live natively in React with mouse/touch, Enter/Space keyboard support, and nested interactive-control exclusion, eliminating post-render heading/text matching and duplicate click dispatch;
+- direct Work or Blog detail requests that fail because of a real network/API error now show a visible retry/back-home state instead of remaining on an indefinite blank loader;
+- existing not-found routing behavior remains separate from request-failure behavior;
+- the existing Work image lifecycle remains reference-safe: failed Work saves clean only new draft uploads, persisted removals remain draft-only until successful save, Cancel preserves persisted originals, and removed persisted assets are cleaned only after the confirmed Work save;
+- no Supabase schema, RLS, grants, RPCs, Auth rules, categories, Cloudinary upload configuration, inquiry security, CSP/security headers, or deployment configuration changed in this pass.
+
+Final accepted review fingerprints:
+
+- `app`: `83acc4ea9f23ebdc15a585fe905b86621c6e534a`
+- `tests`: `dee6f5885f632d5560817e20be0424cb911aff94`
+- `supabase`: unchanged at `0ebbd43b8c4f09e975c5aa1df7297780c0f8f7a8`
+- `functions`: unchanged at `93a01f847b4dfe665ee5d4d7df7b8eae518efd04`
+
+The production workflow must pass the handover lock and `npm run verify` on the exact final PR head before merge. Production smoke testing of disposable Work/Blog writes and real browser navigation remains a post-merge/deploy step because Cloudflare deploys from `main`.
 
 ## AI/Codex instruction block
 
