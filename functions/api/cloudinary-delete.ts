@@ -1,7 +1,7 @@
 import { requireAdmin } from "../_lib/admin-auth";
 import { destroyCloudinaryImage } from "../_lib/cloudinary";
 import { requireRuntimeEnv, type RuntimeEnv } from "../_lib/env";
-import { errorMessage, json } from "../_lib/http";
+import { errorMessage, fetchWithTimeout, json } from "../_lib/http";
 
 type DeleteBody = { publicIds?: unknown };
 function isPublicId(value: unknown): value is string {
@@ -14,7 +14,7 @@ async function claimUnreferencedImages(
   runtime: RuntimeEnv,
 ): Promise<string[]> {
   const authorization = request.headers.get("Authorization");
-  const response = await fetch(`${runtime.SUPABASE_URL}/rest/v1/rpc/claim_unreferenced_cloudinary_images`, {
+  const response = await fetchWithTimeout(`${runtime.SUPABASE_URL}/rest/v1/rpc/claim_unreferenced_cloudinary_images`, {
     method: "POST",
     headers: {
       apikey: runtime.SUPABASE_PUBLISHABLE_KEY,
@@ -22,7 +22,7 @@ async function claimUnreferencedImages(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ p_public_ids: publicIds }),
-  });
+  }, 10_000);
   let result: unknown = null;
   try {
     result = await response.json();
@@ -68,4 +68,3 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
     return json({ error: status === 401 ? "Unauthorized" : "Unable to delete images" }, status);
   }
 };
-
