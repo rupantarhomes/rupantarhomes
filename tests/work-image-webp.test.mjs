@@ -86,7 +86,7 @@ test("keeps persisted image removal draft-only until a successful save", async (
   const site = await read("../app/rupantar/site.tsx");
   const handler = site.indexOf("const handleRemoveWorkImage = async");
   const conditionalDelete = site.indexOf("if (!persisted) await deleteCloudinaryImages([image.publicId])", handler);
-  const save = site.indexOf("savedWork = await saveWork(workForm, editingId)");
+  const save = site.indexOf("savedWork = await saveWork(formSnapshot, editingId)");
   const deleteRemoved = site.indexOf("await deleteCloudinaryImages(removed)", save);
 
   assert.ok(conditionalDelete > handler);
@@ -112,7 +112,7 @@ test("cancel cleans only unsaved draft assets and preserves persisted originals"
 test("failed saves clean new uploads without destroying persisted images", async () => {
   const site = await read("../app/rupantar/site.tsx");
   const newlyUploaded = site.indexOf("const newlyUploaded = draftImagePublicIds()");
-  const save = site.indexOf("savedWork = await saveWork(workForm, editingId)", newlyUploaded);
+  const save = site.indexOf("savedWork = await saveWork(formSnapshot, editingId)", newlyUploaded);
   const cleanupNew = site.indexOf("await deleteCloudinaryImages(newlyUploaded)", save);
   const cleanupRemoved = site.indexOf("await deleteCloudinaryImages(removed)", cleanupNew);
 
@@ -120,6 +120,15 @@ test("failed saves clean new uploads without destroying persisted images", async
   assert.ok(save > newlyUploaded);
   assert.ok(cleanupNew > save);
   assert.ok(cleanupRemoved > cleanupNew);
+});
+
+test("Work save and upload handlers reject overlapping in-flight operations", async () => {
+  const site = await read("../app/rupantar/site.tsx");
+  const save = site.slice(site.indexOf("const handleSaveWork = async"), site.indexOf("const editWork"));
+  const upload = site.slice(site.indexOf("const handleUploadImages = async"), site.indexOf("const handleRemoveWorkImage"));
+
+  assert.match(save, /if \(adminMutationRef\.current \|\| uploadMutationRef\.current\) return;/);
+  assert.match(upload, /if \(!files\.length \|\| uploadMutationRef\.current \|\| adminMutationRef\.current\) return;/);
 });
 
 test("keeps Cloudinary delete operations authenticated, bounded, and reference-safe", async () => {
