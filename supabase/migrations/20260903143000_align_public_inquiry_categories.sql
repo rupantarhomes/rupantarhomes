@@ -27,8 +27,31 @@ alter table public.estimate_requests
     ])
   );
 
-create or replace function public.submit_public_inquiry(
+-- A browser retry after a lost HTTP response must not create a second lead.
+-- Existing historical rows remain valid with a null submission_id.
+alter table public.queries
+  add column if not exists submission_id uuid;
+
+alter table public.estimate_requests
+  add column if not exists submission_id uuid;
+
+create unique index if not exists queries_submission_id_unique
+  on public.queries (submission_id)
+  where submission_id is not null;
+
+create unique index if not exists estimate_requests_submission_id_unique
+  on public.estimate_requests (submission_id)
+  where submission_id is not null;
+
+-- Replace the previous ten-argument overload so PostgREST has one canonical
+-- persistence contract. The RPC remains callable only by service_role.
+drop function if exists public.submit_public_inquiry(
+  text, text, text, text, text, text, text, text, text, text
+);
+
+create function public.submit_public_inquiry(
   p_kind text,
+  p_submission_id text,
   p_name text,
   p_phone text,
   p_category text,
@@ -46,6 +69,7 @@ set search_path to ''
 as $function$
 declare
   recent_count integer;
+  clean_submission_id uuid;
   clean_name text := btrim(coalesce(p_name, ''));
   clean_phone text := btrim(coalesce(p_phone, ''));
   clean_category text := case
@@ -59,6 +83,29 @@ begin
   if p_kind not in ('query', 'estimate') then
     raise exception 'Invalid request type.';
   end if;
+
+  begin
+    clean_submission_id := btrim(coalesce(p_submission_id, ''))::uuid;
+  exception when invalid_text_representation then
+    raise exception 'Invalid submission ID.';
+  end;
+  if clean_submission_id is null then
+    raise exception 'Invalid submission ID.';
+  end if;
+
+  -- Return success for an already-persisted identical submission key before
+  -- rate limiting. This makes retry-after-lost-response safe.
+  if p_kind = 'query' and exists (
+    select 1 from public.queries where submission_id = clean_submission_id
+  ) then
+    return jsonb_build_object('ok', true, 'duplicate', true);
+  end if;
+  if p_kind = 'estimate' and exists (
+    select 1 from public.estimate_requests where submission_id = clean_submission_id
+  ) then
+    return jsonb_build_object('ok', true, 'duplicate', true);
+  end if;
+
   if clean_name = '' or length(clean_name) > 150 then
     raise exception 'Invalid name.';
   end if;
@@ -110,31 +157,42 @@ begin
       raise exception 'Invalid estimate photo.';
     end if;
 
-    insert into public.estimate_requests (
-      name, phone, location, category, approximate_size, material_preference, message,
-      attachment_public_id, attachment_url
-    ) values (
-      clean_name, clean_phone, btrim(p_location), clean_category, btrim(p_approximate_size),
-      btrim(p_material_preference), clean_message, clean_public_id, clean_url
-    );
+    begin
+      insert into public.estimate_requests (
+        submission_id, name, phone, location, category, approximate_size,
+        material_preference, message, attachment_public_id, attachment_url
+      ) values (
+        clean_submission_id, clean_name, clean_phone, btrim(p_location),
+        clean_category, btrim(p_approximate_size), btrim(p_material_preference),
+        clean_message, clean_public_id, clean_url
+      );
+    exception when unique_violation then
+      return jsonb_build_object('ok', true, 'duplicate', true);
+    end;
   else
-    insert into public.queries (
-      name, phone, category, message, attachment_public_id, attachment_url
-    ) values (
-      clean_name, clean_phone, clean_category, clean_message, null, null
-    );
+    begin
+      insert into public.queries (
+        submission_id, name, phone, category, message,
+        attachment_public_id, attachment_url
+      ) values (
+        clean_submission_id, clean_name, clean_phone, clean_category,
+        clean_message, null, null
+      );
+    exception when unique_violation then
+      return jsonb_build_object('ok', true, 'duplicate', true);
+    end;
   end if;
 
-  return jsonb_build_object('ok', true);
+  return jsonb_build_object('ok', true, 'duplicate', false);
 end;
 $function$;
 
 revoke all on function public.submit_public_inquiry(
-  text, text, text, text, text, text, text, text, text, text
+  text, text, text, text, text, text, text, text, text, text, text
 ) from public, anon, authenticated;
 
 grant execute on function public.submit_public_inquiry(
-  text, text, text, text, text, text, text, text, text, text
+  text, text, text, text, text, text, text, text, text, text, text
 ) to service_role;
 
 notify pgrst, 'reload schema';
