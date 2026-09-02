@@ -1,13 +1,22 @@
 "use client";
 
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { blogCategories, blogExcerpt, type Blog, type BlogCategory } from "./blog";
 import type { Page } from "./types";
+
+function isInteractiveTarget(target: EventTarget) {
+  return target instanceof Element && Boolean(target.closest("button, a, input, select, textarea, label"));
+}
 
 export function BlogIndexPage({ blogs, loading, navigate, onBlog }: { blogs: Blog[]; loading: boolean; navigate: (page: Page) => void; onBlog: (id: string) => void }) {
   const [category, setCategory] = useState<"all" | BlogCategory>("all");
   const visibleBlogs = useMemo(() => category === "all" ? blogs : blogs.filter((blog) => blog.category === category), [blogs, category]);
+
+  const openCard = (event: ReactMouseEvent<HTMLElement>, id: string) => {
+    if (isInteractiveTarget(event.target)) return;
+    onBlog(id);
+  };
 
   return (
     <main className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16" aria-busy={loading}>
@@ -20,7 +29,19 @@ export function BlogIndexPage({ blogs, loading, navigate, onBlog }: { blogs: Blo
         </div>
         <div className="mt-14 divide-y divide-zinc-200/80 border-t border-zinc-200/80">
           {visibleBlogs.map((blog) => (
-            <article key={blog.id} className="py-12 sm:py-14">
+            <article
+              key={blog.id}
+              role="button"
+              tabIndex={0}
+              aria-label={`Read ${blog.title}`}
+              onClick={(event) => openCard(event, blog.id)}
+              onKeyDown={(event) => {
+                if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+                event.preventDefault();
+                onBlog(blog.id);
+              }}
+              className="py-12 sm:py-14 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF1A3D]/30"
+            >
               <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#FF1A3D]">{blogCategories.find((item) => item.value === blog.category)?.label}</div>
               <h2 className="mt-3 font-heading text-[26px] sm:text-[34px] font-bold leading-[1.1] tracking-[-0.03em]">{blog.title}</h2>
               <p className="mt-4 max-w-[760px] text-[15px] leading-7 text-zinc-600">{blogExcerpt(blog.body)}</p>
