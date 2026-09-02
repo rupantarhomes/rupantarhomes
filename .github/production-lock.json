@@ -14,7 +14,7 @@
     "package.json": "7e52178119f7d1699741c3075ea1446385b8b846",
     "pnpm-workspace.yaml": "661850fd02b3863cf84ab63d4d1f01e09c1ff98a",
     "public": "0536c426ff9be2776c277c71fd7bea91257ed0f8",
-    "supabase": "d52e21a36b1e88b9e5cf1cd12836e6b558dbc538",
+    "supabase": "0ebbd43b8c4f09e975c5aa1df7297780c0f8f7a8",
     "tests": "47f36ac145ccfb9ddf58bfbb6cf0dc59141161fc",
     "tsconfig.json": "9165aaccebd7ff216078e4672766023673a673bc",
     "vite.config.ts": "162bb85a23130748fcb7d1a6ea233dd776c91ac8",

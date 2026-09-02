@@ -270,6 +270,17 @@ Scope is limited to the production Supabase Work category constraint:
 
 Accepted `supabase` fingerprint after this scoped update: `d52e21a36b1e88b9e5cf1cd12836e6b558dbc538`.
 
+## Accepted Interior Work RPC category validation — 2026-09-03
+
+Scope is limited to the underlying Work-save RPC validation:
+
+- preserve the existing works_category_allowed constraint and all ten allowed values;
+- preserve both RPC overloads, authorization, grants, SECURITY DEFINER behavior, search path, image validation, cleanup locking, and persistence logic;
+- add only the existing frontend category slug interior to the underlying save_work_with_images(..., p_images jsonb, ...) allowlist;
+- production verification confirmed both overloads remain compatible and all ten frontend category values are accepted by the complete live RPC validation path.
+
+Accepted supabase fingerprint after this scoped update: 0ebbd43b8c4f09e975c5aa1df7297780c0f8f7a8.
+
 ## AI/Codex instruction block
 
 Use this at the start of future implementation requests:
