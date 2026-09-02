@@ -15,6 +15,16 @@ function invalidRequest(message = "Invalid inquiry request."): Response {
   return Response.json({ error: message }, { status: 400 });
 }
 
+async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit, timeoutMs = 10_000): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(new Error("Dependency request timed out.")), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function secretHash(value: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
@@ -35,7 +45,7 @@ async function internalSecretIsValid(
   serviceRoleKey: string,
 ): Promise<boolean> {
   if (!providedSecret) return false;
-  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/get_public_inquiry_secret_hash`, {
+  const response = await fetchWithTimeout(`${supabaseUrl}/rest/v1/rpc/get_public_inquiry_secret_hash`, {
     method: "POST",
     headers: {
       apikey: serviceRoleKey,
@@ -93,8 +103,13 @@ Deno.serve(async (request) => {
     return Response.json({ error: "Service unavailable." }, { status: 503 });
   }
   const providedSecret = request.headers.get("X-Rupantar-Internal-Secret") ?? "";
-  if (!(await internalSecretIsValid(providedSecret, supabaseUrl, serviceRoleKey))) {
-    return Response.json({ error: "Unauthorized." }, { status: 401 });
+  try {
+    if (!(await internalSecretIsValid(providedSecret, supabaseUrl, serviceRoleKey))) {
+      return Response.json({ error: "Unauthorized." }, { status: 401 });
+    }
+  } catch (error) {
+    console.error(JSON.stringify({ message: "Public inquiry secret validation failed", error: error instanceof Error ? error.message : "unknown" }));
+    return Response.json({ error: "Service unavailable." }, { status: 503 });
   }
 
   const contentLength = Number(request.headers.get("Content-Length") ?? "0");
@@ -109,15 +124,21 @@ Deno.serve(async (request) => {
     return invalidRequest();
   }
 
-  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/submit_public_inquiry`, {
-    method: "POST",
-    headers: {
-      apikey: serviceRoleKey,
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify(input),
-  });
+  let response: Response;
+  try {
+    response = await fetchWithTimeout(`${supabaseUrl}/rest/v1/rpc/submit_public_inquiry`, {
+      method: "POST",
+      headers: {
+        apikey: serviceRoleKey,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(input),
+    });
+  } catch (error) {
+    console.error(JSON.stringify({ message: "Public inquiry RPC timed out", error: error instanceof Error ? error.message : "unknown" }));
+    return Response.json({ error: "Your request could not be sent. Please try again." }, { status: 503 });
+  }
 
   if (!response.ok) {
     console.error(JSON.stringify({ message: "Public inquiry RPC failed", status: response.status }));
@@ -126,4 +147,3 @@ Deno.serve(async (request) => {
 
   return Response.json({ ok: true }, { status: 201 });
 });
-
