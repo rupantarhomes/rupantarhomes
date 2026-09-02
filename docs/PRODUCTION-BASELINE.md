@@ -281,6 +281,24 @@ Scope is limited to the underlying Work-save RPC validation:
 
 Accepted supabase fingerprint after this scoped update: 0ebbd43b8c4f09e975c5aa1df7297780c0f8f7a8.
 
+## Admin performance and reliability update — 2026-09-03
+
+Scope is limited to Admin-side loading, save responsiveness, Work image draft ownership, and empty Work image-slot interaction:
+
+- preserve Supabase Auth, active-admin membership checks, RLS, grants, RPCs, the ten-category system, and database schema unchanged;
+- load the full Admin Works collection separately from the public 12-item Works pagination so Admin records cannot disappear when the public page limit is reached;
+- stop full Works/Reviews/Settings/Leads/Blogs reloads on every Admin tab switch and open the Admin dashboard immediately after successful authorization while the first Admin data refresh completes;
+- after Work saves/deletes, refresh only the Admin Works collection on the critical path and refresh the public content cache separately without overwriting Admin Works state;
+- pin the set of persisted Cloudinary public IDs when a Work edit begins so later state refreshes cannot reclassify saved images as disposable draft uploads;
+- make existing empty Work image slots activate the existing signed uploader without changing layout, colors, file rules, or upload contract;
+- keep JPEG/PNG input, 10 MB maximum, maximum 3 images, WebP output, 1920×1080 transformation, `rupantar-homes/works`, signed uploads, and reference-safe cleanup unchanged;
+- add regression coverage for Admin loading, navigation, save refresh boundaries, stable image ownership, and empty-slot activation.
+
+Accepted scoped fingerprints for review:
+
+- `app`: `45961d7ec6c8beb99224adf48bb7af02443cc2b3`
+- `tests`: `50ba304358c5b10cdc117d3048278e6f3048159c`
+
 ## AI/Codex instruction block
 
 Use this at the start of future implementation requests:
