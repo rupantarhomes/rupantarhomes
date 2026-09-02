@@ -72,6 +72,21 @@ function PageLoader() {
   return <div className="min-h-[40vh]" aria-busy="true" aria-label="Loading page" />;
 }
 
+function DetailLoadFailure({ label }: { label: string }) {
+  return (
+    <main className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="max-w-[560px] rounded-[1.5rem] border border-zinc-100 bg-white p-7 shadow-sm">
+        <h1 className="font-heading text-[22px] font-bold">Unable to load {label}</h1>
+        <p className="mt-2 text-[14px] leading-6 text-zinc-600">The saved page is still available, but this request did not finish correctly. Retry the page to load the latest data.</p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <button onClick={() => window.location.reload()} className="h-10 px-5 rounded-full bg-[#FF1A3D] text-white text-[13px] font-semibold">Retry</button>
+          <button onClick={() => window.location.assign("/")} className="h-10 px-5 rounded-full border border-zinc-200 text-[13px] font-medium">Back Home</button>
+        </div>
+      </div>
+    </main>
+  );
+}
+
 const publicPages: Page[] = ["home", "works", "work-detail", "about", "contact", "privacy", "interior-design", "blog", "blog-detail"];
 const adminWorksLimit = 1000;
 
@@ -83,11 +98,8 @@ function prefetchPublicPageModules() {
 }
 
 function prefetchPublicRoute(page: Page) {
-  if (page === "blog" || page === "blog-detail") {
-    void loadBlogPages();
-  } else if (publicPages.includes(page) && page !== "home") {
-    void loadPublicPages();
-  }
+  if (page === "blog" || page === "blog-detail") void loadBlogPages();
+  else if (publicPages.includes(page) && page !== "home") void loadPublicPages();
 }
 
 function pageForRoute(route: BrowserRoute): Page {
@@ -123,6 +135,8 @@ export function RupantarSite() {
   const [page, setPage] = useState<Page>(() => pageForRoute(initialRoute));
   const [filter, setFilter] = useState(() => initialRoute.kind === "works" || initialRoute.kind === "work-detail" ? initialRoute.category : "all");
   const [selectedWork, setSelectedWork] = useState<Work | null>(null);
+  const [selectedBlog, setSelectedBlog] = useState<Blog | null>(null);
+  const [detailLoadError, setDetailLoadError] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [works, setWorks] = useState<Work[]>(initialWorksState);
   const [worksTotal, setWorksTotal] = useState(initialRouteUsesWorks || initialRouteIsAdmin ? 0 : initialWorks.length);
@@ -131,7 +145,6 @@ export function RupantarSite() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [blogsLoading, setBlogsLoading] = useState(false);
   const [blogsLoaded, setBlogsLoaded] = useState(false);
-  const [selectedBlog, setSelectedBlog] = useState<Blog | null>(null);
   const [blogForm, setBlogForm] = useState<BlogForm>(emptyBlogForm);
   const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -156,6 +169,7 @@ export function RupantarSite() {
   const homeWorksRef = useRef<Work[]>(initialWorks);
   const worksRef = useRef(works);
   const worksLoadedRef = useRef(false);
+  const adminWorksLoadedRef = useRef(false);
   const worksRequestIdRef = useRef(0);
   const worksPageCacheRef = useRef(new Map<string, PublicWorksPage>());
   const worksPageRequestsRef = useRef(new Map<string, Promise<PublicWorksPage>>());
@@ -174,13 +188,8 @@ export function RupantarSite() {
   const estimateMutationRef = useRef(false);
   const queryMutationRef = useRef(false);
 
-  useEffect(() => {
-    worksRef.current = works;
-  }, [works]);
-
-  useEffect(() => {
-    blogsRef.current = blogs;
-  }, [blogs]);
+  useEffect(() => { worksRef.current = works; }, [works]);
+  useEffect(() => { blogsRef.current = blogs; }, [blogs]);
 
   useEffect(() => {
     if (!estimateSaved) return;
@@ -190,17 +199,14 @@ export function RupantarSite() {
 
   useEffect(() => {
     if (parseRoute(window.location.pathname).kind === "admin") return;
-
     const idleWindow = window as typeof window & {
       requestIdleCallback?: (callback: () => void) => number;
       cancelIdleCallback?: (handle: number) => void;
     };
-
     if (idleWindow.requestIdleCallback) {
       const handle = idleWindow.requestIdleCallback(prefetchPublicPageModules);
       return () => idleWindow.cancelIdleCallback?.(handle);
     }
-
     const timer = window.setTimeout(prefetchPublicPageModules, 150);
     return () => window.clearTimeout(timer);
   }, []);
@@ -232,10 +238,8 @@ export function RupantarSite() {
     setReviews(content.reviews);
     setSettings(content.settings);
     homeWorksRef.current = content.works;
-
     const route = parseRoute(window.location.pathname);
     if (route.kind !== "home") return;
-
     worksRequestIdRef.current += 1;
     worksRef.current = content.works;
     worksLoadedRef.current = true;
@@ -248,6 +252,7 @@ export function RupantarSite() {
     const requestId = ++adminWorksRequestIdRef.current;
     const result = await loadPublicWorksPage(0, adminWorksLimit, "all");
     if (requestId !== adminWorksRequestIdRef.current) return;
+    adminWorksLoadedRef.current = true;
     worksRef.current = result.works;
     worksLoadedRef.current = true;
     setWorks(result.works);
@@ -286,7 +291,6 @@ export function RupantarSite() {
     const requestId = ++worksRequestIdRef.current;
     const cacheKey = `${category}:${offset}`;
     const cached = worksPageCacheRef.current.get(cacheKey);
-
     if (cached) {
       const nextWorks = offset === 0 ? cached.works : [...worksRef.current, ...cached.works];
       worksRef.current = nextWorks;
@@ -296,7 +300,6 @@ export function RupantarSite() {
       setWorksLoading(false);
       return;
     }
-
     if (clearCurrent) {
       worksRef.current = [];
       setWorks([]);
@@ -328,6 +331,7 @@ export function RupantarSite() {
     const routeRequestId = ++routeRequestIdRef.current;
     const isCurrentRoute = () => routeRequestId === routeRequestIdRef.current;
     const route = parseRoute(window.location.pathname);
+    setDetailLoadError("");
 
     if (route.kind === "home") {
       setSelectedWork(null);
@@ -336,18 +340,9 @@ export function RupantarSite() {
       setPage("home");
       return;
     }
-    if (route.kind === "about") {
-      setPage("about");
-      return;
-    }
-    if (route.kind === "contact") {
-      setPage("contact");
-      return;
-    }
-    if (route.kind === "privacy") {
-      setPage("privacy");
-      return;
-    }
+    if (route.kind === "about") { setPage("about"); return; }
+    if (route.kind === "contact") { setPage("contact"); return; }
+    if (route.kind === "privacy") { setPage("privacy"); return; }
     if (route.kind === "blog") {
       setPage("blog");
       setSelectedBlog(null);
@@ -357,32 +352,30 @@ export function RupantarSite() {
     if (route.kind === "blog-detail") {
       setPage("blog-detail");
       const cachedBlog = blogsRef.current.find((item) => item.slug === route.slug);
-      if (cachedBlog) {
-        setSelectedBlog(cachedBlog);
-        return;
-      }
-      const blog = await loadPublicBlogBySlug(route.slug);
-      if (!isCurrentRoute()) return;
-      if (!blog) {
+      if (cachedBlog) { setSelectedBlog(cachedBlog); return; }
+      try {
+        const blog = await loadPublicBlogBySlug(route.slug);
+        if (!isCurrentRoute()) return;
+        if (!blog) {
+          setSelectedBlog(null);
+          setPage("blog");
+          if (!blogsLoadedRef.current) await refreshBlogs();
+          return;
+        }
+        const nextBlogs = [blog, ...blogsRef.current.filter((item) => item.id !== blog.id)];
+        blogsRef.current = nextBlogs;
+        setBlogs(nextBlogs);
+        setSelectedBlog(blog);
+      } catch (error) {
+        if (!isCurrentRoute()) return;
+        console.error("Unable to load blog detail", error);
         setSelectedBlog(null);
-        setPage("blog");
-        if (!blogsLoadedRef.current) await refreshBlogs();
-        return;
+        setDetailLoadError("article");
       }
-      const nextBlogs = [blog, ...blogsRef.current.filter((item) => item.id !== blog.id)];
-      blogsRef.current = nextBlogs;
-      setBlogs(nextBlogs);
-      setSelectedBlog(blog);
       return;
     }
-    if (route.kind === "admin") {
-      setPage("admin-login");
-      return;
-    }
-    if (route.kind === "interior-design") {
-      setPage("interior-design");
-      return;
-    }
+    if (route.kind === "admin") { setPage("admin-login"); return; }
+    if (route.kind === "interior-design") { setPage("interior-design"); return; }
     if (route.kind === "works") {
       setSelectedWork(null);
       setFilter(route.category);
@@ -396,36 +389,36 @@ export function RupantarSite() {
     const cachedWork = worksLoadedRef.current
       ? worksRef.current.find((item) => item.category === route.category && item.slug === route.slug)
       : undefined;
-    if (cachedWork) {
-      setSelectedWork(cachedWork);
-      return;
-    }
-
-    const work = await loadPublicWorkBySlug(route.category, route.slug);
-    if (!isCurrentRoute()) return;
-    if (!work) {
+    if (cachedWork) { setSelectedWork(cachedWork); return; }
+    try {
+      const work = await loadPublicWorkBySlug(route.category, route.slug);
+      if (!isCurrentRoute()) return;
+      if (!work) {
+        setSelectedWork(null);
+        setPage("works");
+        await loadWorks(route.category, 0, true);
+        return;
+      }
+      setSelectedWork(work);
+      const nextWorks = [work, ...worksRef.current.filter((item) => item.id !== work.id)];
+      worksRef.current = nextWorks;
+      worksLoadedRef.current = true;
+      setWorks(nextWorks);
+    } catch (error) {
+      if (!isCurrentRoute()) return;
+      console.error("Unable to load work detail", error);
       setSelectedWork(null);
-      setPage("works");
-      await loadWorks(route.category, 0, true);
-      return;
+      setDetailLoadError("project");
     }
-    setSelectedWork(work);
-    const nextWorks = [work, ...worksRef.current.filter((item) => item.id !== work.id)];
-    worksRef.current = nextWorks;
-    worksLoadedRef.current = true;
-    setWorks(nextWorks);
   }, [loadWorks, refreshBlogs]);
 
   const refreshAdminStats = useCallback(async () => {
-    try {
-      setAdminStats(await loadAdminStats());
-    } catch (error) {
-      console.error("Unable to load admin totals", error);
-    }
+    try { setAdminStats(await loadAdminStats()); }
+    catch (error) { console.error("Unable to load admin totals", error); }
   }, []);
 
   const loadOlderLeads = async () => {
-    if (!leadsHasMore || !leadsNextBefore || leadsLoadingOlder) return;
+    if (!leadsHasMore || !leadsNextBefore || leadsLoadingOlder || adminMutationRef.current || uploadMutationRef.current) return;
     setLeadsLoadingOlder(true);
     try {
       const result = await loadLeads(leadsNextBefore);
@@ -443,34 +436,25 @@ export function RupantarSite() {
     document.title = "Rupantar Homes";
     let active = true;
     const startupRoute = parseRoute(window.location.pathname);
-
-    void applyBrowserRoute().catch((error) => {
-      if (active) console.error("Unable to apply website route", error);
-    });
+    void applyBrowserRoute().catch((error) => { if (active) console.error("Unable to apply website route", error); });
 
     if (startupRoute.kind === "home") {
-      void refreshContent().catch((error) => {
-        if (active) console.error("Unable to load website content", error);
-      });
+      void refreshContent().catch((error) => { if (active) console.error("Unable to load website content", error); });
     } else if (startupRoute.kind !== "admin") {
-      void loadPublicContent()
-        .then((content) => {
-          if (!active) return;
-          setReviews(content.reviews);
-          setSettings(content.settings);
-          homeWorksRef.current = content.works;
-          if (parseRoute(window.location.pathname).kind === "home") {
-            worksRequestIdRef.current += 1;
-            worksRef.current = content.works;
-            worksLoadedRef.current = true;
-            setWorks(content.works);
-            setWorksTotal(content.works.length);
-            setWorksLoading(false);
-          }
-        })
-        .catch((error) => {
-          if (active) console.error("Unable to load website shell content", error);
-        });
+      void loadPublicContent().then((content) => {
+        if (!active) return;
+        setReviews(content.reviews);
+        setSettings(content.settings);
+        homeWorksRef.current = content.works;
+        if (parseRoute(window.location.pathname).kind === "home") {
+          worksRequestIdRef.current += 1;
+          worksRef.current = content.works;
+          worksLoadedRef.current = true;
+          setWorks(content.works);
+          setWorksTotal(content.works.length);
+          setWorksLoading(false);
+        }
+      }).catch((error) => { if (active) console.error("Unable to load website shell content", error); });
     }
 
     void getCurrentAdminSession().then((session) => {
@@ -493,14 +477,15 @@ export function RupantarSite() {
   };
 
   const navigate = (nextPage: Page) => {
+    if (page.startsWith("admin-") && (adminMutationRef.current || uploadMutationRef.current) && nextPage !== page) return;
     routeRequestIdRef.current += 1;
+    setDetailLoadError("");
     prefetchPublicRoute(nextPage);
     if (nextPage.startsWith("admin-")) pushPath("/admin");
     else pushPath(pagePath(nextPage));
 
-    if (nextPage.startsWith("admin-") && nextPage !== "admin-login" && !isAdmin) {
-      setPage("admin-login");
-    } else {
+    if (nextPage.startsWith("admin-") && nextPage !== "admin-login" && !isAdmin) setPage("admin-login");
+    else {
       if (nextPage === "home") {
         setSelectedWork(null);
         setSelectedBlog(null);
@@ -524,16 +509,14 @@ export function RupantarSite() {
 
   const goToEstimate = () => {
     routeRequestIdRef.current += 1;
+    setDetailLoadError("");
     if (page !== "home") {
       pushPath("/");
       setSelectedWork(null);
       setSelectedBlog(null);
       restoreHomeWorks();
       setPage("home");
-      window.setTimeout(
-        () => document.getElementById("estimate")?.scrollIntoView({ behavior: "smooth", block: "start" }),
-        150,
-      );
+      window.setTimeout(() => document.getElementById("estimate")?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
       return;
     }
     document.getElementById("estimate")?.scrollIntoView({ behavior: "smooth" });
@@ -541,6 +524,7 @@ export function RupantarSite() {
 
   const openCategory = (category: string) => {
     routeRequestIdRef.current += 1;
+    setDetailLoadError("");
     prefetchPublicRoute("works");
     pushPath(categoryPath(category));
     setSelectedWork(null);
@@ -556,6 +540,7 @@ export function RupantarSite() {
     if (!blog) return;
     routeRequestIdRef.current += 1;
     blogsRequestIdRef.current += 1;
+    setDetailLoadError("");
     prefetchPublicRoute("blog-detail");
     pushPath(blogArticlePath(blog.slug));
     setSelectedBlog(blog);
@@ -568,6 +553,7 @@ export function RupantarSite() {
     if (!work) return;
     routeRequestIdRef.current += 1;
     worksRequestIdRef.current += 1;
+    setDetailLoadError("");
     prefetchPublicRoute("work-detail");
     pushPath(workPath(work));
     setSelectedWork(work);
@@ -576,7 +562,6 @@ export function RupantarSite() {
   };
 
   const persistedDraftImageIds = () => new Set(persistedDraftImageIdsRef.current);
-
   const draftImagePublicIds = () => {
     const persisted = persistedDraftImageIds();
     return (Array.isArray(workForm.images) ? workForm.images : [])
@@ -604,7 +589,7 @@ export function RupantarSite() {
   };
 
   const handleLogout = async () => {
-    if (adminMutationRef.current) return;
+    if (adminMutationRef.current || uploadMutationRef.current) return;
     adminMutationRef.current = true;
     setAdminBusy(true);
     try {
@@ -626,58 +611,52 @@ export function RupantarSite() {
   };
 
   const handleUpdateLeadStatus = async (id: string, status: LeadStatus) => {
-    if (adminMutationRef.current) return;
+    if (adminMutationRef.current || uploadMutationRef.current) return;
     adminMutationRef.current = true;
     setAdminBusy(true);
     try {
       await updateLeadStatus(id, status);
       leadsRequestIdRef.current += 1;
       setLeads((current) => current.map((lead) => lead.id === id ? { ...lead, status, updatedAt: new Date().toISOString() } : lead));
-    } catch (error) {
-      window.alert(messageFrom(error));
-    } finally {
-      adminMutationRef.current = false;
-      setAdminBusy(false);
-    }
+    } catch (error) { window.alert(messageFrom(error)); }
+    finally { adminMutationRef.current = false; setAdminBusy(false); }
   };
 
   const handleDeleteLead = async (id: string) => {
     if (!window.confirm("Delete this lead?")) return;
-    if (adminMutationRef.current) return;
+    if (adminMutationRef.current || uploadMutationRef.current) return;
     adminMutationRef.current = true;
     setAdminBusy(true);
     try {
       await deleteLead(id);
       leadsRequestIdRef.current += 1;
       setLeads((current) => current.filter((lead) => lead.id !== id));
-    } catch (error) {
-      window.alert(messageFrom(error));
-    } finally {
-      adminMutationRef.current = false;
-      setAdminBusy(false);
-    }
+    } catch (error) { window.alert(messageFrom(error)); }
+    finally { adminMutationRef.current = false; setAdminBusy(false); }
   };
 
   const handleSaveWork = async () => {
-    if (adminMutationRef.current) return;
+    if (adminMutationRef.current || uploadMutationRef.current) return;
     const title = trimmed(workForm.title);
     const slug = trimmed(workForm.slug);
-    if (!title || !slug) {
-      window.alert("Title and Slug required");
-      return;
-    }
+    if (!title || !slug) { window.alert("Title and Slug required"); return; }
 
     adminMutationRef.current = true;
+    const adminWorksWereLoaded = adminWorksLoadedRef.current;
     const editingId = editingWorkId;
+    const formSnapshot: WorkForm = {
+      ...workForm,
+      images: (Array.isArray(workForm.images) ? workForm.images : []).map((image) => ({ ...image })),
+    };
     const newlyUploaded = draftImagePublicIds();
-    const retained = new Set((Array.isArray(workForm.images) ? workForm.images : []).map((image) => image.publicId));
+    const retained = new Set(formSnapshot.images.map((image) => image.publicId));
     const removed = Array.from(persistedDraftImageIdsRef.current).filter((publicId) => !retained.has(publicId));
-
     setAdminBusy(true);
+
     try {
       let savedWork: Work;
       try {
-        savedWork = await saveWork(workForm, editingId);
+        savedWork = await saveWork(formSnapshot, editingId);
       } catch (saveError) {
         try {
           await deleteCloudinaryImages(newlyUploaded);
@@ -712,23 +691,20 @@ export function RupantarSite() {
 
       const currentHome = homeWorksRef.current;
       const homeIndex = currentHome.findIndex((work) => work.id === savedWork.id);
-      if (homeIndex >= 0) {
-        homeWorksRef.current = currentHome.map((work) => work.id === savedWork.id ? savedWork : work);
-      } else if (!editingId) {
-        homeWorksRef.current = [savedWork, ...currentHome].slice(0, 6);
-      }
+      if (homeIndex >= 0) homeWorksRef.current = currentHome.map((work) => work.id === savedWork.id ? savedWork : work);
+      else if (!editingId) homeWorksRef.current = [savedWork, ...currentHome].slice(0, 6);
 
       if (selectedWork?.id === savedWork.id) setSelectedWork(savedWork);
       persistedDraftImageIdsRef.current = new Set();
       setEditingWorkId(null);
       setWorkForm(emptyWork);
 
-      void refreshContent().catch((refreshError) => {
-        console.error("Work saved but public content reconciliation failed", refreshError);
-      });
-      try {
-        await deleteCloudinaryImages(removed);
-      } catch (cleanupError) {
+      if (!adminWorksWereLoaded) {
+        void refreshAdminWorks().catch((refreshError) => console.error("Work saved but initial Admin Works reconciliation failed", refreshError));
+      }
+      void refreshContent().catch((refreshError) => console.error("Work saved but public content reconciliation failed", refreshError));
+      try { await deleteCloudinaryImages(removed); }
+      catch (cleanupError) {
         console.error("Work saved but removed Cloudinary images could not be cleaned up", cleanupError);
         window.alert("The work was saved, but one or more removed images still need Cloudinary cleanup.");
       }
@@ -739,6 +715,7 @@ export function RupantarSite() {
   };
 
   const editWork = (work: Work) => {
+    if (adminMutationRef.current || uploadMutationRef.current) return;
     persistedDraftImageIdsRef.current = new Set(work.images.map((image) => image.publicId));
     setWorkForm({
       title: work.title,
@@ -757,17 +734,13 @@ export function RupantarSite() {
 
   const handleDeleteWork = async (id: string) => {
     if (!window.confirm("Delete this work?")) return;
-    if (adminMutationRef.current) return;
+    if (adminMutationRef.current || uploadMutationRef.current) return;
     adminMutationRef.current = true;
     setAdminBusy(true);
     try {
       let deletedImagePublicIds: string[];
-      try {
-        deletedImagePublicIds = await deleteWork(id);
-      } catch (deleteError) {
-        window.alert(messageFrom(deleteError));
-        return;
-      }
+      try { deletedImagePublicIds = await deleteWork(id); }
+      catch (deleteError) { window.alert(messageFrom(deleteError)); return; }
 
       adminWorksRequestIdRef.current += 1;
       contentRequestIdRef.current += 1;
@@ -778,29 +751,22 @@ export function RupantarSite() {
       setWorksTotal((current) => Math.max(0, current - 1));
       homeWorksRef.current = homeWorksRef.current.filter((work) => work.id !== id);
       if (selectedWork?.id === id) setSelectedWork(null);
-
       if (editingWorkId === id) {
         persistedDraftImageIdsRef.current = new Set();
         setEditingWorkId(null);
         setWorkForm(emptyWork);
       }
-      void refreshContent().catch((refreshError) => {
-        console.error("Work deleted but public content reconciliation failed", refreshError);
-      });
-      try {
-        await deleteCloudinaryImages(deletedImagePublicIds);
-      } catch (cleanupError) {
+      void refreshContent().catch((refreshError) => console.error("Work deleted but public content reconciliation failed", refreshError));
+      try { await deleteCloudinaryImages(deletedImagePublicIds); }
+      catch (cleanupError) {
         console.error("Work deleted but Cloudinary cleanup failed", cleanupError);
         window.alert("The work was deleted from the website, but one or more images still need Cloudinary cleanup.");
       }
-    } finally {
-      adminMutationRef.current = false;
-      setAdminBusy(false);
-    }
+    } finally { adminMutationRef.current = false; setAdminBusy(false); }
   };
 
   const cancelWork = async () => {
-    if (adminMutationRef.current) return;
+    if (adminMutationRef.current || uploadMutationRef.current) return;
     adminMutationRef.current = true;
     setAdminBusy(true);
     try {
@@ -808,22 +774,15 @@ export function RupantarSite() {
       persistedDraftImageIdsRef.current = new Set();
       setEditingWorkId(null);
       setWorkForm(emptyWork);
-    } catch (error) {
-      window.alert(`Cancel stopped: ${messageFrom(error)}`);
-    } finally {
-      adminMutationRef.current = false;
-      setAdminBusy(false);
-    }
+    } catch (error) { window.alert(`Cancel stopped: ${messageFrom(error)}`); }
+    finally { adminMutationRef.current = false; setAdminBusy(false); }
   };
 
   const handleUploadImages = async (files: File[]) => {
-    if (!files.length || uploadMutationRef.current) return;
+    if (!files.length || uploadMutationRef.current || adminMutationRef.current) return;
     const currentImageCount = Array.isArray(workForm.images) ? workForm.images.length : 0;
     const remainingImageSlots = maximumWorkImages - currentImageCount;
-    if (remainingImageSlots <= 0) {
-      window.alert(`A work can include up to ${maximumWorkImages} images.`);
-      return;
-    }
+    if (remainingImageSlots <= 0) { window.alert(`A work can include up to ${maximumWorkImages} images.`); return; }
     if (files.length > remainingImageSlots) {
       window.alert(`You can add ${remainingImageSlots} more image${remainingImageSlots === 1 ? "" : "s"} to this work.`);
       return;
@@ -836,20 +795,15 @@ export function RupantarSite() {
         ...current,
         images: [...(Array.isArray(current.images) ? current.images : []), ...uploaded].map((image, index) => ({ ...image, sortOrder: index })),
       }));
-    } catch (error) {
-      window.alert(messageFrom(error));
-    } finally {
-      uploadMutationRef.current = false;
-      setUploadingImages(false);
-    }
+    } catch (error) { window.alert(messageFrom(error)); }
+    finally { uploadMutationRef.current = false; setUploadingImages(false); }
   };
 
   const handleRemoveWorkImage = async (index: number) => {
-    if (uploadMutationRef.current) return;
+    if (uploadMutationRef.current || adminMutationRef.current) return;
     const images = Array.isArray(workForm.images) ? workForm.images : [];
     const image = images[index];
     if (!image) return;
-
     uploadMutationRef.current = true;
     const persisted = persistedDraftImageIdsRef.current.has(image.publicId);
     setUploadingImages(true);
@@ -861,24 +815,20 @@ export function RupantarSite() {
           .filter((candidate) => candidate.publicId !== image.publicId)
           .map((candidate, sortOrder) => ({ ...candidate, sortOrder })),
       }));
-    } catch (error) {
-      window.alert(`Image removal stopped: ${messageFrom(error)}`);
-    } finally {
-      uploadMutationRef.current = false;
-      setUploadingImages(false);
-    }
+    } catch (error) { window.alert(`Image removal stopped: ${messageFrom(error)}`); }
+    finally { uploadMutationRef.current = false; setUploadingImages(false); }
   };
 
   const handleSaveBlog = async () => {
-    if (adminMutationRef.current) return;
-    if (!trimmed(blogForm.title) || !trimmed(blogForm.body)) {
-      window.alert("Title and body are required.");
-      return;
-    }
+    if (adminMutationRef.current || uploadMutationRef.current) return;
+    if (!trimmed(blogForm.title) || !trimmed(blogForm.body)) { window.alert("Title and body are required."); return; }
     adminMutationRef.current = true;
+    const blogsWereLoaded = blogsLoadedRef.current;
+    const editingId = editingBlogId;
+    const formSnapshot = { ...blogForm };
     setAdminBusy(true);
     try {
-      const savedBlog = await saveBlog(blogForm, editingBlogId);
+      const savedBlog = await saveBlog(formSnapshot, editingId);
       blogsRequestIdRef.current += 1;
       const existingIndex = blogsRef.current.findIndex((blog) => blog.id === savedBlog.id);
       const nextBlogs = existingIndex >= 0
@@ -891,99 +841,86 @@ export function RupantarSite() {
       if (selectedBlog?.id === savedBlog.id) setSelectedBlog(savedBlog);
       setBlogForm(emptyBlogForm);
       setEditingBlogId(null);
-    } catch (error) {
-      window.alert(messageFrom(error));
-    } finally {
-      adminMutationRef.current = false;
-      setAdminBusy(false);
-    }
+      if (!blogsWereLoaded) {
+        void refreshBlogs().catch((refreshError) => console.error("Article saved but initial Blog reconciliation failed", refreshError));
+      }
+    } catch (error) { window.alert(messageFrom(error)); }
+    finally { adminMutationRef.current = false; setAdminBusy(false); }
   };
 
   const editBlog = (blog: Blog) => {
+    if (adminMutationRef.current || uploadMutationRef.current) return;
     setEditingBlogId(blog.id);
     setBlogForm({ title: blog.title, category: blog.category, body: blog.body });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const cancelBlog = () => {
+    if (adminMutationRef.current || uploadMutationRef.current) return;
     setEditingBlogId(null);
     setBlogForm(emptyBlogForm);
   };
 
   const handleDeleteBlog = async (id: string) => {
     if (!window.confirm("Delete this article?")) return;
-    if (adminMutationRef.current) return;
+    if (adminMutationRef.current || uploadMutationRef.current) return;
     adminMutationRef.current = true;
     setAdminBusy(true);
     try {
       await deleteBlog(id);
       blogsRequestIdRef.current += 1;
-      if (editingBlogId === id) cancelBlog();
+      if (editingBlogId === id) {
+        setEditingBlogId(null);
+        setBlogForm(emptyBlogForm);
+      }
       const nextBlogs = blogsRef.current.filter((blog) => blog.id !== id);
       blogsRef.current = nextBlogs;
       setBlogs(nextBlogs);
       if (selectedBlog?.id === id) setSelectedBlog(null);
-    } catch (error) {
-      window.alert(messageFrom(error));
-    } finally {
-      adminMutationRef.current = false;
-      setAdminBusy(false);
-    }
+    } catch (error) { window.alert(messageFrom(error)); }
+    finally { adminMutationRef.current = false; setAdminBusy(false); }
   };
 
   const handleSaveReview = async () => {
-    if (adminMutationRef.current) return;
-    if (!trimmed(reviewForm.name) || !trimmed(reviewForm.message)) {
-      window.alert("Name and message required");
-      return;
-    }
+    if (adminMutationRef.current || uploadMutationRef.current) return;
+    if (!trimmed(reviewForm.name) || !trimmed(reviewForm.message)) { window.alert("Name and message required"); return; }
     adminMutationRef.current = true;
+    const formSnapshot = { ...reviewForm };
     setAdminBusy(true);
     try {
-      const savedReview = await saveReview(reviewForm);
+      const savedReview = await saveReview(formSnapshot);
       contentRequestIdRef.current += 1;
       setReviews((current) => [savedReview, ...current.filter((review) => review.id !== savedReview.id)]);
       setReviewForm(emptyReview);
-    } catch (error) {
-      window.alert(messageFrom(error));
-    } finally {
-      adminMutationRef.current = false;
-      setAdminBusy(false);
-    }
+    } catch (error) { window.alert(messageFrom(error)); }
+    finally { adminMutationRef.current = false; setAdminBusy(false); }
   };
 
   const handleDeleteReview = async (id: string) => {
     if (!window.confirm("Delete this review?")) return;
-    if (adminMutationRef.current) return;
+    if (adminMutationRef.current || uploadMutationRef.current) return;
     adminMutationRef.current = true;
     setAdminBusy(true);
     try {
       await deleteReview(id);
       contentRequestIdRef.current += 1;
       setReviews((current) => current.filter((review) => review.id !== id));
-    } catch (error) {
-      window.alert(messageFrom(error));
-    } finally {
-      adminMutationRef.current = false;
-      setAdminBusy(false);
-    }
+    } catch (error) { window.alert(messageFrom(error)); }
+    finally { adminMutationRef.current = false; setAdminBusy(false); }
   };
 
   const handleSaveSettings = async () => {
-    if (adminMutationRef.current) return;
+    if (adminMutationRef.current || uploadMutationRef.current) return;
     adminMutationRef.current = true;
+    const settingsSnapshot = { ...settings };
     setAdminBusy(true);
     try {
-      const savedSettings = await saveSettings(settings);
+      const savedSettings = await saveSettings(settingsSnapshot);
       contentRequestIdRef.current += 1;
       setSettings(savedSettings);
       window.alert("Settings saved.");
-    } catch (error) {
-      window.alert(messageFrom(error));
-    } finally {
-      adminMutationRef.current = false;
-      setAdminBusy(false);
-    }
+    } catch (error) { window.alert(messageFrom(error)); }
+    finally { adminMutationRef.current = false; setAdminBusy(false); }
   };
 
   const handleEstimate = async () => {
@@ -995,12 +932,8 @@ export function RupantarSite() {
       setEstimate(emptyEstimate);
       setEstimateSaved(true);
       if (isAdmin) void Promise.all([refreshAdminStats(), refreshLeads()]);
-    } catch (error) {
-      window.alert(messageFrom(error));
-    } finally {
-      estimateMutationRef.current = false;
-      setEstimateBusy(false);
-    }
+    } catch (error) { window.alert(messageFrom(error)); }
+    finally { estimateMutationRef.current = false; setEstimateBusy(false); }
   };
 
   const handleQuery = async () => {
@@ -1012,26 +945,19 @@ export function RupantarSite() {
       setQuery(emptyQuery);
       setEstimateSaved(true);
       if (isAdmin) void Promise.all([refreshAdminStats(), refreshLeads()]);
-    } catch (error) {
-      window.alert(messageFrom(error));
-    } finally {
-      queryMutationRef.current = false;
-      setQueryBusy(false);
-    }
+    } catch (error) { window.alert(messageFrom(error)); }
+    finally { queryMutationRef.current = false; setQueryBusy(false); }
   };
 
   const publicPage = publicPages.includes(page);
+  const adminInteractionBusy = adminBusy || uploadingImages;
 
   if (page === "admin-login") {
-    return (
-      <Suspense fallback={<PageLoader />}><AdminLogin navigate={navigate} onLogin={handleLogin} error={loginError} busy={loginBusy} /></Suspense>
-    );
+    return <Suspense fallback={<PageLoader />}><AdminLogin navigate={navigate} onLogin={handleLogin} error={loginError} busy={loginBusy} /></Suspense>;
   }
 
   if (page.startsWith("admin-")) {
-    if (!isAdmin) {
-      return <Suspense fallback={<PageLoader />}><AdminLogin navigate={navigate} onLogin={handleLogin} error={loginError} busy={loginBusy} /></Suspense>;
-    }
+    if (!isAdmin) return <Suspense fallback={<PageLoader />}><AdminLogin navigate={navigate} onLogin={handleLogin} error={loginError} busy={loginBusy} /></Suspense>;
     return (
       <Suspense fallback={<PageLoader />}><AdminPortal
         page={page}
@@ -1071,7 +997,7 @@ export function RupantarSite() {
         setSettings={setSettings}
         onSaveSettings={handleSaveSettings}
         adminStats={adminStats}
-        busy={adminBusy}
+        busy={adminInteractionBusy}
       /></Suspense>
     );
   }
@@ -1101,17 +1027,13 @@ export function RupantarSite() {
         />
       )}
       {page === "blog" && <Suspense fallback={<PageLoader />}><BlogIndexPage blogs={blogs} loading={!blogsLoaded || blogsLoading} navigate={navigate} onBlog={openBlog} /></Suspense>}
-      {page === "blog-detail" && (selectedBlog ? <Suspense fallback={<PageLoader />}><BlogArticlePage blog={selectedBlog} navigate={navigate} /></Suspense> : <PageLoader />)}
+      {page === "blog-detail" && (selectedBlog
+        ? <Suspense fallback={<PageLoader />}><BlogArticlePage blog={selectedBlog} navigate={navigate} /></Suspense>
+        : detailLoadError ? <DetailLoadFailure label="article" /> : <PageLoader />)}
       {page === "works" && <Suspense fallback={<PageLoader />}><WorksPage works={works} total={worksTotal} loading={worksLoading} filter={filter} setFilter={openCategory} onLoadMore={() => void loadWorks(filter, works.length)} navigate={navigate} onWork={openWork} /></Suspense>}
       {page === "work-detail" && (selectedWork ? (
-        <Suspense fallback={<PageLoader />}><WorkDetailPage
-          work={selectedWork}
-          works={works}
-          navigate={navigate}
-          onWork={openWork}
-          onEstimate={goToEstimate}
-        /></Suspense>
-      ) : <PageLoader />)}
+        <Suspense fallback={<PageLoader />}><WorkDetailPage work={selectedWork} works={works} navigate={navigate} onWork={openWork} onEstimate={goToEstimate} /></Suspense>
+      ) : detailLoadError ? <DetailLoadFailure label="project" /> : <PageLoader />)}
       {page === "about" && <Suspense fallback={<PageLoader />}><AboutPage navigate={navigate} settings={settings} /></Suspense>}
       {page === "contact" && <Suspense fallback={<PageLoader />}><ContactPage navigate={navigate} /></Suspense>}
       {page === "privacy" && <Suspense fallback={<PageLoader />}><PrivacyPage navigate={navigate} /></Suspense>}
