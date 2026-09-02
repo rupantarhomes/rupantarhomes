@@ -69,7 +69,7 @@ test("removes new draft images from Cloudinary before removing their preview", a
     read("../app/rupantar/admin.tsx"),
   ]);
   const handler = site.indexOf("const handleRemoveWorkImage = async");
-  const persisted = site.indexOf("const persisted = persistedDraftImageIds().has(image.publicId)", handler);
+  const persisted = site.indexOf("const persisted = persistedDraftImageIdsRef.current.has(image.publicId)", handler);
   const destroy = site.indexOf("if (!persisted) await deleteCloudinaryImages([image.publicId])", persisted);
   const removePreview = site.indexOf("setWorkForm((current)", destroy);
 
