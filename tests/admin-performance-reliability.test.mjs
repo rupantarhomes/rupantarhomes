@@ -29,6 +29,27 @@ test("opens Admin immediately after authorization and avoids full Admin reloads 
   assert.match(navigate, /nextPage === "admin-dashboard"[\s\S]*refreshAdminStats/);
 });
 
+test("does not seed Admin dashboard with fake public works while live Admin data is loading", async () => {
+  const site = await read("../app/rupantar/site.tsx");
+
+  assert.match(site, /const initialRouteIsAdmin = initialRoute\.kind === "admin";/);
+  assert.match(site, /initialRouteUsesWorks \|\| initialRouteIsAdmin \? \[\] : initialWorks/);
+  assert.match(site, /initialRouteUsesWorks \|\| initialRouteIsAdmin \? 0 : initialWorks\.length/);
+});
+
+test("guards public, Admin Works, Leads and Blog reads against stale in-flight responses", async () => {
+  const site = await read("../app/rupantar/site.tsx");
+
+  assert.match(site, /const adminWorksRequestIdRef = useRef\(0\)/);
+  assert.match(site, /const contentRequestIdRef = useRef\(0\)/);
+  assert.match(site, /const leadsRequestIdRef = useRef\(0\)/);
+  assert.match(site, /const blogsRequestIdRef = useRef\(0\)/);
+  assert.match(site, /if \(requestId !== contentRequestIdRef\.current\) return;/);
+  assert.match(site, /if \(requestId !== adminWorksRequestIdRef\.current\) return;/);
+  assert.match(site, /if \(requestId !== leadsRequestIdRef\.current\) return;/);
+  assert.match(site, /if \(requestId !== blogsRequestIdRef\.current\) return;/);
+});
+
 test("keeps public-content refreshes from overwriting the Admin works list", async () => {
   const site = await read("../app/rupantar/site.tsx");
   const refresh = site.slice(site.indexOf("const refreshContent = useCallback"), site.indexOf("const refreshAdminWorks"));
@@ -46,13 +67,102 @@ test("pins persisted image ownership for the lifetime of an edit", async () => {
   assert.match(site, /const persisted = persistedDraftImageIdsRef\.current\.has\(image\.publicId\)/);
 });
 
-test("refreshes only Admin works after a work save and keeps public refresh off the critical path", async () => {
+test("commits a confirmed Work save to Admin and homepage state immediately without waiting for a second list fetch", async () => {
   const site = await read("../app/rupantar/site.tsx");
+  const repository = await read("../app/rupantar/repository.ts");
   const save = site.slice(site.indexOf("const handleSaveWork = async"), site.indexOf("const editWork"));
 
-  assert.match(save, /await refreshAdminWorks\(\)/);
-  assert.match(save, /void refreshContent\(\)\.catch/);
-  assert.ok(save.indexOf("await refreshAdminWorks()") < save.indexOf("void refreshContent().catch"));
+  assert.match(repository, /export async function saveWork\(form: WorkForm, editingId: string \| null\): Promise<Work>/);
+  assert.match(save, /savedWork = await saveWork\(workForm, editingId\)/);
+  assert.match(save, /worksRef\.current = nextWorks;/);
+  assert.match(save, /setWorks\(nextWorks\);/);
+  assert.match(save, /homeWorksRef\.current = \[savedWork, \.\.\.currentHome\]\.slice\(0, 6\)/);
+  assert.doesNotMatch(save, /await refreshAdminWorks\(\)/);
+});
+
+test("Work delete disappears immediately from Admin/home state after the confirmed database delete", async () => {
+  const site = await read("../app/rupantar/site.tsx");
+  const remove = site.slice(site.indexOf("const handleDeleteWork = async"), site.indexOf("const cancelWork"));
+
+  assert.match(remove, /deletedImagePublicIds = await deleteWork\(id\)/);
+  assert.match(remove, /worksRef\.current\.filter\(\(work\) => work\.id !== id\)/);
+  assert.match(remove, /homeWorksRef\.current = homeWorksRef\.current\.filter/);
+  assert.doesNotMatch(remove, /await refreshAdminWorks\(\)/);
+});
+
+test("selected Work and Blog detail records are independent from mutable list pagination", async () => {
+  const site = await read("../app/rupantar/site.tsx");
+
+  assert.match(site, /const \[selectedWork, setSelectedWork\] = useState<Work \| null>\(null\)/);
+  assert.match(site, /const \[selectedBlog, setSelectedBlog\] = useState<Blog \| null>\(null\)/);
+  assert.match(site, /worksRequestIdRef\.current \+= 1;[\s\S]*setSelectedWork\(work\);[\s\S]*setPage\("work-detail"\)/);
+  assert.match(site, /blogsRequestIdRef\.current \+= 1;[\s\S]*setSelectedBlog\(blog\);[\s\S]*setPage\("blog-detail"\)/);
+  assert.doesNotMatch(site, /const selectedWork = works\.find/);
+  assert.doesNotMatch(site, /const selectedBlog = blogs\.find/);
+});
+
+test("Blog saves return the saved record and become visible immediately without a post-save reload", async () => {
+  const site = await read("../app/rupantar/site.tsx");
+  const repository = await read("../app/rupantar/repository.ts");
+  const save = site.slice(site.indexOf("const handleSaveBlog = async"), site.indexOf("const editBlog"));
+
+  assert.match(repository, /export async function saveBlog\(form: BlogForm, editingBlogId: string \| null\): Promise<Blog>/);
+  assert.match(save, /const savedBlog = await saveBlog\(blogForm, editingBlogId\)/);
+  assert.match(save, /blogsRef\.current = nextBlogs;/);
+  assert.match(save, /setBlogs\(nextBlogs\);/);
+  assert.doesNotMatch(save, /refreshBlogs\(/);
+});
+
+test("Lead status and delete actions update local React state after the confirmed write instead of reloading Leads", async () => {
+  const site = await read("../app/rupantar/site.tsx");
+  const admin = await read("../app/rupantar/admin.tsx");
+  const repository = await read("../app/rupantar/repository.ts");
+  const status = site.slice(site.indexOf("const handleUpdateLeadStatus"), site.indexOf("const handleDeleteLead"));
+  const remove = site.slice(site.indexOf("const handleDeleteLead"), site.indexOf("const handleSaveWork"));
+
+  assert.match(status, /await updateLeadStatus\(id, status\)/);
+  assert.match(status, /setLeads\(\(current\) => current\.map/);
+  assert.doesNotMatch(status, /refreshLeads\(/);
+  assert.match(repository, /export async function deleteLead\(id: string\): Promise<void>/);
+  assert.match(remove, /await deleteLead\(id\)/);
+  assert.match(remove, /setLeads\(\(current\) => current\.filter/);
+  assert.doesNotMatch(admin, /leads\.splice\(/);
+  assert.doesNotMatch(admin, /getSupabase/);
+  assert.match(admin, /onDeleteLead: \(id: string\) => Promise<void>/);
+});
+
+test("Review saves/deletes and Settings saves update exactly their public state without broad content reloads", async () => {
+  const site = await read("../app/rupantar/site.tsx");
+  const repository = await read("../app/rupantar/repository.ts");
+  const reviewSave = site.slice(site.indexOf("const handleSaveReview"), site.indexOf("const handleDeleteReview"));
+  const reviewDelete = site.slice(site.indexOf("const handleDeleteReview"), site.indexOf("const handleSaveSettings"));
+  const settingsSave = site.slice(site.indexOf("const handleSaveSettings"), site.indexOf("const handleEstimate"));
+
+  assert.match(repository, /export async function saveReview\(form: ReviewForm\): Promise<Review>/);
+  assert.match(reviewSave, /const savedReview = await saveReview\(reviewForm\)/);
+  assert.match(reviewSave, /setReviews\(\(current\) => \[savedReview/);
+  assert.doesNotMatch(reviewSave, /refreshContent\(/);
+  assert.match(reviewDelete, /setReviews\(\(current\) => current\.filter/);
+  assert.doesNotMatch(reviewDelete, /refreshContent\(/);
+  assert.match(repository, /export async function saveSettings\(settings: SiteSettings\): Promise<SiteSettings>/);
+  assert.match(settingsSave, /const savedSettings = await saveSettings\(settings\)/);
+  assert.match(settingsSave, /setSettings\(savedSettings\)/);
+  assert.doesNotMatch(settingsSave, /refreshContent\(/);
+});
+
+test("Admin, upload, login and public form handlers reject duplicate in-flight touch/submission calls", async () => {
+  const site = await read("../app/rupantar/site.tsx");
+
+  assert.match(site, /const loginMutationRef = useRef\(false\)/);
+  assert.match(site, /const adminMutationRef = useRef\(false\)/);
+  assert.match(site, /const uploadMutationRef = useRef\(false\)/);
+  assert.match(site, /const estimateMutationRef = useRef\(false\)/);
+  assert.match(site, /const queryMutationRef = useRef\(false\)/);
+  assert.match(site, /if \(loginMutationRef\.current\) return;/);
+  assert.match(site, /if \(adminMutationRef\.current\) return;/);
+  assert.match(site, /if \(!files\.length \|\| uploadMutationRef\.current\) return;/);
+  assert.match(site, /if \(estimateMutationRef\.current\) return;/);
+  assert.match(site, /if \(queryMutationRef\.current\) return;/);
 });
 
 test("makes every empty work image slot open the existing approved file picker", async () => {
@@ -74,14 +184,13 @@ test("landing page requests the six newest works instead of letting older featur
   assert.match(repository, /works: initialWorks\.slice\(0, 6\)/);
 });
 
-test("View Site performs a fresh public load so saved works and images cannot be hidden by stale Admin memory", async () => {
-  const enhancer = await read("../app/rupantar/admin-leads-enhancer.ts");
+test("every Admin-to-public exit performs a fresh root load", async () => {
+  const admin = await read("../app/rupantar/admin.tsx");
+  const site = await read("../app/rupantar/site.tsx");
 
-  assert.match(enhancer, /function enhanceViewSiteButton\(\)/);
-  assert.match(enhancer, /candidate\.textContent\?\.trim\(\) === "View Site"/);
-  assert.match(enhancer, /event\.stopImmediatePropagation\(\)/);
-  assert.match(enhancer, /window\.location\.assign\("\/"\)/);
-  assert.match(enhancer, /enhanceViewSiteButton\(\)/);
+  assert.match(admin, /Back to site/);
+  assert.ok((admin.match(/window\.location\.assign\("\/"\)/g) ?? []).length >= 3);
+  assert.match(site, /await signOutAdmin\(\)[\s\S]*window\.location\.assign\("\/"\)/);
 });
 
 test("Recent Works and Blog cards respond across the full card without double-firing nested controls", async () => {
