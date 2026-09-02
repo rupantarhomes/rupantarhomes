@@ -58,6 +58,9 @@ const allowedLeadStatuses = new Set<LeadStatus>(["new", "contacted", "closed"]);
 const allowedBlogCategories = new Set<BlogCategory>(["architecture", "interior-design", "home-construction"]);
 const maximumPublicMessageLength = 4000;
 const maximumEstimatePhotoBytes = 10 * 1024 * 1024;
+const blogColumns = "id,title,slug,body,category,created_at,updated_at";
+const reviewColumns = "id,name,location,message,rating,instagram_url";
+const settingsColumns = "id,slogan,phone,instagram_url,tiktok_url,address,workshop_note";
 
 function text(value: unknown): string {
   return typeof value === "string" ? value : value == null ? "" : String(value);
@@ -207,6 +210,18 @@ function mapLead(row: LeadRow): Lead {
   };
 }
 
+function mapBlog(row: BlogRow): Blog {
+  return {
+    id: String(row.id),
+    title: row.title,
+    slug: row.slug,
+    body: row.body,
+    category: row.category as BlogCategory,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 export type PublicWorksPage = { works: Work[]; total: number };
 
 export async function loadPublicWorkBySlug(category: string, slug: string): Promise<Work | null> {
@@ -269,15 +284,8 @@ export async function loadPublicContent(): Promise<{
   const supabase = getSupabase();
   const [worksPage, reviewsResult, settingsResult] = await Promise.all([
     loadPublicWorksPage(0, 6, "all"),
-    supabase
-      .from("reviews")
-      .select("id,name,location,message,rating,instagram_url")
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("site_settings")
-      .select("id,slogan,phone,instagram_url,tiktok_url,address,workshop_note")
-      .eq("id", 1)
-      .maybeSingle(),
+    supabase.from("reviews").select(reviewColumns).order("created_at", { ascending: false }),
+    supabase.from("site_settings").select(settingsColumns).eq("id", 1).maybeSingle(),
   ]);
 
   const error = reviewsResult.error ?? settingsResult.error;
@@ -335,10 +343,15 @@ export async function signOutAdmin(): Promise<void> {
   if (isSupabaseConfigured) await getSupabase().auth.signOut();
 }
 
-export async function saveWork(form: WorkForm, editingId: string | null): Promise<string> {
+export async function saveWork(form: WorkForm, editingId: string | null): Promise<Work> {
   const supabase = getSupabase();
-  const title = trimmed(form.title);
-  const slug = trimmed(form.slug);
+  const title = requiredText(form.title, "Title");
+  const slug = requiredText(form.slug, "Slug");
+  const category = trimmed(form.category) || "interior-designing";
+  const location = trimmed(form.location) || "Kathmandu";
+  const shortDesc = trimmed(form.shortDesc) || "Custom designed space";
+  const longDesc = trimmed(form.longDesc) || "Detailed project description coming soon. Crafted at Rupantar workshop.";
+  const blogUrl = httpsUrl(form.blogUrl, "Project blog URL", true);
   const images = Array.isArray(form.images) ? form.images : [];
   const imagePayload = images.map((image) => {
     const publicId = trimmed(image.publicId);
@@ -357,17 +370,35 @@ export async function saveWork(form: WorkForm, editingId: string | null): Promis
   const { data, error } = await supabase.rpc("save_work_with_images", {
     p_title: title,
     p_slug: slug,
-    p_category: trimmed(form.category) || "interior-designing",
-    p_location: trimmed(form.location) || "Kathmandu",
-    p_short_description: trimmed(form.shortDesc) || "Custom designed space",
-    p_long_description: trimmed(form.longDesc) || "Detailed project description coming soon. Crafted at Rupantar workshop.",
+    p_category: category,
+    p_location: location,
+    p_short_description: shortDesc,
+    p_long_description: longDesc,
     p_featured: Boolean(form.featured),
-    p_blog_url: httpsUrl(form.blogUrl, "Project blog URL", true),
+    p_blog_url: blogUrl,
     p_images: imagePayload,
     p_work_id: editingId ? databaseId(editingId, "work ID") : null,
   });
   if (error || data == null) throw new Error(error?.message ?? "The work could not be saved.");
-  return text(data);
+
+  const id = text(data);
+  return {
+    id,
+    title,
+    slug,
+    category,
+    location,
+    shortDesc,
+    longDesc,
+    featured: Boolean(form.featured),
+    blogUrl: blogUrl ?? "",
+    images: images.map((image, sortOrder) => ({
+      ...image,
+      workId: id,
+      altText: trimmed(image.altText) || title,
+      sortOrder,
+    })),
+  };
 }
 
 export async function deleteWork(id: string): Promise<string[]> {
@@ -378,7 +409,7 @@ export async function deleteWork(id: string): Promise<string[]> {
   return data.map(text).filter(Boolean);
 }
 
-export async function saveReview(form: ReviewForm): Promise<void> {
+export async function saveReview(form: ReviewForm): Promise<Review> {
   const rating = Number(form.rating);
   const payload: TablesInsert<"reviews"> = {
     name: requiredText(form.name, "Review name"),
@@ -387,8 +418,9 @@ export async function saveReview(form: ReviewForm): Promise<void> {
     rating: Number.isInteger(rating) && rating >= 1 && rating <= 5 ? rating : 5,
     instagram_url: httpsUrl(form.instagramLink, "Instagram link", true),
   };
-  const { error } = await getSupabase().from("reviews").insert(payload);
-  if (error) throw new Error(error.message);
+  const { data, error } = await getSupabase().from("reviews").insert(payload).select(reviewColumns).single();
+  if (error || !data) throw new Error(error?.message ?? "The review could not be saved.");
+  return mapReview(data as ReviewRow);
 }
 
 export async function deleteReview(id: string): Promise<void> {
@@ -396,7 +428,7 @@ export async function deleteReview(id: string): Promise<void> {
   if (error || !data) throw new Error(error?.message ?? "The review could not be deleted.");
 }
 
-export async function saveSettings(settings: SiteSettings): Promise<void> {
+export async function saveSettings(settings: SiteSettings): Promise<SiteSettings> {
   const payload: TablesInsert<"site_settings"> = {
     id: 1,
     slogan: requiredText(settings.slogan, "Slogan"),
@@ -407,8 +439,9 @@ export async function saveSettings(settings: SiteSettings): Promise<void> {
     workshop_note: trimmed(settings.workshopNote),
     updated_at: new Date().toISOString(),
   };
-  const { data, error } = await getSupabase().from("site_settings").upsert(payload, { onConflict: "id" }).select("id").single();
+  const { data, error } = await getSupabase().from("site_settings").upsert(payload, { onConflict: "id" }).select(settingsColumns).single();
   if (error || !data) throw new Error(error?.message ?? "Settings could not be saved.");
+  return mapSettings(data as SettingsRow);
 }
 
 export async function submitEstimate(form: EstimateForm): Promise<void> {
@@ -487,10 +520,20 @@ export async function updateLeadStatus(id: string, status: LeadStatus): Promise<
   const { data, error } = await supabase
     .from("leads")
     .update({ status })
-    .eq("id", id)
+    .eq("id", requiredText(id, "lead ID"))
     .select("id")
     .maybeSingle();
   if (error || !data) throw new Error(error?.message ?? "The lead could not be updated.");
+}
+
+export async function deleteLead(id: string): Promise<void> {
+  const { data, error } = await (getSupabase() as any)
+    .from("leads")
+    .delete()
+    .eq("id", requiredText(id, "lead ID"))
+    .select("id")
+    .maybeSingle();
+  if (error || !data) throw new Error(error?.message ?? "The lead could not be deleted.");
 }
 
 export async function loadAdminStats(): Promise<AdminStats> {
@@ -503,12 +546,70 @@ export async function loadAdminStats(): Promise<AdminStats> {
   return { queries: queries.count ?? 0, estimates: estimates.count ?? 0 };
 }
 
+function blogCategory(value: unknown): BlogCategory {
+  const category = trimmed(value) as BlogCategory;
+  if (!allowedBlogCategories.has(category)) throw new Error("Please select a valid blog category.");
+  return category;
+}
 
-function blogCategory(value: unknown): BlogCategory { const category=trimmed(value) as BlogCategory; if(!allowedBlogCategories.has(category)) throw new Error("Please select a valid blog category."); return category; }
-function blogBody(value: unknown): string { const body=requiredText(value,"Body"); if(countBlogWords(body)>maximumBlogWords) throw new Error(`Body must be ${maximumBlogWords.toLocaleString()} words or fewer.`); return body; }
-function mapBlog(row: BlogRow): Blog { return {id:String(row.id),title:row.title,slug:row.slug,body:row.body,category:row.category as BlogCategory,createdAt:row.created_at,updatedAt:row.updated_at}; }
-export async function loadPublicBlogs(): Promise<Blog[]> { const {data,error}=await getSupabase().from("blogs").select("id,title,slug,body,category,created_at,updated_at").order("created_at",{ascending:false}); if(error) throw new Error(error.message); return ((data??[]) as BlogRow[]).map(mapBlog); }
-export async function loadPublicBlogBySlug(slug:string): Promise<Blog|null> { const {data,error}=await getSupabase().from("blogs").select("id,title,slug,body,category,created_at,updated_at").eq("slug",slug).maybeSingle(); if(error) throw new Error(error.message); return data?mapBlog(data as BlogRow):null; }
-async function nextBlogSlug(title:string): Promise<string> { const base=slugifyBlogTitle(title); if(!base) throw new Error("Title must include letters or numbers."); const {data,error}=await getSupabase().from("blogs").select("slug").like("slug",`${base}%`); if(error) throw new Error(error.message); const existing=new Set((data??[]).map((row)=>row.slug)); if(!existing.has(base))return base; let suffix=2; while(existing.has(`${base}-${suffix}`))suffix+=1; return `${base}-${suffix}`; }
-export async function saveBlog(form:BlogForm,editingBlogId:string|null):Promise<void> { const title=requiredText(form.title,"Title"),body=blogBody(form.body),category=blogCategory(form.category),supabase=getSupabase() as any; if(editingBlogId){const {data,error}=await supabase.from("blogs").update({title,body,category,updated_at:new Date().toISOString()}).eq("id",Number(editingBlogId)).select("id").maybeSingle();if(error||!data)throw new Error(error?.message??"Article could not be saved.");return;}for(let attempt=0;attempt<3;attempt+=1){const slug=await nextBlogSlug(title);const {error}=await supabase.from("blogs").insert({title,slug,body,category});if(!error)return;if(error.code!=="23505"||attempt===2)throw new Error(error.message);} }
-export async function deleteBlog(id:string):Promise<void> { const {data,error}=await (getSupabase() as any).from("blogs").delete().eq("id",Number(id)).select("id").maybeSingle();if(error||!data)throw new Error(error?.message??"Article could not be deleted."); }
+function blogBody(value: unknown): string {
+  const body = requiredText(value, "Body");
+  if (countBlogWords(body) > maximumBlogWords) throw new Error(`Body must be ${maximumBlogWords.toLocaleString()} words or fewer.`);
+  return body;
+}
+
+export async function loadPublicBlogs(): Promise<Blog[]> {
+  const { data, error } = await getSupabase().from("blogs").select(blogColumns).order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as BlogRow[]).map(mapBlog);
+}
+
+export async function loadPublicBlogBySlug(slug: string): Promise<Blog | null> {
+  const { data, error } = await getSupabase().from("blogs").select(blogColumns).eq("slug", slug).maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ? mapBlog(data as BlogRow) : null;
+}
+
+async function nextBlogSlug(title: string): Promise<string> {
+  const base = slugifyBlogTitle(title);
+  if (!base) throw new Error("Title must include letters or numbers.");
+  const { data, error } = await getSupabase().from("blogs").select("slug").like("slug", `${base}%`);
+  if (error) throw new Error(error.message);
+  const existing = new Set((data ?? []).map((row) => row.slug));
+  if (!existing.has(base)) return base;
+  let suffix = 2;
+  while (existing.has(`${base}-${suffix}`)) suffix += 1;
+  return `${base}-${suffix}`;
+}
+
+export async function saveBlog(form: BlogForm, editingBlogId: string | null): Promise<Blog> {
+  const title = requiredText(form.title, "Title");
+  const body = blogBody(form.body);
+  const category = blogCategory(form.category);
+  const supabase = getSupabase() as any;
+
+  if (editingBlogId) {
+    const { data, error } = await supabase
+      .from("blogs")
+      .update({ title, body, category, updated_at: new Date().toISOString() })
+      .eq("id", Number(editingBlogId))
+      .select(blogColumns)
+      .maybeSingle();
+    if (error || !data) throw new Error(error?.message ?? "Article could not be saved.");
+    return mapBlog(data as BlogRow);
+  }
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const slug = await nextBlogSlug(title);
+    const { data, error } = await supabase.from("blogs").insert({ title, slug, body, category }).select(blogColumns).single();
+    if (!error && data) return mapBlog(data as BlogRow);
+    if (error?.code !== "23505" || attempt === 2) throw new Error(error?.message ?? "Article could not be saved.");
+  }
+
+  throw new Error("Article could not be saved.");
+}
+
+export async function deleteBlog(id: string): Promise<void> {
+  const { data, error } = await (getSupabase() as any).from("blogs").delete().eq("id", Number(id)).select("id").maybeSingle();
+  if (error || !data) throw new Error(error?.message ?? "Article could not be deleted.");
+}
