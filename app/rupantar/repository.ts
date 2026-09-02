@@ -58,6 +58,7 @@ const allowedLeadStatuses = new Set<LeadStatus>(["new", "contacted", "closed"]);
 const allowedBlogCategories = new Set<BlogCategory>(["architecture", "interior-design", "home-construction"]);
 const maximumPublicMessageLength = 4000;
 const maximumEstimatePhotoBytes = 10 * 1024 * 1024;
+const adminWorksBatchSize = 1000;
 const blogColumns = "id,title,slug,body,category,created_at,updated_at";
 const reviewColumns = "id,name,location,message,rating,instagram_url";
 const settingsColumns = "id,slogan,phone,instagram_url,tiktok_url,address,workshop_note";
@@ -91,6 +92,16 @@ function categorySlug(value: unknown): string {
   return normalized;
 }
 
+async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(new Error("Request timed out.")), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
 async function submitPublicInquiry(
   kind: "estimate" | "query",
   payload: Record<string, string>,
@@ -101,7 +112,7 @@ async function submitPublicInquiry(
   for (const [name, value] of Object.entries(payload)) body.set(name, value);
   if (attachment) body.set("attachment", attachment, attachment.name);
 
-  const response = await fetch("/api/inquiries", { method: "POST", body });
+  const response = await fetchWithTimeout("/api/inquiries", { method: "POST", body }, attachment ? 60_000 : 30_000);
   let result: { error?: unknown } | null = null;
   try {
     result = (await response.json()) as { error?: unknown };
@@ -269,7 +280,19 @@ export async function loadPublicWorksPage(offset = 0, limit = 12, category = "al
     const id = text(row.work_id);
     imagesByWork.set(id, [...(imagesByWork.get(id) ?? []), mapImage(row)]);
   }
-  return { works: rows.map((row) => mapWork(row, imagesByWork.get(text(row.id)) ?? [])), total: worksResult.count ?? 0 };
+  const mappedWorks = rows.map((row) => mapWork(row, imagesByWork.get(text(row.id)) ?? []));
+  const total = worksResult.count ?? 0;
+
+  if (offset === 0 && limit >= adminWorksBatchSize && total > mappedWorks.length) {
+    const allWorks = [...mappedWorks];
+    for (let nextOffset = mappedWorks.length; nextOffset < total; nextOffset += adminWorksBatchSize) {
+      const next = await loadPublicWorksPage(nextOffset, adminWorksBatchSize, category);
+      allWorks.push(...next.works);
+    }
+    return { works: allWorks, total };
+  }
+
+  return { works: mappedWorks, total };
 }
 
 export async function loadPublicContent(): Promise<{
@@ -347,7 +370,7 @@ export async function saveWork(form: WorkForm, editingId: string | null): Promis
   const supabase = getSupabase();
   const title = requiredText(form.title, "Title");
   const slug = requiredText(form.slug, "Slug");
-  const category = trimmed(form.category) || "interior-designing";
+  const category = trimmed(form.category) || "architect";
   const location = trimmed(form.location) || "Kathmandu";
   const shortDesc = trimmed(form.shortDesc) || "Custom designed space";
   const longDesc = trimmed(form.longDesc) || "Detailed project description coming soon. Crafted at Rupantar workshop.";
