@@ -263,12 +263,12 @@ export async function loadPublicContent(): Promise<{
   settings: SiteSettings;
 }> {
   if (!isSupabaseConfigured) {
-    return { works: initialWorks, reviews: initialReviews, settings: initialSettings };
+    return { works: initialWorks.slice(0, 6), reviews: initialReviews, settings: initialSettings };
   }
 
   const supabase = getSupabase();
   const [worksPage, reviewsResult, settingsResult] = await Promise.all([
-    loadPublicWorksPage(),
+    loadPublicWorksPage(0, 6, "all"),
     supabase
       .from("reviews")
       .select("id,name,location,message,rating,instagram_url")
