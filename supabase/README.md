@@ -1,85 +1,154 @@
-# Supabase schema and authentication
+# Supabase production contract
 
 Production project reference: `gmtdqeskyvdvyibccxwt`
 
-## Migration status
+This directory is the forward-only schema history for Rupantar Homes. The live
+Supabase migration ledger is the authoritative record of what production has
+already applied.
 
-`migrations/20260809130140_baseline_and_reconcile_schema.sql` is the canonical
-schema migration. It has already been applied to production and is recorded in
-the Supabase migration history as:
+## Migration safety rule
 
-- Version: `20260809130140`
-- Name: `baseline_and_reconcile_schema`
+- Never manually replay an old migration against production because a repository
+  filename appears different from a version shown in the Supabase dashboard.
+- Historical repository filenames and the live migration ledger contain legacy
+  version/name differences from earlier deployment workflows. Production has
+  been inspected directly and is the source of truth for already-applied DDL.
+- Every future schema change must be a **new forward-only migration**.
+- Apply production DDL only through a migration-aware approved deployment step.
+- Never edit an already-applied migration to change production behavior.
+- After every approved schema migration, regenerate `app/rupantar/database.types.ts`,
+  review the diff, and run `npm run verify`.
 
-Do not manually rerun this migration on the production project.
+The current Admin Work system uses atomic `save_work_with_images` and
+`delete_work_with_images` RPCs, reference-safe Cloudinary cleanup claims, the
+10-category Work contract, consolidated Leads, and the server-mediated public
+inquiry path. These systems are already present in production and must not be
+recreated by manually rerunning historical migrations.
 
-`migrations/20260809200422_atomic_work_crud.sql` is the next pending
-production migration. It adds two `SECURITY INVOKER` RPCs:
+The migration `20260903143000_align_public_inquiry_categories.sql` is the next
+forward-only correction in PR #85. It aligns Query/Estimate validation and the
+`submit_public_inquiry` RPC with the same ten canonical service categories used
+by the application. It must not be applied to production until the PR is
+reviewed and approved.
 
-- `save_work_with_images` saves a work and all ordered image rows in one
-  PostgreSQL transaction.
-- `delete_work_with_images` deletes a work with its cascaded image rows and
-  returns the exact Cloudinary public IDs for post-commit cleanup.
+## Canonical service categories
 
-This migration has **not** been applied to production yet. Apply it only in the
-approved deployment step, regenerate `database.types.ts`, and run the live CRUD
-smoke test before handing the site over.
+The application, Work RPC, public inquiry Function, and Query/Estimate database
+validation must remain aligned on these values:
 
-`migrations/20260809224500_secure_public_inquiries.sql` is also pending. It
-revokes direct browser inserts into `queries` and `estimate_requests`. Public
-forms instead use the validated `/api/inquiries` Cloudflare Pages Function,
-which writes with the server-only `SUPABASE_SECRET_KEY`. Apply this migration
-and add that Cloudflare secret in the same approved deployment step so there is
-no interval where public forms are unavailable.
+- `architect`
+- `modular-kitchen`
+- `tv-cabinet`
+- `wardrobe`
+- `hydraulic-bed`
+- `false-ceiling`
+- `parqueting`
+- `railing`
+- `home-construction`
+- `interior`
 
-For a new Supabase project, apply the committed migration through the Supabase
-CLI or another migration-aware deployment process so its version is recorded.
-The migration creates:
-
-- `admin_users`
-- `works`
-- `work_images`
-- `reviews`
-- `site_settings`
-- `queries`
-- `estimate_requests`
-
-It also enables RLS, installs the required policies, grants the minimum Data API
-privileges, and creates the singleton settings row.
+The legacy public inquiry value `interior-designing` may be normalized to
+`architect` for backward compatibility, but new UI/data must use only the
+canonical list above.
 
 ## Canonical application columns
 
 - Work descriptions: `short_description`, `long_description`
 - Work image URL and size: `secure_url`, `byte_size`
 - Work image ordering: `sort_order`
+- Work project article: `blog_url`
 - Review social link: `instagram_url`
 - Settings social links: `instagram_url`, `tiktok_url`
 - Estimate details: `approximate_size`, `material_preference`
+- Consolidated Lead status: `status`
 
-Legacy compatibility columns may remain temporarily in production. New
-application code must use the canonical columns above.
+Legacy compatibility columns may remain in production. New application code
+must use the canonical columns above.
 
 ## Generated TypeScript contract
 
-`app/rupantar/database.types.ts` is generated from the production schema and
-is supplied to `createClient<Database>()`. This makes a renamed or missing
-database column fail the TypeScript production build instead of failing later
-in the browser.
+`app/rupantar/database.types.ts` is the checked-in TypeScript representation of
+the live public schema and is supplied to `createClient<Database>()`.
 
-Regenerate the file after every approved schema migration:
+Regenerate it after every approved schema migration:
 
 ```powershell
 supabase gen types typescript --project-id gmtdqeskyvdvyibccxwt --schema public > app/rupantar/database.types.ts
 ```
 
-Review the generated diff and run `pnpm test` before deploying it.
+Then review the generated diff and run:
+
+```powershell
+npm run verify
+```
+
+`npm run verify` includes strict TypeScript checking, the production build, and
+the regression suite. A schema/client mismatch must fail before deployment.
+
+## Authentication and authorization
+
+1. Supabase Auth owns user sessions.
+2. Admin users must also have an active row in `public.admin_users`.
+3. Browser/Admin operations use RLS plus active-admin checks.
+4. Privileged `SECURITY DEFINER` Work/cleanup RPCs perform their own active-admin
+   authorization before privileged work.
+5. Public Query/Estimate submissions cannot execute the internal persistence RPC
+   directly. The browser calls `/api/inquiries`; Cloudflare validates/rate-limits
+   the request and calls the protected Supabase Edge Function using an internal
+   secret; the Edge Function invokes the RPC using service-role credentials.
+6. Server/service-role secrets must never be exposed to frontend code.
+
+## Public inquiry chain
+
+The durable submission path is:
+
+`browser -> /api/inquiries -> optional Cloudinary estimate image -> protected
+Supabase Edge Function -> submit_public_inquiry RPC -> queries/estimate_requests
+-> database trigger -> leads`
+
+Web3Forms notification is secondary. A notification failure must not roll back a
+lead that is already persisted.
+
+New Cloudinary inquiry media uses the dedicated asset folder
+`rupantar-homes/inquiries`. Historical inquiry media may remain in older folders
+when it is already referenced by production rows; do not move/delete referenced
+assets just to normalize folder history.
+
+## Live integrity checks
+
+Before/after a schema or media-lifecycle deployment, verify at minimum:
+
+- no orphan `work_images` rows;
+- no duplicate Work or Blog slugs;
+- no invalid Work/Blog categories;
+- no Work has more than three image rows;
+- Work image metadata is complete;
+- `site_settings` has exactly the singleton row `id = 1`;
+- Lead status is one of `new`, `contacted`, `closed`;
+- `cloudinary_cleanup_claims` contains no public ID currently referenced by a
+  `work_images` row;
+- `query_create_lead` and `estimate_request_create_lead` triggers exist.
+
+## Production backups
+
+The current Supabase project is on the Free plan. Do not assume the project has a
+production-grade downloadable automatic backup/point-in-time restore guarantee.
+Keep an off-platform database export routine until the project is on a plan with
+the required managed backup/retention policy.
+
+A backup is only useful after restore has been tested. Record export date,
+restore-test date, schema/migration head, and responsible operator in the
+production operations runbook.
 
 ## Create an admin user on a new project
 
-1. Open **Authentication -> Users -> Add user -> Create new user**.
-2. Enter the client's admin email and a strong unique password.
-3. Enable **Auto confirm user**, then create the user.
-4. In SQL Editor, replace the placeholder email and run:
+1. Create and confirm the user in Supabase Authentication.
+2. Insert/activate the exact Auth user ID in `public.admin_users`.
+3. Verify login succeeds through the Rupantar Admin UI.
+4. Verify a normal authenticated user without an active `admin_users` row cannot
+   access Admin data or privileged RPC behavior.
+
+Example activation (replace the placeholder only in a controlled SQL session):
 
 ```sql
 insert into public.admin_users (user_id)
@@ -89,39 +158,14 @@ where email = 'CLIENT_ADMIN_EMAIL'
 on conflict (user_id) do update set is_active = true;
 ```
 
-## Verify RLS and the migration
+## Do not do these things
 
-```sql
-select tablename, rowsecurity
-from pg_tables
-where schemaname = 'public'
-  and tablename in (
-    'admin_users',
-    'works',
-    'work_images',
-    'reviews',
-    'site_settings',
-    'queries',
-    'estimate_requests'
-  )
-order by tablename;
-```
-
-All seven rows must show `rowsecurity = true`.
-
-Public users can read published site content. Queries and estimates are accepted
-only through the rate-limited Cloudflare Function. Only active users listed in
-`admin_users` can read submissions or modify works, work images, reviews, or
-site settings.
-
-## Client workflow for query and estimate details
-
-The locked admin dashboard intentionally shows totals only. To read the full
-submissions without changing that interface, the client uses Supabase **Table
-Editor**:
-
-1. Open `queries` for query details and optional `attachment_url`.
-2. Open `estimate_requests` for estimate details and optional `attachment_url`.
-3. Sort `created_at` descending so the newest submissions appear first.
-4. Open `attachment_url` only when it is present; the corresponding
-   `attachment_public_id` is retained for managed Cloudinary cleanup.
+- Do not develop directly on `main`.
+- Do not manually rerun historical migrations in production.
+- Do not add direct public inserts to Query/Estimate tables.
+- Do not grant public/anon/authenticated access to the internal inquiry RPC.
+- Do not remove active-admin checks from privileged Work/cleanup functions.
+- Do not delete Cloudinary assets solely because they look old; prove they are
+  unreferenced first.
+- Do not treat a successful notification as proof the database saved, or a
+  notification failure as proof the database failed.
