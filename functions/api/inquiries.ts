@@ -15,6 +15,7 @@ const allowedCategories = new Set([
   "parqueting",
   "railing",
   "home-construction",
+  "interior",
 ]);
 
 type InquiryKind = "query" | "estimate";
@@ -349,4 +350,3 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
     return json({ error: status < 500 ? message : "Your request could not be sent. Please try again." }, status);
   }
 };
-
