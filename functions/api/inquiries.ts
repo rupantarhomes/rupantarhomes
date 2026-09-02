@@ -5,6 +5,7 @@ import { errorMessage, fetchWithTimeout, json } from "../_lib/http";
 const maximumAttachmentBytes = 10 * 1024 * 1024;
 const maximumRequestBytes = 11 * 1024 * 1024;
 const acceptedAttachmentTypes = new Set(["image/jpeg", "image/png"]);
+const inquiryAssetFolder = "rupantar-homes/inquiries";
 const allowedCategories = new Set([
   "architect",
   "modular-kitchen",
@@ -141,6 +142,7 @@ async function uploadAttachment(
   const timestamp = Math.floor(Date.now() / 1000);
   const publicId = `rupantar-homes/inquiries/${kind}-${crypto.randomUUID()}`;
   const parameters = {
+    asset_folder: inquiryAssetFolder,
     overwrite: "false",
     public_id: publicId,
     timestamp,
@@ -149,6 +151,7 @@ async function uploadAttachment(
   const signature = await cloudinarySignature(parameters, apiSecret);
   const body = new FormData();
   body.set("api_key", apiKey);
+  body.set("asset_folder", inquiryAssetFolder);
   body.set("file", file, file.name);
   body.set("overwrite", "false");
   body.set("public_id", publicId);
