@@ -288,6 +288,7 @@ Scope is limited to Admin-side loading, save responsiveness, Work image draft ow
 - preserve Supabase Auth, active-admin membership checks, RLS, grants, RPCs, the ten-category system, and database schema unchanged;
 - load the full Admin Works collection separately from the public 12-item Works pagination so Admin records cannot disappear when the public page limit is reached;
 - stop full Works/Reviews/Settings/Leads/Blogs reloads on every Admin tab switch and open the Admin dashboard immediately after successful authorization while the first Admin data refresh completes;
+- preserve only the lightweight Admin totals refresh when navigating back to the Dashboard;
 - after Work saves/deletes, refresh only the Admin Works collection on the critical path and refresh the public content cache separately without overwriting Admin Works state;
 - pin the set of persisted Cloudinary public IDs when a Work edit begins so later state refreshes cannot reclassify saved images as disposable draft uploads;
 - make existing empty Work image slots activate the existing signed uploader without changing layout, colors, file rules, or upload contract;
@@ -296,8 +297,8 @@ Scope is limited to Admin-side loading, save responsiveness, Work image draft ow
 
 Accepted scoped fingerprints for review:
 
-- `app`: `45961d7ec6c8beb99224adf48bb7af02443cc2b3`
-- `tests`: `50ba304358c5b10cdc117d3048278e6f3048159c`
+- `app`: `17b81cf038e49f06422f9280c302e75e8a6aaeff`
+- `tests`: `1811fff4198ba9ff07e89a952bd8225b58371c3c`
 
 ## AI/Codex instruction block
 
