@@ -83,3 +83,16 @@ test("View Site performs a fresh public load so saved works and images cannot be
   assert.match(enhancer, /window\.location\.assign\("\/"\)/);
   assert.match(enhancer, /enhanceViewSiteButton\(\)/);
 });
+
+test("Recent Works and Blog cards respond across the full card without double-firing nested controls", async () => {
+  const enhancer = await read("../app/rupantar/admin-leads-enhancer.ts");
+
+  assert.match(enhancer, /function enhancePublicClickCards\(\)/);
+  assert.match(enhancer, /heading\.textContent\?\.trim\(\) === "Recent Works"/);
+  assert.match(enhancer, /button\.textContent\?\.includes\("View Details"\)/);
+  assert.match(enhancer, /heading\.textContent\?\.trim\(\) === "Blog"/);
+  assert.match(enhancer, /button\.textContent\?\.includes\("Read Article"\)/);
+  assert.match(enhancer, /if \(isInteractiveTarget\(event\.target\)\) return;/);
+  assert.match(enhancer, /action\.click\(\)/);
+  assert.match(enhancer, /enhancePublicClickCards\(\)/);
+});
