@@ -199,7 +199,7 @@ test("keeps secondary content flows validated and synchronized", async () => {
   assert.match(home, /type="file"/);
   assert.match(home, /accept="image\/jpeg,image\/png,\.jpg,\.jpeg,\.png"/);
   assert.match(home, /onDragOver/);
-  assert.match(repository, /fetch\("\/api\/inquiries"/);
+  assert.match(repository, /fetchWithTimeout\("\/api\/inquiries"/);
   assert.match(site, /busy=\{adminInteractionBusy\}/);
   assert.match(site, /PublicFooter navigate=\{navigate\}/);
   assert.match(site, /AboutPage navigate=\{navigate\}/);
