@@ -72,6 +72,7 @@ function PageLoader() {
 }
 
 const publicPages: Page[] = ["home", "works", "work-detail", "about", "contact", "privacy", "interior-design", "blog", "blog-detail"];
+const adminWorksLimit = 1000;
 
 type BrowserRoute = ReturnType<typeof parseRoute>;
 
@@ -161,6 +162,7 @@ export function RupantarSite() {
   const blogsLoadedRef = useRef(false);
   const blogsRequestIdRef = useRef(0);
   const routeRequestIdRef = useRef(0);
+  const persistedDraftImageIdsRef = useRef(new Set<string>());
 
   useEffect(() => {
     worksRef.current = works;
@@ -213,7 +215,7 @@ export function RupantarSite() {
     homeWorksRef.current = content.works;
 
     const route = parseRoute(window.location.pathname);
-    if (route.kind !== "home" && route.kind !== "admin") return;
+    if (route.kind !== "home") return;
 
     worksRequestIdRef.current += 1;
     worksRef.current = content.works;
@@ -221,6 +223,14 @@ export function RupantarSite() {
     setWorks(content.works);
     setWorksTotal(content.works.length);
     setWorksLoading(false);
+  }, []);
+
+  const refreshAdminWorks = useCallback(async () => {
+    const result = await loadPublicWorksPage(0, adminWorksLimit, "all");
+    worksRef.current = result.works;
+    worksLoadedRef.current = true;
+    setWorks(result.works);
+    setWorksTotal(result.total);
   }, []);
 
   const refreshBlogs = useCallback(async () => {
@@ -441,7 +451,7 @@ export function RupantarSite() {
       if (!active || !session) return;
       setIsAdmin(true);
       if (parseRoute(window.location.pathname).kind === "admin") setPage("admin-dashboard");
-      void Promise.all([refreshAdminStats(), refreshLeads(), refreshBlogs()]);
+      void Promise.allSettled([refreshAdminWorks(), refreshContent(), refreshAdminStats(), refreshLeads(), refreshBlogs()]);
     });
 
     const onPopState = () => void applyBrowserRoute().catch((error) => console.error("Unable to apply browser route", error));
@@ -450,7 +460,7 @@ export function RupantarSite() {
       active = false;
       window.removeEventListener("popstate", onPopState);
     };
-  }, [applyBrowserRoute, refreshAdminStats, refreshBlogs, refreshContent, refreshLeads]);
+  }, [applyBrowserRoute, refreshAdminStats, refreshAdminWorks, refreshBlogs, refreshContent, refreshLeads]);
 
   const pushPath = (path: string) => {
     if (window.location.pathname !== path) window.history.pushState(null, "", path);
@@ -475,12 +485,6 @@ export function RupantarSite() {
         const categoryChanged = filter !== "all";
         setFilter("all");
         void loadWorks("all", 0, categoryChanged);
-      }
-      if (nextPage.startsWith("admin-") && nextPage !== "admin-login") {
-        void refreshContent().catch((error) => console.error("Unable to refresh admin content", error));
-        void refreshLeads();
-        void refreshBlogs();
-        if (nextPage === "admin-dashboard") void refreshAdminStats();
       }
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -537,12 +541,7 @@ export function RupantarSite() {
   const selectedWork = works.find((work) => work.id === selectedWorkId);
   const selectedBlog = blogs.find((blog) => blog.id === selectedBlogId);
 
-  const persistedDraftImageIds = () =>
-    new Set(
-      (editingWorkId ? works.find((work) => work.id === editingWorkId)?.images ?? [] : []).map(
-        (image) => image.publicId,
-      ),
-    );
+  const persistedDraftImageIds = () => new Set(persistedDraftImageIdsRef.current);
 
   const draftImagePublicIds = () => {
     const persisted = persistedDraftImageIds();
@@ -557,9 +556,9 @@ export function RupantarSite() {
     try {
       await signInAdmin(email, password);
       setIsAdmin(true);
-      await Promise.all([refreshContent(), refreshAdminStats(), refreshLeads(), refreshBlogs()]);
       setPage("admin-dashboard");
       window.scrollTo({ top: 0 });
+      void Promise.allSettled([refreshAdminWorks(), refreshContent(), refreshAdminStats(), refreshLeads(), refreshBlogs()]);
     } catch (error) {
       setLoginError(messageFrom(error));
     } finally {
@@ -572,6 +571,7 @@ export function RupantarSite() {
     try {
       await deleteCloudinaryImages(draftImagePublicIds());
       await signOutAdmin();
+      persistedDraftImageIdsRef.current = new Set();
       setEditingWorkId(null);
       setWorkForm(emptyWork);
       setIsAdmin(false);
@@ -607,10 +607,9 @@ export function RupantarSite() {
       return;
     }
 
-    const previous = editingWorkId ? works.find((work) => work.id === editingWorkId) : undefined;
     const newlyUploaded = draftImagePublicIds();
     const retained = new Set((Array.isArray(workForm.images) ? workForm.images : []).map((image) => image.publicId));
-    const removed = previous?.images.filter((image) => !retained.has(image.publicId)).map((image) => image.publicId) ?? [];
+    const removed = Array.from(persistedDraftImageIdsRef.current).filter((publicId) => !retained.has(publicId));
 
     setAdminBusy(true);
     try {
@@ -635,14 +634,18 @@ export function RupantarSite() {
         return;
       }
 
+      persistedDraftImageIdsRef.current = new Set();
       setEditingWorkId(null);
       setWorkForm(emptyWork);
       try {
-        await refreshContent();
+        await refreshAdminWorks();
       } catch (refreshError) {
-        console.error("Work saved but content refresh failed", refreshError);
-        window.alert("The work was saved, but the page could not refresh. Reload the page to see the latest content.");
+        console.error("Work saved but admin list refresh failed", refreshError);
+        window.alert("The work was saved, but the Admin list could not refresh. Reload Admin to see the latest content.");
       }
+      void refreshContent().catch((refreshError) => {
+        console.error("Work saved but public content refresh failed", refreshError);
+      });
       try {
         await deleteCloudinaryImages(removed);
       } catch (cleanupError) {
@@ -655,6 +658,7 @@ export function RupantarSite() {
   };
 
   const editWork = (work: Work) => {
+    persistedDraftImageIdsRef.current = new Set(work.images.map((image) => image.publicId));
     setWorkForm({
       title: work.title,
       slug: work.slug,
@@ -681,12 +685,20 @@ export function RupantarSite() {
         window.alert(messageFrom(deleteError));
         return;
       }
-      try {
-        await refreshContent();
-      } catch (refreshError) {
-        console.error("Work deleted but content refresh failed", refreshError);
-        window.alert("The work was deleted, but the page could not refresh. Reload the page to update the list.");
+      if (editingWorkId === id) {
+        persistedDraftImageIdsRef.current = new Set();
+        setEditingWorkId(null);
+        setWorkForm(emptyWork);
       }
+      try {
+        await refreshAdminWorks();
+      } catch (refreshError) {
+        console.error("Work deleted but admin list refresh failed", refreshError);
+        window.alert("The work was deleted, but the Admin list could not refresh. Reload Admin to update the list.");
+      }
+      void refreshContent().catch((refreshError) => {
+        console.error("Work deleted but public content refresh failed", refreshError);
+      });
       try {
         await deleteCloudinaryImages(deletedImagePublicIds);
       } catch (cleanupError) {
@@ -702,6 +714,7 @@ export function RupantarSite() {
     setAdminBusy(true);
     try {
       await deleteCloudinaryImages(draftImagePublicIds());
+      persistedDraftImageIdsRef.current = new Set();
       setEditingWorkId(null);
       setWorkForm(emptyWork);
     } catch (error) {
@@ -742,7 +755,7 @@ export function RupantarSite() {
     const image = images[index];
     if (!image) return;
 
-    const persisted = persistedDraftImageIds().has(image.publicId);
+    const persisted = persistedDraftImageIdsRef.current.has(image.publicId);
     setUploadingImages(true);
     try {
       if (!persisted) await deleteCloudinaryImages([image.publicId]);
@@ -759,10 +772,44 @@ export function RupantarSite() {
     }
   };
 
-  const handleSaveBlog = async () => { if (!trimmed(blogForm.title) || !trimmed(blogForm.body)) { window.alert("Title and body are required."); return; } setAdminBusy(true); try { await saveBlog(blogForm, editingBlogId); setBlogForm(emptyBlogForm); setEditingBlogId(null); await refreshBlogs(); } catch (error) { window.alert(messageFrom(error)); } finally { setAdminBusy(false); } };
+  const handleSaveBlog = async () => {
+    if (!trimmed(blogForm.title) || !trimmed(blogForm.body)) {
+      window.alert("Title and body are required.");
+      return;
+    }
+    setAdminBusy(true);
+    try {
+      await saveBlog(blogForm, editingBlogId);
+      setBlogForm(emptyBlogForm);
+      setEditingBlogId(null);
+      setAdminBusy(false);
+      void refreshBlogs().catch((error) => {
+        console.error("Blog saved but Admin list refresh failed", error);
+        window.alert("The blog was saved, but the Admin list could not refresh. Reload Admin to see the latest article.");
+      });
+    } catch (error) {
+      window.alert(messageFrom(error));
+    } finally {
+      setAdminBusy(false);
+    }
+  };
   const editBlog = (blog: Blog) => { setEditingBlogId(blog.id); setBlogForm({ title: blog.title, category: blog.category, body: blog.body }); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const cancelBlog = () => { setEditingBlogId(null); setBlogForm(emptyBlogForm); };
-  const handleDeleteBlog = async (id: string) => { if (!window.confirm("Delete this article?")) return; setAdminBusy(true); try { await deleteBlog(id); if (editingBlogId === id) cancelBlog(); await refreshBlogs(); } catch (error) { window.alert(messageFrom(error)); } finally { setAdminBusy(false); } };
+  const handleDeleteBlog = async (id: string) => {
+    if (!window.confirm("Delete this article?")) return;
+    setAdminBusy(true);
+    try {
+      await deleteBlog(id);
+      if (editingBlogId === id) cancelBlog();
+      const nextBlogs = blogsRef.current.filter((blog) => blog.id !== id);
+      blogsRef.current = nextBlogs;
+      setBlogs(nextBlogs);
+    } catch (error) {
+      window.alert(messageFrom(error));
+    } finally {
+      setAdminBusy(false);
+    }
+  };
 
   const handleSaveReview = async () => {
     if (!trimmed(reviewForm.name) || !trimmed(reviewForm.message)) {
