@@ -86,7 +86,7 @@ test("keeps persisted image removal draft-only until a successful save", async (
   const site = await read("../app/rupantar/site.tsx");
   const handler = site.indexOf("const handleRemoveWorkImage = async");
   const conditionalDelete = site.indexOf("if (!persisted) await deleteCloudinaryImages([image.publicId])", handler);
-  const save = site.indexOf("await saveWork(workForm, editingWorkId)");
+  const save = site.indexOf("savedWork = await saveWork(workForm, editingId)");
   const deleteRemoved = site.indexOf("await deleteCloudinaryImages(removed)", save);
 
   assert.ok(conditionalDelete > handler);
@@ -112,7 +112,7 @@ test("cancel cleans only unsaved draft assets and preserves persisted originals"
 test("failed saves clean new uploads without destroying persisted images", async () => {
   const site = await read("../app/rupantar/site.tsx");
   const newlyUploaded = site.indexOf("const newlyUploaded = draftImagePublicIds()");
-  const save = site.indexOf("await saveWork(workForm, editingWorkId)", newlyUploaded);
+  const save = site.indexOf("savedWork = await saveWork(workForm, editingId)", newlyUploaded);
   const cleanupNew = site.indexOf("await deleteCloudinaryImages(newlyUploaded)", save);
   const cleanupRemoved = site.indexOf("await deleteCloudinaryImages(removed)", cleanupNew);
 
