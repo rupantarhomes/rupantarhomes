@@ -259,6 +259,17 @@ Scope remains limited to the existing review carousel and mobile `/admin` presen
 
 Accepted `app` fingerprint after this scoped refinement: `a71e0cdd002011ed59310e1cce76bf3f5adcec63`.
 
+## Accepted Interior work category — 2026-09-03
+
+Scope is limited to the production Supabase Work category constraint:
+
+- preserve every previously allowed Work category unchanged;
+- add the existing frontend category slug `interior` to `works_category_allowed`;
+- make no application, UI, Cloudinary, routing, data-model, or unrelated database changes;
+- production verification confirmed the live constraint accepts `interior` and retains all previous category values.
+
+Accepted `supabase` fingerprint after this scoped update: `d52e21a36b1e88b9e5cf1cd12836e6b558dbc538`.
+
 ## AI/Codex instruction block
 
 Use this at the start of future implementation requests:
