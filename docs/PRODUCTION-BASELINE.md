@@ -283,7 +283,7 @@ Accepted supabase fingerprint after this scoped update: 0ebbd43b8c4f09e975c5aa1d
 
 ## Admin performance and reliability update — 2026-09-03
 
-Scope is limited to Admin-side loading, save responsiveness, Work image draft ownership, and empty Work image-slot interaction:
+Scope is limited to Admin-side loading, save responsiveness, Work image draft ownership, empty Work image-slot interaction, and the saved-content handoff to the public site:
 
 - preserve Supabase Auth, active-admin membership checks, RLS, grants, RPCs, the ten-category system, and database schema unchanged;
 - load the full Admin Works collection separately from the public 12-item Works pagination so Admin records cannot disappear when the public page limit is reached;
@@ -292,13 +292,16 @@ Scope is limited to Admin-side loading, save responsiveness, Work image draft ow
 - after Work saves/deletes, refresh only the Admin Works collection on the critical path and refresh the public content cache separately without overwriting Admin Works state;
 - pin the set of persisted Cloudinary public IDs when a Work edit begins so later state refreshes cannot reclassify saved images as disposable draft uploads;
 - make existing empty Work image slots activate the existing signed uploader without changing layout, colors, file rules, or upload contract;
+- make the homepage public-content request contain the six newest Works in database creation order so a newly saved non-featured Work cannot be excluded by older Featured records;
+- make Admin `View Site` perform a fresh root-page load so the public landing page reads current Supabase data and current saved image URLs instead of stale in-memory Admin state;
+- keep the existing Featured badge and all homepage card layout, styling, copy, and interaction unchanged;
 - keep JPEG/PNG input, 10 MB maximum, maximum 3 images, WebP output, 1920×1080 transformation, `rupantar-homes/works`, signed uploads, and reference-safe cleanup unchanged;
-- add regression coverage for Admin loading, navigation, save refresh boundaries, stable image ownership, and empty-slot activation.
+- add regression coverage for Admin loading, navigation, save refresh boundaries, stable image ownership, empty-slot activation, newest-six landing data, and the fresh Admin-to-public handoff.
 
 Accepted scoped fingerprints for review:
 
-- `app`: `17b81cf038e49f06422f9280c302e75e8a6aaeff`
-- `tests`: `1811fff4198ba9ff07e89a952bd8225b58371c3c`
+- `app`: `b57bcf9e426611e9ec93bdcbfe604199e4db9676`
+- `tests`: `88d2ff332f5876ae8df2c7c0fa859d916db26a0c`
 
 ## AI/Codex instruction block
 
