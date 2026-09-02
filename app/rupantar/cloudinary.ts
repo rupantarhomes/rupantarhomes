@@ -39,6 +39,16 @@ function positiveInteger(value: unknown): number | null {
   return typeof value === "number" && Number.isSafeInteger(value) && value > 0 ? value : null;
 }
 
+async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(new Error("Request timed out.")), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
 async function readJson(response: Response): Promise<unknown> {
   try {
     return await response.json();
@@ -57,14 +67,14 @@ function responseError(body: unknown, fallback: string): string {
 
 async function adminRequest(path: string, init: RequestInit): Promise<Response> {
   const token = await getAccessToken();
-  return fetch(path, {
+  return fetchWithTimeout(path, {
     ...init,
     headers: {
       ...init.headers,
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-  });
+  }, 15_000);
 }
 
 function parseSignature(body: unknown): SignatureResponse {
@@ -138,10 +148,10 @@ async function uploadOne(file: File, sortOrder: number): Promise<WorkImage> {
   body.set("format", signed.format);
   body.set("transformation", signed.transformation);
 
-  const response = await fetch(`${cloudinaryApiBase}/v1_1/${encodeURIComponent(signed.cloudName)}/image/upload`, {
+  const response = await fetchWithTimeout(`${cloudinaryApiBase}/v1_1/${encodeURIComponent(signed.cloudName)}/image/upload`, {
     method: "POST",
     body,
-  });
+  }, 45_000);
   const uploaded = (await readJson(response)) as UploadResponse | null;
   if (!response.ok || !uploaded || uploaded.error) {
     throw new Error(responseError(uploaded, `Unable to upload ${file.name}.`));
