@@ -298,10 +298,35 @@ Scope is limited to Admin-side loading, save responsiveness, Work image draft ow
 - keep JPEG/PNG input, 10 MB maximum, maximum 3 images, WebP output, 1920×1080 transformation, `rupantar-homes/works`, signed uploads, and reference-safe cleanup unchanged;
 - add regression coverage for Admin loading, navigation, save refresh boundaries, stable image ownership, empty-slot activation, newest-six landing data, and the fresh Admin-to-public handoff.
 
-Accepted scoped fingerprints for review:
+## Complete Admin reliability audit — 2026-09-03
 
-- `app`: `b57bcf9e426611e9ec93bdcbfe604199e4db9676`
-- `tests`: `88d2ff332f5876ae8df2c7c0fa859d916db26a0c`
+This audit extends the same Admin reliability scope across Admin Login, Dashboard, Works, Blogs, Leads, Reviews, Settings, public detail navigation, and touch/click behavior without changing the site design or security model.
+
+- Admin Login starts with an empty live-data Works state instead of seeded demo Works, prevents duplicate in-flight login submissions, enters Dashboard immediately after successful authorization, and keeps the existing active-admin check unchanged;
+- all Admin-to-public exits (`Back to site`, header `View Site`, Dashboard `View Site`, and Logout) perform a fresh root load so public pages cannot inherit stale Admin memory;
+- Dashboard keeps lightweight totals refresh behavior and reflects live Works/Lead state without forcing full content reloads on tab navigation;
+- Work save now uses the exact confirmed RPC result to update Admin state immediately, invalidates stale Works/public requests, updates the six-item homepage cache immediately, and does not wait for a second Admin Works fetch before the saved Work appears;
+- Work delete removes the confirmed deleted Work immediately from Admin/home state and preserves the existing reference-safe Cloudinary cleanup sequence;
+- Work image ownership, failed-save cleanup, Cancel behavior, maximum image count, source formats, WebP validation, 1920×1080 bounds, signed upload path, and Cloudinary folder remain unchanged;
+- Blog save/update returns the exact confirmed saved Blog row and commits it to Admin/public Blog state immediately without a second list fetch; delete removes the confirmed row locally immediately;
+- Lead status updates and deletes commit locally immediately after the confirmed database write instead of doing an additional full Leads fetch, and Admin no longer mutates the Leads prop array directly;
+- Review save/delete updates only Review state immediately after the confirmed database operation instead of reloading Works + Reviews + Settings;
+- Settings save applies the exact confirmed settings row immediately instead of performing a broad public-content reload;
+- selected Work and Blog detail records are pinned independently from mutable paginated lists so a late list response cannot blank or replace a just-clicked detail page;
+- public Works/Blog/Admin content reads use request-generation guards so stale in-flight responses cannot overwrite a newer confirmed mutation;
+- Login, Admin mutations, Work image upload/removal, estimate submission, and query submission reject duplicate in-flight handler calls, protecting rapid taps/double clicks before React can render a disabled state;
+- existing full-card Recent Works and Blog click behavior remains protected from nested-control double firing, while All Works cards retain their existing full-card navigation;
+- no Supabase Auth/RLS/grant/schema/RPC/category changes, no Cloudinary configuration changes, no deployment/security-header changes, and no visual redesign were made in this audit;
+- live Supabase API inspection during the audit showed healthy successful API responses, so the removed delays were client-side redundant reads/state races rather than a database outage.
+
+Accepted scoped fingerprints after the complete audit:
+
+- `app`: `4d3e682de7537295b9723d55156aea072f4bf7d4`
+- `tests`: `236750c3b9990056a8aab04f6d20609880f58946`
+- `supabase`: unchanged at `0ebbd43b8c4f09e975c5aa1df7297780c0f8f7a8`
+- `functions`: unchanged at `93a01f847b4dfe665ee5d4d7df7b8eae518efd04`
+
+The accepted behavior is: once the required network write is confirmed successful, the affected Admin/public in-memory state is updated immediately from that confirmed result without an additional blocking list/content reload. Network persistence itself is still a real request and therefore is not treated as zero-time.
 
 ## AI/Codex instruction block
 
