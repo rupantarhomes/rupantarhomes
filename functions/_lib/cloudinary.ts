@@ -1,4 +1,5 @@
 import type { RuntimeEnv } from "./env";
+import { fetchWithTimeout } from "./http";
 
 type DestroyResponse = { result?: unknown; error?: { message?: unknown } };
 
@@ -30,9 +31,10 @@ export async function destroyCloudinaryImage(
     signature,
     timestamp: String(timestamp),
   });
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `https://api.cloudinary.com/v1_1/${encodeURIComponent(runtime.CLOUDINARY_CLOUD_NAME)}/image/destroy`,
     { method: "POST", body: form },
+    15_000,
   );
   let body: DestroyResponse | null = null;
   try {
