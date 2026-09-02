@@ -1,6 +1,6 @@
 import { cloudinarySignature, destroyCloudinaryImage } from "../_lib/cloudinary";
 import { requireInquiryRuntimeEnv, type InquiryRuntimeEnv, type RuntimeEnv } from "../_lib/env";
-import { errorMessage, json } from "../_lib/http";
+import { errorMessage, fetchWithTimeout, json } from "../_lib/http";
 
 const maximumAttachmentBytes = 10 * 1024 * 1024;
 const maximumRequestBytes = 11 * 1024 * 1024;
@@ -156,9 +156,10 @@ async function uploadAttachment(
   body.set("timestamp", String(timestamp));
   body.set("upload_preset", uploadPreset);
 
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/image/upload`,
     { method: "POST", body },
+    30_000,
   );
   let result: CloudinaryUpload | null = null;
   try {
@@ -196,7 +197,7 @@ async function uploadAttachment(
 async function insertInquiry(kind: InquiryKind, payload: InquiryPayload, env: RuntimeEnv): Promise<void> {
   const supabaseUrl = requiredEnv(env, "SUPABASE_URL");
   const internalSecret = requiredEnv(env, "PUBLIC_INQUIRY_INTERNAL_SECRET");
-  const response = await fetch(`${supabaseUrl}/functions/v1/submit-public-inquiry`, {
+  const response = await fetchWithTimeout(`${supabaseUrl}/functions/v1/submit-public-inquiry`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -215,7 +216,7 @@ async function insertInquiry(kind: InquiryKind, payload: InquiryPayload, env: Ru
       p_approximate_size: payload.approximate_size,
       p_material_preference: payload.material_preference,
     }),
-  });
+  }, 15_000);
   const responseBody = await response.text();
   if (!response.ok) {
     console.error(JSON.stringify({ message: "Supabase inquiry RPC failed", status: response.status, responseBody }));
@@ -246,11 +247,11 @@ async function sendWeb3FormsNotification(
     notification.photo_url = payload.attachment_url ?? "";
   }
 
-  const response = await fetch("https://api.web3forms.com/submit", {
+  const response = await fetchWithTimeout("https://api.web3forms.com/submit", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify(notification),
-  });
+  }, 10_000);
 
   let result: Web3FormsResult | null = null;
   try {
