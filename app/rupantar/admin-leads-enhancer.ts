@@ -109,6 +109,24 @@ function enhanceWorkImageSlots() {
   }
 }
 
+function enhanceViewSiteButton() {
+  const button = Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find(
+    (candidate) => candidate.textContent?.trim() === "View Site",
+  );
+  if (!button || button.dataset.rhFreshViewSite === "true") return;
+
+  button.dataset.rhFreshViewSite = "true";
+  button.addEventListener(
+    "click",
+    (event) => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      window.location.assign("/");
+    },
+    true,
+  );
+}
+
 export function initAdminLeadsEnhancements() {
   let scheduled = false;
 
@@ -119,6 +137,7 @@ export function initAdminLeadsEnhancements() {
       scheduled = false;
       enhanceAdminLeads();
       enhanceWorkImageSlots();
+      enhanceViewSiteButton();
     });
   };
 
