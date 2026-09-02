@@ -127,7 +127,7 @@ test("keeps the strict Admin Work Cloudinary contract and secrets server-side", 
   assert.match(site, /draftImagePublicIds/);
   assert.match(site, /handleRemoveWorkImage/);
   assert.match(site, /if \(!persisted\) await deleteCloudinaryImages\(\[image\.publicId\]\)/);
-  assert.match(site, /savedWork = await saveWork\(workForm, editingId\)[\s\S]*await deleteCloudinaryImages\(removed\)/);
+  assert.match(site, /savedWork = await saveWork\(formSnapshot, editingId\)[\s\S]*await deleteCloudinaryImages\(removed\)/);
   assert.match(site, /await deleteCloudinaryImages\(draftImagePublicIds\(\)\)[\s\S]*setEditingWorkId\(null\)/);
   assert.match(site, /remainingImageSlots = maximumWorkImages - currentImageCount/);
 
@@ -153,7 +153,7 @@ test("saves complete work aggregates through atomic Supabase RPCs", async () => 
   assert.match(saveSource, /rpc\("save_work_with_images"/);
   assert.doesNotMatch(saveSource, /\.from\("works"\)|\.from\("work_images"\)/);
   assert.match(repository, /rpc\("delete_work_with_images"/);
-  assert.match(site, /savedWork = await saveWork\(workForm, editingId\)[\s\S]*worksRef\.current = nextWorks/);
+  assert.match(site, /savedWork = await saveWork\(formSnapshot, editingId\)[\s\S]*worksRef\.current = nextWorks/);
   assert.match(site, /deletedImagePublicIds = await deleteWork\(id\)[\s\S]*worksRef\.current = nextWorks/);
   assert.match(site, /void refreshContent\(\)\.catch/);
 
@@ -183,8 +183,8 @@ test("keeps secondary content flows validated and synchronized", async () => {
   assert.match(site, /nextPage === "admin-dashboard"[\s\S]*refreshAdminStats/);
   assert.match(site, /await submitEstimate\(estimate\)[\s\S]*setEstimateSaved\(true\)/);
   assert.match(site, /await submitQuery\(query\)[\s\S]*setEstimateSaved\(true\)/);
-  assert.match(site, /const savedReview = await saveReview\(reviewForm\)[\s\S]*setReviews/);
-  assert.match(site, /const savedSettings = await saveSettings\(settings\)[\s\S]*setSettings\(savedSettings\)/);
+  assert.match(site, /const savedReview = await saveReview\(formSnapshot\)[\s\S]*setReviews/);
+  assert.match(site, /const savedSettings = await saveSettings\(settingsSnapshot\)[\s\S]*setSettings\(savedSettings\)/);
   assert.doesNotMatch(site.slice(site.indexOf("const handleSaveReview"), site.indexOf("const handleDeleteReview")), /refreshContent\(/);
   assert.doesNotMatch(site.slice(site.indexOf("const handleSaveSettings"), site.indexOf("const handleEstimate")), /refreshContent\(/);
   assert.match(site, /Your form has been submitted\. Mr\. Gokul will connect with you in a few hours\./);
@@ -200,7 +200,7 @@ test("keeps secondary content flows validated and synchronized", async () => {
   assert.match(home, /accept="image\/jpeg,image\/png,\.jpg,\.jpeg,\.png"/);
   assert.match(home, /onDragOver/);
   assert.match(repository, /fetch\("\/api\/inquiries"/);
-  assert.match(site, /busy=\{adminBusy\}/);
+  assert.match(site, /busy=\{adminInteractionBusy\}/);
   assert.match(site, /PublicFooter navigate=\{navigate\}/);
   assert.match(site, /AboutPage navigate=\{navigate\}/);
   assert.match(admin, /type="url"[\s\S]*Instagram Video Link/);
