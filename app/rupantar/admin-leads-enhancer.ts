@@ -71,6 +71,35 @@ function enhanceAdminLeads() {
   leadSectionTitles.forEach(enhanceLeadSection);
 }
 
+function adminIsBusy() {
+  if (window.location.pathname !== "/admin") return false;
+  const logout = Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find(
+    (button) => button.textContent?.includes("Logout"),
+  );
+  return Boolean(logout?.disabled);
+}
+
+function syncAdminBusyControls() {
+  if (window.location.pathname !== "/admin") return;
+  const busy = adminIsBusy();
+  const controls = Array.from(document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement>("input, select, textarea, button"));
+
+  for (const control of controls) {
+    if (busy) {
+      if (!control.disabled) {
+        control.dataset.rhBusyDisabled = "true";
+        control.disabled = true;
+      }
+      continue;
+    }
+
+    if (control.dataset.rhBusyDisabled === "true") {
+      delete control.dataset.rhBusyDisabled;
+      control.disabled = false;
+    }
+  }
+}
+
 function enhanceWorkImageSlots() {
   const worksHeading = Array.from(document.querySelectorAll<HTMLHeadingElement>("h1")).find(
     (heading) => heading.textContent?.trim() === "Manage Works",
@@ -97,7 +126,7 @@ function enhanceWorkImageSlots() {
     slot.style.cursor = "pointer";
 
     const openPicker = () => {
-      if (!fileInput.disabled) fileInput.click();
+      if (!fileInput.disabled && !adminIsBusy()) fileInput.click();
     };
 
     slot.addEventListener("click", openPicker);
@@ -119,6 +148,11 @@ function enhanceViewSiteButton() {
   button.addEventListener(
     "click",
     (event) => {
+      if (adminIsBusy()) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+      }
       event.preventDefault();
       event.stopImmediatePropagation();
       window.location.assign("/");
@@ -151,31 +185,18 @@ function enhanceClickCard(card: HTMLElement, action: HTMLButtonElement, label: s
   });
 }
 
-function enhancePublicClickCards() {
+function enhanceRecentWorkCards() {
   const recentHeading = Array.from(document.querySelectorAll<HTMLHeadingElement>("h3")).find(
     (heading) => heading.textContent?.trim() === "Recent Works",
   );
   const recentSection = recentHeading?.closest("section");
-  if (recentSection) {
-    for (const card of Array.from(recentSection.querySelectorAll<HTMLElement>("article"))) {
-      const action = Array.from(card.querySelectorAll<HTMLButtonElement>("button")).find(
-        (button) => button.textContent?.includes("View Details"),
-      );
-      if (action) enhanceClickCard(card, action, "View work details");
-    }
-  }
+  if (!recentSection) return;
 
-  const blogHeading = Array.from(document.querySelectorAll<HTMLHeadingElement>("h1")).find(
-    (heading) => heading.textContent?.trim() === "Blog",
-  );
-  const blogMain = blogHeading?.closest("main");
-  if (blogMain) {
-    for (const card of Array.from(blogMain.querySelectorAll<HTMLElement>("article"))) {
-      const action = Array.from(card.querySelectorAll<HTMLButtonElement>("button")).find(
-        (button) => button.textContent?.includes("Read Article"),
-      );
-      if (action) enhanceClickCard(card, action, "Read article");
-    }
+  for (const card of Array.from(recentSection.querySelectorAll<HTMLElement>("article"))) {
+    const action = Array.from(card.querySelectorAll<HTMLButtonElement>("button")).find(
+      (button) => button.textContent?.includes("View Details"),
+    );
+    if (action) enhanceClickCard(card, action, "View work details");
   }
 }
 
@@ -187,15 +208,16 @@ export function initAdminLeadsEnhancements() {
     scheduled = true;
     window.requestAnimationFrame(() => {
       scheduled = false;
+      syncAdminBusyControls();
       enhanceAdminLeads();
       enhanceWorkImageSlots();
       enhanceViewSiteButton();
-      enhancePublicClickCards();
+      enhanceRecentWorkCards();
     });
   };
 
   schedule();
 
   const observer = new MutationObserver(schedule);
-  observer.observe(document.body, { childList: true, subtree: true });
+  observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["disabled"] });
 }
