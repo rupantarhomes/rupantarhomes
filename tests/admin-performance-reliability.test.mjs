@@ -13,7 +13,7 @@ test("loads the complete admin works collection without changing public paginati
   assert.match(site, /loadPublicWorksPage\(offset, 12, category\)/);
 });
 
-test("opens Admin immediately after authorization and does not refetch everything on tab switches", async () => {
+test("opens Admin immediately after authorization and avoids full Admin reloads on tab switches", async () => {
   const site = await read("../app/rupantar/site.tsx");
   const login = site.indexOf("const handleLogin = async");
   const dashboard = site.indexOf('setPage("admin-dashboard")', login);
@@ -23,7 +23,10 @@ test("opens Admin immediately after authorization and does not refetch everythin
   assert.ok(login >= 0);
   assert.ok(dashboard > login);
   assert.ok(backgroundLoad > dashboard);
-  assert.doesNotMatch(navigate, /refreshContent\(|refreshLeads\(|refreshBlogs\(|refreshAdminStats\(/);
+  assert.doesNotMatch(navigate, /if \(nextPage\.startsWith\("admin-"\) && nextPage !== "admin-login"\) \{/);
+  assert.doesNotMatch(navigate, /refreshContent\(|refreshLeads\(/);
+  assert.equal((navigate.match(/refreshBlogs\(/g) ?? []).length, 1);
+  assert.match(navigate, /nextPage === "admin-dashboard"[\s\S]*refreshAdminStats/);
 });
 
 test("keeps public-content refreshes from overwriting the Admin works list", async () => {
