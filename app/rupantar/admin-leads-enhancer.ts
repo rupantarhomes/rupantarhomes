@@ -161,45 +161,6 @@ function enhanceViewSiteButton() {
   );
 }
 
-function isInteractiveTarget(target: EventTarget | null) {
-  return target instanceof Element && Boolean(target.closest("button, a, input, select, textarea, label"));
-}
-
-function enhanceClickCard(card: HTMLElement, action: HTMLButtonElement, label: string) {
-  if (card.dataset.rhClickCardReady === "true") return;
-
-  card.dataset.rhClickCardReady = "true";
-  card.setAttribute("role", "button");
-  card.setAttribute("tabindex", "0");
-  card.setAttribute("aria-label", label);
-  card.style.cursor = "pointer";
-
-  card.addEventListener("click", (event) => {
-    if (isInteractiveTarget(event.target)) return;
-    action.click();
-  });
-  card.addEventListener("keydown", (event) => {
-    if (event.target !== card || (event.key !== "Enter" && event.key !== " ")) return;
-    event.preventDefault();
-    action.click();
-  });
-}
-
-function enhanceRecentWorkCards() {
-  const recentHeading = Array.from(document.querySelectorAll<HTMLHeadingElement>("h3")).find(
-    (heading) => heading.textContent?.trim() === "Recent Works",
-  );
-  const recentSection = recentHeading?.closest("section");
-  if (!recentSection) return;
-
-  for (const card of Array.from(recentSection.querySelectorAll<HTMLElement>("article"))) {
-    const action = Array.from(card.querySelectorAll<HTMLButtonElement>("button")).find(
-      (button) => button.textContent?.includes("View Details"),
-    );
-    if (action) enhanceClickCard(card, action, "View work details");
-  }
-}
-
 export function initAdminLeadsEnhancements() {
   let scheduled = false;
 
@@ -212,7 +173,6 @@ export function initAdminLeadsEnhancements() {
       enhanceAdminLeads();
       enhanceWorkImageSlots();
       enhanceViewSiteButton();
-      enhanceRecentWorkCards();
     });
   };
 
