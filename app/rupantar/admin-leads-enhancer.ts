@@ -71,6 +71,44 @@ function enhanceAdminLeads() {
   leadSectionTitles.forEach(enhanceLeadSection);
 }
 
+function enhanceWorkImageSlots() {
+  const worksHeading = Array.from(document.querySelectorAll<HTMLHeadingElement>("h1")).find(
+    (heading) => heading.textContent?.trim() === "Manage Works",
+  );
+  if (!worksHeading) return;
+
+  const fileInput = Array.from(document.querySelectorAll<HTMLInputElement>('input[type="file"]')).find(
+    (input) => input.multiple && input.accept.includes("image/jpeg"),
+  );
+  if (!fileInput) return;
+
+  const emptyLabels = Array.from(document.querySelectorAll<HTMLElement>("span")).filter(
+    (label) => label.textContent?.trim() === "Empty",
+  );
+
+  for (const emptyLabel of emptyLabels) {
+    const slot = emptyLabel.parentElement;
+    if (!(slot instanceof HTMLElement) || slot.dataset.rhWorkSlotReady === "true") continue;
+
+    slot.dataset.rhWorkSlotReady = "true";
+    slot.setAttribute("role", "button");
+    slot.setAttribute("tabindex", "0");
+    slot.setAttribute("aria-label", "Add work image");
+    slot.style.cursor = "pointer";
+
+    const openPicker = () => {
+      if (!fileInput.disabled) fileInput.click();
+    };
+
+    slot.addEventListener("click", openPicker);
+    slot.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      openPicker();
+    });
+  }
+}
+
 export function initAdminLeadsEnhancements() {
   let scheduled = false;
 
@@ -80,6 +118,7 @@ export function initAdminLeadsEnhancements() {
     window.requestAnimationFrame(() => {
       scheduled = false;
       enhanceAdminLeads();
+      enhanceWorkImageSlots();
     });
   };
 
