@@ -65,3 +65,21 @@ test("makes every empty work image slot open the existing approved file picker",
   assert.match(enhancer, /if \(!fileInput\.disabled\) fileInput\.click\(\)/);
   assert.match(enhancer, /enhanceWorkImageSlots\(\)/);
 });
+
+test("landing page requests the six newest works instead of letting older featured works crowd out a new save", async () => {
+  const repository = await read("../app/rupantar/repository.ts");
+
+  assert.match(repository, /loadPublicWorksPage\(0, 6, "all"\)/);
+  assert.match(repository, /\.order\("created_at", \{ ascending: false \}\)/);
+  assert.match(repository, /works: initialWorks\.slice\(0, 6\)/);
+});
+
+test("View Site performs a fresh public load so saved works and images cannot be hidden by stale Admin memory", async () => {
+  const enhancer = await read("../app/rupantar/admin-leads-enhancer.ts");
+
+  assert.match(enhancer, /function enhanceViewSiteButton\(\)/);
+  assert.match(enhancer, /candidate\.textContent\?\.trim\(\) === "View Site"/);
+  assert.match(enhancer, /event\.stopImmediatePropagation\(\)/);
+  assert.match(enhancer, /window\.location\.assign\("\/"\)/);
+  assert.match(enhancer, /enhanceViewSiteButton\(\)/);
+});
