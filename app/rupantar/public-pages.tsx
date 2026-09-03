@@ -3,7 +3,9 @@
 import { ArrowLeft, ArrowRight, Check, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { rupantarBlogSlugFromUrl } from "./blog";
 import { brandAssets, categories, interiorDesignCategories, worksFilterCategories } from "./data";
+import { loadPublicBlogBySlug } from "./repository";
 import { categoryIcons, PhotoPlaceholder, WorkPhoto } from "./shared";
 import type { Page, SiteSettings, Work } from "./types";
 
@@ -183,6 +185,27 @@ export function WorkDetailPage({
   onEstimate: () => void;
 }) {
   const related = works.filter((item) => item.category === work.category && item.id !== work.id);
+  const [projectBlogTitle, setProjectBlogTitle] = useState<string | null>(null);
+
+  useEffect(() => {
+    const blogSlug = rupantarBlogSlugFromUrl(work.blogUrl);
+    setProjectBlogTitle(null);
+    if (!blogSlug) return;
+
+    let active = true;
+    void loadPublicBlogBySlug(blogSlug)
+      .then((blog) => {
+        if (active) setProjectBlogTitle(blog?.title ?? null);
+      })
+      .catch((error) => {
+        console.error("Unable to resolve Work project blog", error);
+        if (active) setProjectBlogTitle(null);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [work.blogUrl]);
 
   return (
     <main className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
@@ -238,10 +261,10 @@ export function WorkDetailPage({
               Get Similar Estimate <ArrowRight className="w-4 h-4" />
             </button>
           </div>
-          {work.blogUrl && (
+          {projectBlogTitle && work.blogUrl && (
             <div className="mt-6 rounded-[1.75rem] border border-zinc-100 bg-[#fffdfa] p-6 sm:p-7 shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
               <div className="text-[10px] uppercase tracking-[0.16em] font-semibold text-[#FF1A3D]">Project Story</div>
-              <h3 className="font-heading font-bold text-[17px] mt-2">A Detail Blog for this Project</h3>
+              <h3 className="font-heading font-bold text-[17px] mt-2">{projectBlogTitle}</h3>
               <p className="text-[13px] leading-6 text-zinc-600 mt-2">Read the detailed story, planning, design decisions, and execution behind this project.</p>
               <a
                 href={work.blogUrl}
