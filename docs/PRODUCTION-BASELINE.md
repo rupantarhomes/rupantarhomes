@@ -391,6 +391,25 @@ The exact code/schema head `c8153ebcc6b4aefdccf7a6c5c9b8166a95e9e09a` passed pro
 
 Production database/Edge compatibility work described above is already live because it was deliberately rolled out backward-compatibly before the application merge. The application/UI branch remains unmerged. Destructive/disposable browser smoke testing of the new application behavior remains a post-merge/Cloudflare-deploy step.
 
+## Work-linked Blog title resolution — 2026-09-03
+
+This scoped change makes the existing Work `blog_url` the only stored relationship to a Rupantar Homes Blog while resolving the displayed title from the current Blog record at runtime:
+
+- keep the existing Work Blog URL field and database column unchanged; no Work `blogTitle` field or duplicated Blog-title storage is added;
+- accept only HTTPS Rupantar Homes Blog links for `rupantarhomes.com` or `www.rupantarhomes.com` with the exact `/blog/{slug}` path shape when resolving a Blog record;
+- show the exact currently loaded Blog title beside the Blog URL in Manage Works when the URL resolves, and show a clear non-destructive message when the URL is invalid or has no matching Blog;
+- on the public Work detail page, resolve the linked Blog by slug when the detail component mounts and use that Blog record's current title as the Project Story heading;
+- hide Project Story when there is no Blog URL, when the URL is not a valid Rupantar Homes Blog URL, when no existing Blog matches it, or when the Blog lookup cannot be safely completed;
+- preserve Work save/edit/delete, Blog save/edit/delete, Supabase Auth/RLS/security, Cloudinary lifecycle, inquiry/forms, routing, and existing visual presentation outside the requested dynamic heading/Admin confirmation behavior;
+- add regression coverage that checks the resolver wiring, removes the fixed heading, verifies clear unmatched/invalid Admin handling, and confirms no duplicated `blogTitle` Work/database field was introduced.
+
+Review fingerprints for this scoped change:
+
+- `app`: `bc9740c4c74389197e44d144a83919058b6bca8c`
+- `tests`: `0ba51aff1a3344013c132cdae8d4b0cd2914cb3f`
+
+The code-bearing head `33c822a63d03b75b4a3c1275d0c16bbcf8a06f2a` passed production handover-lock enforcement, dependency installation, the frontend reliability guard self-test, strict TypeScript, the production build, and the full regression suite in GitHub Actions run `33788279707`, job `100758300813`. This PR must remain unmerged until explicit approval.
+
 ## AI/Codex instruction block
 
 Use this at the start of future implementation requests:
