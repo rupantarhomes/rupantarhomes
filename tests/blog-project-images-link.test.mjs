@@ -27,14 +27,25 @@ test("shows the reverse project card only when a linked Work resolves", async ()
   assert.match(source, /setLinkedWork\(null\)/);
 });
 
-test("keeps desktop Blog spacing while giving mobile and the linked project card more breathing room", async () => {
-  const source = await read("../app/rupantar/blog-pages.tsx");
+test("dedicated Blog article uses one scoped layout contract", async () => {
+  const [source, styles] = await Promise.all([
+    read("../app/rupantar/blog-pages.tsx"),
+    read("../app/rupantar/blog-article.css"),
+  ]);
 
-  assert.match(source, /pt-\[4\.75rem\] pb-14 sm:py-16/);
-  assert.match(source, /<div aria-hidden="true" style=\{\{ height: "64px" \}\} \/>/);
-  assert.match(source, /className="w-full rounded-\[1\.75rem\]/);
-  assert.match(source, /p-6 sm:p-7/);
+  assert.match(source, /import "\.\/blog-article\.css"/);
+  assert.match(source, /rh-blog-article-page/);
+  assert.match(source, /rh-blog-project-card/);
+  assert.doesNotMatch(source, /aria-hidden="true" style=\{\{ height:/);
   assert.doesNotMatch(source, /max-w-\[640px\]/);
+
+  assert.match(styles, /\.rh-blog-article \{[\s\S]*?max-width: 800px !important/);
+  assert.match(styles, /\.rh-blog-article-title \{[\s\S]*?font-size: 56px !important/);
+  assert.match(styles, /\.rh-blog-article-body \{[\s\S]*?font-size: 17px !important/);
+  assert.match(styles, /\.rh-blog-project-card \{[\s\S]*?margin-top: 64px !important/);
+  assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article-page \{[\s\S]*?padding-top: 32px !important/);
+  assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article-title \{[\s\S]*?font-size: 40px !important/);
+  assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-project-card \{[\s\S]*?margin-top: 56px !important/);
 });
 
 test("does not change the existing Work-to-Blog project story contract", async () => {
