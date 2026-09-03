@@ -86,7 +86,7 @@ end;
 $function$;
 
 create or replace function public.claim_expired_cloudinary_drafts(
-  p_min_age_minutes integer default 1440,
+  p_min_age_minutes integer default 10080,
   p_limit integer default 50
 )
 returns text[]
@@ -96,7 +96,7 @@ set search_path to ''
 as $function$
 declare
   claimed_ids text[];
-  safe_min_age integer := greatest(coalesce(p_min_age_minutes, 1440), 60);
+  safe_min_age integer := greatest(coalesce(p_min_age_minutes, 10080), 1440);
   safe_limit integer := least(greatest(coalesce(p_limit, 50), 1), 100);
 begin
   if auth.uid() is null or not exists (
