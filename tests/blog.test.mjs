@@ -64,7 +64,7 @@ test("Work project stories resolve the current Blog title without duplicating ti
 });
 
 
-test("Blog article keeps approved card typography while adding outer breathing room", async () => {
+test("Blog article keeps approved card typography while adding guaranteed outer breathing room", async () => {
   const [pages, editorial] = await Promise.all([
     read("app/rupantar/blog-pages.tsx"),
     read("app/editorial-pages.css"),
@@ -75,8 +75,8 @@ test("Blog article keeps approved card typography while adding outer breathing r
   assert.match(articlePage, /className="rh-blog-article max-w-\[800px\]"/);
   assert.match(articlePage, /linkedWork &&/);
   assert.doesNotMatch(articlePage, /rh-blog-project-images/);
-  assert.match(articlePage, /style=\{\{ marginTop: "64px" \}\}/);
-  assert.match(articlePage, /className="mt-12 w-full rounded-\[1\.75rem\][\s\S]*?p-6 sm:p-7/);
+  assert.match(articlePage, /<div aria-hidden="true" style=\{\{ height: "64px" \}\} \/>/);
+  assert.match(articlePage, /className="w-full rounded-\[1\.75rem\][\s\S]*?p-6 sm:p-7/);
   assert.match(articlePage, /text-\[18px\] sm:text-\[20px\]/);
   assert.match(articlePage, /text-\[13px\] leading-6/);
   assert.match(articlePage, /text-\[12px\] font-semibold/);
