@@ -441,3 +441,25 @@ Accepted fingerprints for this scoped code-bearing update:
 - `tests`: `c173c0f1d1fec97159608e8cb80419c091d31052`
 
 The exact code-bearing head `4cd79e270a73a083fa20b63262dfa1afe8d1fc7a` passed production handover-lock enforcement, dependency installation, the frontend reliability guard self-test, strict TypeScript, the production build, and the full regression suite in GitHub Actions run `33790451990`, job `100765508074`. The documentation commit that records this baseline must also pass the same workflow before merge. PR #88 remains unmerged until explicit approval.
+
+## Native six-image Work gallery — 2026-09-04
+
+Scoped candidate based on main `2e47c90481ca07f595717022d9f3248701d1bcd2`, on `feature/work-six-image-gallery-v2`. Do not merge without explicit review approval.
+
+- Raise only the Work upload count to six; retain JPEG/PNG, 10 MB, signed WebP conversion, dimensions, draft rollback and reference-safe cleanup.
+- Replace only Manage Works image controls with compact two-column/three-row native React slots and individual full-screen previews. Keep the existing upload/remove/save handlers.
+- Replace only the dedicated Work gallery with one full image and actual rear image edges, plus a shared React portal viewer with bounded navigation, keyboard/focus handling, scroll restoration and horizontal swipe. Use existing responsive Cloudinary delivery, small lazy rear images and selected-image-only fullscreen loading.
+- The existing gallery enhancer skips this native gallery; listing-card enhancement, Project Story/Blog title resolution, Related Works, other Admin/public areas and infrastructure remain unchanged. Existing absolute Remove-pill CSS is overridden only inside native image slots.
+- Add `20260904013001_native_six_work_images.sql` after the prior rollback; preserve all earlier migration history. Its canonical RPC definition differs from live only in `> 3` becoming `> 6` and matching error wording. The newly generated unapplied migration timestamp was placed after the repository's future-dated rollback.
+- Applied to project `gmtdqeskyvdvyibccxwt` as `20260903201051_native_six_work_images`. Live function OID, signature, owner, SECURITY DEFINER, empty search_path and ACL are unchanged. Authenticated execution remains granted; anon/PUBLIC remain denied.
+- Live transaction-scoped checks with a verified nonexistent Work ID: counts 0–6 reach the missing-Work guard; seven rejects; unauthenticated call denies. Transaction rolled back; no production Work/image records or Cloudinary assets created. This is live validation-path verification, not a full production upload/save.
+- Local verification: dependency install, strict TypeScript, production build, 78 regression tests, reliability guard self-test, and whitespace diff check pass. Browser fixture suite exercises the actual React pages with intercepted local Supabase/Cloudinary responses: six uploads, save/edit/persisted removal, two columns/three rows, bounded arrows/keys, horizontal vs vertical swipe, modal close/focus/scroll restoration, one-image compatibility and exact linked Blog title. Admin/public checked at 320, 375, 390, 393, 414, 430, 1280 and 1440px in Chromium; not a physical iPhone test.
+- Security advisors were reviewed: authenticated SECURITY DEFINER notices are expected for the unchanged admin-gated RPCs; internal RLS/no-policy tables and disabled leaked-password protection are existing configuration, outside this feature. [Advisor guidance](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), [password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+
+Only these protected fingerprints change:
+
+- `app`: `ae7f4ba2011749d92c242a121ef6126797ca2d2f`
+- `supabase`: `27543b4517a14bfb6821014f5ca75356765d647b`
+- `tests`: `c50fcfdd4a8bb61b00ef710e8608345c455420d0`
+
+Application deployment/merge remains pending review. The backward-compatible database count change alone is already live.

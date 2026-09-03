@@ -7,6 +7,7 @@ import { rupantarBlogSlugFromUrl } from "./blog";
 import { brandAssets, categories, interiorDesignCategories, worksFilterCategories } from "./data";
 import { loadPublicBlogBySlug } from "./repository";
 import { categoryIcons, PhotoPlaceholder, WorkPhoto } from "./shared";
+import { WorkImageGallery } from "./work-image-gallery";
 import type { Page, SiteSettings, Work } from "./types";
 
 const whatsappUrl = `https://wa.me/9779745941799?text=${encodeURIComponent("Hello Gokul, I would like to discuss my interior project.")}`;
@@ -234,15 +235,7 @@ export function WorkDetailPage({
             {work.title}
           </h1>
           <div className="mt-6">
-            <WorkPhoto image={work.images[0]} alt={work.title} aspect="aspect-[16/10]" label="Main Gallery Photo Coming Soon" eager sizes="(min-width: 1280px) 720px, (min-width: 1024px) 55vw, 100vw" widths={[480, 768, 1200, 1600]} />
-          </div>
-          <div className="grid grid-cols-2 gap-3 mt-3">
-            {Array.from({ length: 2 }, (_, index) => {
-              const image = work.images[index + 1];
-              return (
-                <WorkPhoto key={image?.id ?? `slot-${index + 1}`} image={image} alt={`${work.title} ${index + 2}`} aspect="aspect-square" label={`Thumb ${index + 2}`} sizes="50vw" widths={[96, 160, 240, 320]} />
-              );
-            })}
+            <WorkImageGallery key={work.id} images={work.images} title={work.title} />
           </div>
         </div>
 

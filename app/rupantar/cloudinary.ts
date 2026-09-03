@@ -24,7 +24,7 @@ type UploadResponse = {
 
 const allowedTypes = new Set(["image/jpeg", "image/png"]);
 const maximumBytes = 10 * 1024 * 1024;
-export const maximumWorkImages = 3;
+export const maximumWorkImages = 6;
 const deleteBatchSize = 20;
 const cloudinaryApiBase = (import.meta.env.VITE_CLOUDINARY_API_BASE || "https://api.cloudinary.com").replace(/\/$/, "");
 const workDraftIdPattern = /^rupantar-homes\/works\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
