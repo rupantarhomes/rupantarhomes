@@ -32,7 +32,7 @@ test("keeps the public inquiry path aligned with every canonical service categor
 
   assert.match(migration, /queries_category_allowed/);
   assert.match(migration, /estimate_requests_category_allowed/);
-  assert.match(migration, /create or replace function public\.submit_public_inquiry/);
+  assert.match(migration, /create function public\.submit_public_inquiry/);
   assert.match(migration, /when btrim\(coalesce\(p_category, ''\)\) = 'interior-designing' then 'architect'/);
   assert.match(migration, /revoke all on function public\.submit_public_inquiry[\s\S]*from public, anon, authenticated/);
   assert.match(migration, /grant execute on function public\.submit_public_inquiry[\s\S]*to service_role/);
@@ -72,6 +72,41 @@ test("public inquiry delivery stays server mediated, bounded and rate limited", 
   assert.match(http, /AbortController/);
 });
 
+test("public inquiry retries are idempotent from browser through database", async () => {
+  const [repository, cloudflare, edge, migration] = await Promise.all([
+    read("../app/rupantar/repository.ts"),
+    read("../functions/api/inquiries.ts"),
+    read("../supabase/functions/submit-public-inquiry/index.ts"),
+    read("../supabase/migrations/20260903143000_align_public_inquiry_categories.sql"),
+  ]);
+
+  assert.match(repository, /async function inquiryFingerprint/);
+  assert.match(repository, /crypto\.subtle\.digest\("SHA-256"/);
+  assert.match(repository, /window\.sessionStorage\.getItem\(storageKey\)/);
+  assert.match(repository, /const submissionId = submissionIdForFingerprint\(fingerprint\)/);
+  assert.match(repository, /body\.set\("submission_id", submissionId\)/);
+  assert.match(repository, /clearSubmissionIdForFingerprint\(fingerprint\)/);
+
+  assert.match(cloudflare, /const requestSubmissionId = submissionId\(form\)/);
+  assert.match(cloudflare, /publicId = `\$\{inquiryAssetFolder\}\/\$\{kind\}-\$\{requestSubmissionId\}`/);
+  assert.match(cloudflare, /overwrite: "true"/);
+  assert.match(cloudflare, /p_submission_id: payload\.submission_id/);
+  assert.match(cloudflare, /!persistence\.duplicate[\s\S]*sendWeb3FormsNotification/);
+  assert.match(cloudflare, /!persistenceError\.safeToCleanupAttachment[\s\S]*uploadedPublicId = null/);
+
+  assert.match(edge, /p_submission_id: string/);
+  assert.match(edge, /uuidPattern\.test\(p_submission_id\)/);
+  assert.match(edge, /body: JSON\.stringify\(input\)/);
+  assert.match(edge, /duplicate: result\.duplicate === true/);
+
+  assert.match(migration, /add column if not exists submission_id uuid/);
+  assert.match(migration, /queries_submission_id_unique/);
+  assert.match(migration, /estimate_requests_submission_id_unique/);
+  assert.match(migration, /p_submission_id text/);
+  assert.match(migration, /duplicate', true/);
+  assert.match(migration, /exception when unique_violation/);
+});
+
 test("Admin Work media keeps atomic persistence, bounded dependencies and reference-safe cleanup", async () => {
   const [repository, saveMigration, cleanupMigration, cloudinary, serverCloudinary, deleteEndpoint, auth] = await Promise.all([
     read("../app/rupantar/repository.ts"),
@@ -99,6 +134,69 @@ test("Admin Work media keeps atomic persistence, bounded dependencies and refere
   assert.match(deleteEndpoint, /claimUnreferencedImages/);
   assert.match(deleteEndpoint, /fetchWithTimeout/);
   assert.match(auth, /fetchWithTimeout/);
+});
+
+test("abandoned Work uploads are registered and safely reclaimed", async () => {
+  const [migration, signature, client, deleteEndpoint, repository, runtime] = await Promise.all([
+    read("../supabase/migrations/20260903143000_align_public_inquiry_categories.sql"),
+    read("../functions/api/cloudinary-signature.ts"),
+    read("../app/rupantar/cloudinary.ts"),
+    read("../functions/api/cloudinary-delete.ts"),
+    read("../app/rupantar/repository.ts"),
+    read("../app/runtime-resilience.ts"),
+  ]);
+
+  assert.match(migration, /create table if not exists public\.cloudinary_draft_assets/);
+  assert.match(migration, /register_cloudinary_draft_image/);
+  assert.match(migration, /claim_expired_cloudinary_drafts/);
+  assert.match(migration, /complete_cloudinary_draft_cleanup/);
+  assert.match(migration, /not exists \([\s\S]*public\.work_images/);
+  assert.match(migration, /cleanup_claimed_at < now\(\) - interval '15 minutes'/);
+  assert.match(signature, /registerDraftImage\(publicId, request, runtime\)/);
+  assert.match(signature, /public_id: publicId/);
+  assert.match(client, /publicId !== signed\.publicId/);
+  assert.match(deleteEndpoint, /completeDraftRegistryCleanup/);
+  assert.match(repository, /export async function claimExpiredCloudinaryDrafts/);
+  assert.match(runtime, /claimExpiredCloudinaryDrafts/);
+  assert.match(runtime, /await deleteCloudinaryImages\(publicIds\)/);
+});
+
+test("Admin runtime revalidates sessions without treating provider outages as revocation", async () => {
+  const [runtime, repository, index] = await Promise.all([
+    read("../app/runtime-resilience.ts"),
+    read("../app/rupantar/repository.ts"),
+    read("../index.html"),
+  ]);
+
+  assert.match(index, /\/app\/runtime-resilience\.ts/);
+  assert.match(runtime, /auth\.onAuthStateChange/);
+  assert.match(runtime, /admin_users/);
+  assert.match(runtime, /visibilitychange/);
+  assert.match(runtime, /adminVerificationIntervalMs/);
+  assert.match(runtime, /if \(adminError\) throw adminError/);
+  assert.match(runtime, /Unable to verify the open Admin session/);
+  assert.match(runtime, /redirectExpiredAdminSession/);
+  assert.match(repository, /const \{ data: admin, error: adminError \} = await supabase/);
+  assert.match(repository, /if \(adminError\) return null;/);
+});
+
+test("Settings writes require confirmed live production settings", async () => {
+  const repository = await read("../app/rupantar/repository.ts");
+  assert.match(repository, /let settingsConfirmed = false/);
+  assert.match(repository, /if \(!settingsResult\.data\) throw new Error\("The production Settings row could not be confirmed\."\)/);
+  assert.match(repository, /settingsConfirmed = true;[\s\S]*settings: mapSettings/);
+  assert.match(repository, /if \(!settingsConfirmed\)[\s\S]*Settings are not confirmed from production yet/);
+});
+
+test("public list failures gain a failure-only retry path without changing successful layouts", async () => {
+  const runtime = await read("../app/runtime-resilience.ts");
+  assert.match(runtime, /publicRecoveryProbeDelayMs = 5000/);
+  assert.match(runtime, /route\.kind === "works"/);
+  assert.match(runtime, /loadPublicWorksPage\(0, 1, route\.category\)/);
+  assert.match(runtime, /route\.kind === "blog"/);
+  assert.match(runtime, /loadPublicBlogs\(\)/);
+  assert.match(runtime, /data-rh-runtime-recovery/);
+  assert.match(runtime, /window\.location\.reload\(\)/);
 });
 
 test("the public runtime has crash recovery and dead review links cannot masquerade as actions", async () => {
