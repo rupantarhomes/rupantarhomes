@@ -32,7 +32,8 @@ test("keeps the public inquiry path aligned with every canonical service categor
 
   assert.match(migration, /queries_category_allowed/);
   assert.match(migration, /estimate_requests_category_allowed/);
-  assert.match(migration, /create function public\.submit_public_inquiry/);
+  assert.match(migration, /create or replace function public\.submit_public_inquiry/);
+  assert.match(migration, /existing ten-argument submit_public_inquiry overload in place/i);
   assert.match(migration, /when btrim\(coalesce\(p_category, ''\)\) = 'interior-designing' then 'architect'/);
   assert.match(migration, /revoke all on function public\.submit_public_inquiry[\s\S]*from public, anon, authenticated/);
   assert.match(migration, /grant execute on function public\.submit_public_inquiry[\s\S]*to service_role/);
