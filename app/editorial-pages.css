@@ -443,3 +443,50 @@ main.max-w-\[1280px\] > div.max-w-\[780px\]:has(> h1 + div + section) > section:
     font-size: 17px;
   }
 }
+
+
+/* Dedicated Blog article only: make the mobile header-to-category gap explicit,
+   and give the conditional Project Images card the approved editorial breathing room. */
+.rh-blog-project-images {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 34px !important;
+}
+
+.rh-blog-project-images > h2 {
+  margin-top: 14px;
+  line-height: 1.3;
+}
+
+.rh-blog-project-images > p {
+  margin-top: 16px;
+}
+
+.rh-blog-project-images > a {
+  margin-top: 28px;
+  margin-bottom: 2px;
+}
+
+@media (max-width: 639px) {
+  .rh-blog-article {
+    padding-top: 32px;
+  }
+
+  .rh-blog-project-images {
+    padding: 28px !important;
+  }
+
+  .rh-blog-project-images > h2 {
+    margin-top: 12px;
+    line-height: 1.3;
+  }
+
+  .rh-blog-project-images > p {
+    margin-top: 14px;
+  }
+
+  .rh-blog-project-images > a {
+    margin-top: 26px;
+    margin-bottom: 2px;
+  }
+}

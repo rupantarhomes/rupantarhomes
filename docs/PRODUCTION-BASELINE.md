@@ -479,3 +479,18 @@ From PR head `e4257bc7f3ab6e2d0165528fa9ff78fef715106f`, change only `.rh-native
 ## PR #92 dedicated Work metadata styling — 2026-09-04
 
 From PR head `210b97115323ec38d9d9e0ec8753047340125b55`, change only the two WorkDetailPage metadata spans: conditional Featured becomes plain uppercase semibold site-red text; existing location and MapPin use a compact site-red/white label with 8px corners, 4px/8px padding and safe text wrapping. Values, Featured condition, gallery, Project Story, Related Works and all other pages/systems are unchanged. TypeScript, production build, 80 regression tests and existing gallery/Admin browser fixtures at all eight requested widths pass. Only app (`bb76b67b828cf4fa3f81dc3184cc9a940334df6a`) and tests (`4fbcbb72263adb1c07a073b12bf5b334089e606c`) fingerprints change. PR #92 remains unmerged pending approval.
+
+
+## Accepted dedicated Blog article spacing correction — 2026-09-04
+
+Scope is limited to the individual Blog article page:
+
+- provide an explicit 32px mobile-only gap between the public header boundary and the article category;
+- preserve the approved desktop article placement and the Blog index unchanged;
+- keep the conditional Project Images card at the existing article width while increasing only its internal mobile/desktop breathing room and content spacing;
+- preserve every route, linked-Work relationship, card wording, colors and behavior.
+
+Accepted fingerprints after this scoped update:
+
+- `app`: `b0a39d9dbfe99df9722c7534031bf9e69de0bf4a`
+- `tests`: `cbee3ecfd6179a9b7a0e75443ec5d376f8d4fb5b`
