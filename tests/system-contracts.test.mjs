@@ -141,13 +141,13 @@ test("Admin Work media keeps atomic persistence, bounded dependencies and refere
 });
 
 test("abandoned Work uploads are registered and safely reclaimed", async () => {
-  const [migration, signature, client, deleteEndpoint, repository, runtime] = await Promise.all([
+  const [migration, signature, client, deleteEndpoint, repository, site] = await Promise.all([
     read("../supabase/migrations/20260903143000_align_public_inquiry_categories.sql"),
     read("../functions/api/cloudinary-signature.ts"),
     read("../app/rupantar/cloudinary.ts"),
     read("../functions/api/cloudinary-delete.ts"),
     read("../app/rupantar/repository.ts"),
-    read("../app/runtime-resilience.ts"),
+    read("../app/rupantar/site.tsx"),
   ]);
 
   assert.match(migration, /create table if not exists public\.cloudinary_draft_assets/);
@@ -164,25 +164,27 @@ test("abandoned Work uploads are registered and safely reclaimed", async () => {
   assert.match(deleteEndpoint, /completeDraftRegistryCleanup/);
   assert.match(repository, /export async function claimExpiredCloudinaryDrafts/);
   assert.match(repository, /p_min_age_minutes: 10080/);
-  assert.match(runtime, /claimExpiredCloudinaryDrafts/);
-  assert.match(runtime, /await deleteCloudinaryImages\(publicIds\)/);
+  assert.match(site, /const cleanupExpiredWorkDrafts = useCallback/);
+  assert.match(site, /claimExpiredCloudinaryDrafts\(\)/);
+  assert.match(site, /await deleteCloudinaryImages\(publicIds\)/);
 });
 
-test("Admin runtime revalidates sessions without treating provider outages as revocation", async () => {
-  const [runtime, repository, index] = await Promise.all([
-    read("../app/runtime-resilience.ts"),
+test("Admin session revalidation is native and provider outages are not treated as revocation", async () => {
+  const [site, repository, index] = await Promise.all([
+    read("../app/rupantar/site.tsx"),
     read("../app/rupantar/repository.ts"),
     read("../index.html"),
   ]);
 
-  assert.match(index, /\/app\/runtime-resilience\.ts/);
-  assert.match(runtime, /auth\.onAuthStateChange/);
-  assert.match(runtime, /admin_users/);
-  assert.match(runtime, /visibilitychange/);
-  assert.match(runtime, /adminVerificationIntervalMs/);
-  assert.match(runtime, /if \(adminError\) throw adminError/);
-  assert.match(runtime, /Unable to verify the open Admin session/);
-  assert.match(runtime, /redirectExpiredAdminSession/);
+  assert.doesNotMatch(index, /runtime-resilience\.ts/);
+  assert.match(site, /auth\.onAuthStateChange/);
+  assert.match(site, /admin_users/);
+  assert.match(site, /visibilitychange/);
+  assert.match(site, /adminVerificationIntervalMs/);
+  assert.match(site, /if \(adminError\) throw adminError/);
+  assert.match(site, /Unable to verify the open Admin session/);
+  assert.match(site, /expireAdminSession/);
+  assert.match(site, /explicitLogoutRef/);
   assert.match(repository, /const \{ data: admin, error: adminError \} = await supabase/);
   assert.match(repository, /if \(adminError\) return null;/);
 });
@@ -195,15 +197,23 @@ test("Settings writes require confirmed live production settings", async () => {
   assert.match(repository, /if \(!settingsConfirmed\)[\s\S]*Settings are not confirmed from production yet/);
 });
 
-test("public list failures gain a failure-only retry path without changing successful layouts", async () => {
-  const runtime = await read("../app/runtime-resilience.ts");
-  assert.match(runtime, /publicRecoveryProbeDelayMs = 5000/);
-  assert.match(runtime, /route\.kind === "works"/);
-  assert.match(runtime, /loadPublicWorksPage\(0, 1, route\.category\)/);
-  assert.match(runtime, /route\.kind === "blog"/);
-  assert.match(runtime, /loadPublicBlogs\(\)/);
-  assert.match(runtime, /data-rh-runtime-recovery/);
-  assert.match(runtime, /window\.location\.reload\(\)/);
+test("public and Admin list failures use explicit React retry state without DOM probes", async () => {
+  const [site, index] = await Promise.all([
+    read("../app/rupantar/site.tsx"),
+    read("../index.html"),
+  ]);
+  assert.doesNotMatch(index, /runtime-resilience\.ts/);
+  assert.match(site, /const \[worksLoadError, setWorksLoadError\]/);
+  assert.match(site, /const \[blogsLoadError, setBlogsLoadError\]/);
+  assert.match(site, /const \[adminLoadError, setAdminLoadError\]/);
+  assert.match(site, /function ListLoadFailure/);
+  assert.match(site, /function AdminLoadWarning/);
+  assert.match(site, /setWorksLoadError\(messageFrom\(error\)\)/);
+  assert.match(site, /setBlogsLoadError\(messageFrom\(error\)\)/);
+  assert.match(site, /<ListLoadFailure label="projects"/);
+  assert.match(site, /<ListLoadFailure label="articles"/);
+  assert.match(site, /<AdminLoadWarning/);
+  assert.doesNotMatch(site, /data-rh-runtime-recovery/);
 });
 
 test("the public runtime has crash recovery and dead review links cannot masquerade as actions", async () => {
