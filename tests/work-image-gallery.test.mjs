@@ -57,6 +57,20 @@ test("only the page stack is square and cropped; fullscreen remains contained", 
   }
 });
 
+test("Work detail metadata preserves values and conditional Featured with scoped styling", () => {
+  const { WorkDetailPage } = load("app/rupantar/public-pages.tsx", { "./repository": {} });
+  for (const featured of [false, true]) {
+    const work = { id: "1", title: "Work", category: "interior", location: "Kapan, Kathmandu", images: images.slice(0, 1), featured };
+    const html = renderToStaticMarkup(React.createElement(WorkDetailPage, { work, works: [] }));
+    assert.equal(html.includes(">Featured</span>"), featured);
+    if (featured) assert.match(html, /<span class="text-\[11px\] text-\[#FF1A3D\] font-semibold uppercase tracking-wide">Featured<\/span>/);
+    assert.match(html, /background-color:#FF1A3D;color:#fff;border-radius:8px;padding:4px 8px;max-width:100%;overflow-wrap:anywhere/);
+    assert.match(html, /Kapan, Kathmandu<\/span>/);
+    assert.match(html, /data-native-work-gallery/);
+    assert.match(html, /Related Works/);
+  }
+});
+
 test("Admin renders six compact slots using the existing upload/remove lifecycle", () => {
   const mocks = { "./supabase": {}, "./repository": {} };
   const { AdminPortal } = load("app/rupantar/admin.tsx", mocks);

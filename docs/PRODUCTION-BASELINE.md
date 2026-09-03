@@ -475,3 +475,7 @@ Only `app` (`01b32cc07d6075027284b393fd0f3bc41e3e5306`) and `tests` (`43011b1672
 ## PR #92 stacked-image white ring — 2026-09-04
 
 From PR head `e4257bc7f3ab6e2d0165528fa9ff78fef715106f`, change only `.rh-native-work-stack-photo` ring color to `#ffffff`. Preview inspection showed the existing 1px ring computed as `rgba(59, 130, 246, 0.5)`; its width, geometry and shadow construction are unchanged. Fullscreen, Admin and every other surface remain unchanged. TypeScript, build, all 79 existing regression tests and gallery browser fixtures at all eight approved widths pass; no tests changed. Only the `app` fingerprint becomes `9c59af36e216d7d97e6daa8b1fbd602d7ed8e45b`. PR remains unmerged pending approval.
+
+## PR #92 dedicated Work metadata styling — 2026-09-04
+
+From PR head `210b97115323ec38d9d9e0ec8753047340125b55`, change only the two WorkDetailPage metadata spans: conditional Featured becomes plain uppercase semibold site-red text; existing location and MapPin use a compact site-red/white label with 8px corners, 4px/8px padding and safe text wrapping. Values, Featured condition, gallery, Project Story, Related Works and all other pages/systems are unchanged. TypeScript, production build, 80 regression tests and existing gallery/Admin browser fixtures at all eight requested widths pass. Only app (`bb76b67b828cf4fa3f81dc3184cc9a940334df6a`) and tests (`4fbcbb72263adb1c07a073b12bf5b334089e606c`) fingerprints change. PR #92 remains unmerged pending approval.

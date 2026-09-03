@@ -222,11 +222,11 @@ export function WorkDetailPage({
             <span className="text-[11px] px-3 py-1 rounded-full bg-[#FFF0F2] text-[#FF1A3D] font-semibold uppercase tracking-wide">
               {work.category.replace("-", " ")}
             </span>
-            <span className="text-[12px] text-zinc-500 flex items-center gap-1">
+            <span className="text-[12px] flex items-center gap-1" style={{ backgroundColor: "#FF1A3D", color: "#fff", borderRadius: 8, padding: "4px 8px", maxWidth: "100%", overflowWrap: "anywhere" }}>
               <MapPin className="w-3.5 h-3.5" /> {work.location}
             </span>
             {work.featured && (
-              <span className="text-[11px] px-3 py-1 rounded-full bg-[#FF1A3D] text-white font-semibold">
+              <span className="text-[11px] text-[#FF1A3D] font-semibold uppercase tracking-wide">
                 Featured
               </span>
             )}
