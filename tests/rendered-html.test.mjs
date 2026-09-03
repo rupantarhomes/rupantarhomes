@@ -98,7 +98,7 @@ test("keeps the strict Admin Work Cloudinary contract and secrets server-side", 
   assert.doesNotMatch(clientUpload, /CLOUDINARY_API_SECRET/);
   assert.match(clientUpload, /new Set\(\["image\/jpeg", "image\/png"\]\)/);
   assert.match(clientUpload, /file\.size > maximumBytes/);
-  assert.match(clientUpload, /export const maximumWorkImages = 6/);
+  assert.match(clientUpload, /export const maximumWorkImages = 3/);
   assert.match(clientUpload, /format !== "webp"/);
   assert.match(clientUpload, /width > 1920 \|\| height > 1080/);
   assert.match(clientUpload, /body\.set\("asset_folder", signed\.assetFolder\)/);

@@ -130,7 +130,7 @@ test("Admin Work media keeps atomic persistence, bounded dependencies and refere
   assert.match(saveMigration, /Admin authorization required/);
   assert.match(cleanupMigration, /pg_advisory_xact_lock/);
   assert.match(cleanupMigration, /claim_unreferenced_cloudinary_images/);
-  assert.match(cloudinary, /export const maximumWorkImages = 6/);
+  assert.match(cloudinary, /export const maximumWorkImages = 3/);
   assert.match(cloudinary, /format !== "webp"/);
   assert.match(cloudinary, /width > 1920 \|\| height > 1080/);
   assert.match(cloudinary, /fetchWithTimeout/);
