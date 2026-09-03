@@ -17,7 +17,7 @@ import {
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { maximumWorkImages } from "./cloudinary";
 import { AdminBlogs } from "./blog-admin";
-import type { Blog, BlogForm } from "./blog";
+import { resolveRupantarBlogUrl, rupantarBlogSlugFromUrl, type Blog, type BlogForm } from "./blog";
 import { brandAssets, categories, emptyWork } from "./data";
 import type {
   AdminStats,
@@ -535,6 +535,7 @@ function LeadField({ label, value }: { label: string; value: string }) {
 
 function AdminWorks({
   works,
+  blogs,
   workForm,
   setWorkForm,
   editingWorkId,
@@ -549,6 +550,9 @@ function AdminWorks({
 }: AdminPortalProps) {
   const slugify = (value: string | null | undefined) =>
     (value ?? "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  const projectBlogUrl = (workForm.blogUrl ?? "").trim();
+  const projectBlogSlug = rupantarBlogSlugFromUrl(projectBlogUrl);
+  const projectBlog = resolveRupantarBlogUrl(projectBlogUrl, blogs);
 
   return (
     <>
@@ -590,6 +594,17 @@ function AdminWorks({
                 className="mt-1 w-full h-10 px-4 rounded-full border border-zinc-200 text-[13px] outline-none focus:border-[#FF1A3D]"
               />
               <div className="mt-1 text-[10px] text-zinc-500">Paste this project’s Rupantar Homes blog article URL. Leave blank if there is no detailed article.</div>
+              {projectBlogUrl && (
+                <div aria-live="polite" className="mt-1 text-[10px] text-zinc-500">
+                  {projectBlog ? (
+                    <>Linked blog: <span className="font-medium text-zinc-700">{projectBlog.title}</span></>
+                  ) : projectBlogSlug ? (
+                    "No existing Rupantar Homes blog matches this URL."
+                  ) : (
+                    "This URL is not a valid Rupantar Homes blog link."
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-4 pt-2">
