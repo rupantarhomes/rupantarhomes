@@ -72,7 +72,7 @@ test("Blog article has scoped mobile breathing room and a spacious conditional p
   const [indexPage, articlePage] = pages.split("export function BlogArticlePage");
 
   assert.doesNotMatch(indexPage, /rh-blog-article|rh-blog-project-images/);
-  assert.match(articlePage, /className="rh-blog-article max-w-\\[800px\\]"/);
+  assert.match(articlePage, /className="rh-blog-article max-w-\[800px\]"/);
   assert.match(articlePage, /linkedWork &&/);
   assert.match(articlePage, /className="rh-blog-project-images mt-12 w-full/);
   assert.match(articlePage, /href=\\{workPath\\(linkedWork\\)\\}/);

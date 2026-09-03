@@ -344,7 +344,7 @@ The final hardening pass closes the remaining slow-network, rapid-touch, first-l
 Final accepted review fingerprints:
 
 - `app`: `83acc4ea9f23ebdc15a585fe905b86621c6e534a`
-- `tests`: `dee6f5885f632d5560817e20be0424cb911aff94`
+- `tests`: `795222462105597612a53fb3c98fa31dd93e187d`
 - `supabase`: unchanged at `0ebbd43b8c4f09e975c5aa1df7297780c0f8f7a8`
 - `functions`: unchanged at `93a01f847b4dfe665ee5d4d7df7b8eae518efd04`
 
