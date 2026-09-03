@@ -1,0 +1,87 @@
+/* Dedicated Blog article page only. Keep this scoped so Blog index and all other public pages remain untouched. */
+.rh-blog-article-page {
+  padding-top: 56px;
+  padding-bottom: 56px;
+}
+
+.rh-blog-article {
+  width: min(800px, 100%);
+  max-width: 800px;
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.rh-blog-article-title {
+  margin-top: 12px;
+  font-size: 56px;
+  line-height: 1.06;
+  letter-spacing: -0.045em;
+}
+
+.rh-blog-article-body {
+  margin-top: 34px;
+  font-size: 17px;
+  line-height: 1.8;
+  color: #3f3f46;
+}
+
+.rh-blog-article-body > p + p {
+  margin-top: 22px;
+}
+
+.rh-blog-project-card {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 64px;
+  padding: 24px;
+}
+
+.rh-blog-project-title {
+  margin-top: 8px;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.rh-blog-project-description {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 24px;
+}
+
+.rh-blog-project-link {
+  margin-top: 20px;
+  font-size: 12px;
+}
+
+@media (max-width: 639px) {
+  .rh-blog-article-page {
+    padding-top: 32px;
+    padding-bottom: 56px;
+  }
+
+  .rh-blog-article-title {
+    margin-top: 12px;
+    font-size: 40px;
+    line-height: 1.04;
+    letter-spacing: -0.045em;
+  }
+
+  .rh-blog-article-body {
+    margin-top: 36px;
+    font-size: 16px;
+    line-height: 1.75;
+  }
+
+  .rh-blog-article-body > p + p {
+    margin-top: 24px;
+  }
+
+  .rh-blog-project-card {
+    margin-top: 56px;
+    padding: 24px;
+  }
+
+  .rh-blog-project-title {
+    font-size: 18px;
+  }
+}
