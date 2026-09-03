@@ -64,7 +64,7 @@ test("Work project stories resolve the current Blog title without duplicating ti
 });
 
 
-test("Blog article has scoped mobile breathing room and a spacious conditional project-images card", async () => {
+test("Blog article keeps approved card typography while adding outer breathing room", async () => {
   const [pages, editorial] = await Promise.all([
     read("app/rupantar/blog-pages.tsx"),
     read("app/editorial-pages.css"),
@@ -74,10 +74,13 @@ test("Blog article has scoped mobile breathing room and a spacious conditional p
   assert.doesNotMatch(indexPage, /rh-blog-article|rh-blog-project-images/);
   assert.match(articlePage, /className="rh-blog-article max-w-\[800px\]"/);
   assert.match(articlePage, /linkedWork &&/);
-  assert.match(articlePage, /className="rh-blog-project-images mt-12 w-full/);
+  assert.doesNotMatch(articlePage, /rh-blog-project-images/);
+  assert.match(articlePage, /style=\{\{ marginTop: "64px" \}\}/);
+  assert.match(articlePage, /className="mt-12 w-full rounded-\[1\.75rem\][\s\S]*?p-6 sm:p-7/);
+  assert.match(articlePage, /text-\[18px\] sm:text-\[20px\]/);
+  assert.match(articlePage, /text-\[13px\] leading-6/);
+  assert.match(articlePage, /text-\[12px\] font-semibold/);
   assert.match(articlePage, /href=\{workPath\(linkedWork\)\}/);
 
   assert.match(editorial, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article \{[\s\S]*?padding-top: 32px/);
-  assert.match(editorial, /\.rh-blog-project-images \{[\s\S]*?width: 100%;[\s\S]*?padding: 34px !important/);
-  assert.match(editorial, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-project-images \{[\s\S]*?padding: 28px !important/);
 });
