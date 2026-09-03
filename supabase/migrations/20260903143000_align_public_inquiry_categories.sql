@@ -168,13 +168,12 @@ grant execute on function public.register_cloudinary_draft_image(text) to authen
 grant execute on function public.claim_expired_cloudinary_drafts(integer, integer) to authenticated;
 grant execute on function public.complete_cloudinary_draft_cleanup(text[]) to authenticated;
 
--- Replace the previous ten-argument overload so PostgREST has one canonical
--- persistence contract. The RPC remains callable only by service_role.
-drop function if exists public.submit_public_inquiry(
-  text, text, text, text, text, text, text, text, text, text
-);
-
-create function public.submit_public_inquiry(
+-- Keep the existing ten-argument submit_public_inquiry overload in place for
+-- the currently deployed caller. Add the idempotent eleven-argument overload
+-- alongside it so database migration and Edge/Cloudflare rollout can happen
+-- independently without an outage. The legacy overload can be retired only in
+-- a later migration after the new caller has been proven in production.
+create or replace function public.submit_public_inquiry(
   p_kind text,
   p_submission_id text,
   p_name text,
