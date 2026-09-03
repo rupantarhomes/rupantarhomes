@@ -75,9 +75,9 @@ test("Blog article has scoped mobile breathing room and a spacious conditional p
   assert.match(articlePage, /className="rh-blog-article max-w-\[800px\]"/);
   assert.match(articlePage, /linkedWork &&/);
   assert.match(articlePage, /className="rh-blog-project-images mt-12 w-full/);
-  assert.match(articlePage, /href=\\{workPath\\(linkedWork\\)\\}/);
+  assert.match(articlePage, /href=\{workPath\(linkedWork\)\}/);
 
-  assert.match(editorial, /@media \\(max-width: 639px\\) \\{[\\s\\S]*?\\.rh-blog-article \\{[\\s\\S]*?padding-top: 32px/);
-  assert.match(editorial, /\\.rh-blog-project-images \\{[\\s\\S]*?width: 100%;[\\s\\S]*?padding: 34px !important/);
-  assert.match(editorial, /@media \\(max-width: 639px\\) \\{[\\s\\S]*?\\.rh-blog-project-images \\{[\\s\\S]*?padding: 28px !important/);
+  assert.match(editorial, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article \{[\s\S]*?padding-top: 32px/);
+  assert.match(editorial, /\.rh-blog-project-images \{[\s\S]*?width: 100%;[\s\S]*?padding: 34px !important/);
+  assert.match(editorial, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-project-images \{[\s\S]*?padding: 28px !important/);
 });
