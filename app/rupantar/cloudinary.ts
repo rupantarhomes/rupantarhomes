@@ -7,6 +7,7 @@ type SignatureResponse = {
   apiKey: string;
   cloudName: string;
   assetFolder: string;
+  publicId: string;
   format: "webp";
   transformation: string;
 };
@@ -26,6 +27,7 @@ const maximumBytes = 10 * 1024 * 1024;
 export const maximumWorkImages = 3;
 const deleteBatchSize = 20;
 const cloudinaryApiBase = (import.meta.env.VITE_CLOUDINARY_API_BASE || "https://api.cloudinary.com").replace(/\/$/, "");
+const workDraftIdPattern = /^rupantar-homes\/works\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -37,6 +39,16 @@ function nonEmptyString(value: unknown): string | null {
 
 function positiveInteger(value: unknown): number | null {
   return typeof value === "number" && Number.isSafeInteger(value) && value > 0 ? value : null;
+}
+
+async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(new Error("Request timed out.")), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    window.clearTimeout(timeout);
+  }
 }
 
 async function readJson(response: Response): Promise<unknown> {
@@ -57,14 +69,14 @@ function responseError(body: unknown, fallback: string): string {
 
 async function adminRequest(path: string, init: RequestInit): Promise<Response> {
   const token = await getAccessToken();
-  return fetch(path, {
+  return fetchWithTimeout(path, {
     ...init,
     headers: {
       ...init.headers,
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-  });
+  }, 15_000);
 }
 
 function parseSignature(body: unknown): SignatureResponse {
@@ -73,14 +85,18 @@ function parseSignature(body: unknown): SignatureResponse {
   const apiKey = nonEmptyString(body.apiKey);
   const cloudName = nonEmptyString(body.cloudName);
   const assetFolder = nonEmptyString(body.assetFolder);
+  const publicId = nonEmptyString(body.publicId);
   const format = nonEmptyString(body.format);
   const transformation = nonEmptyString(body.transformation);
   const timestamp = positiveInteger(body.timestamp);
-  if (!signature || !apiKey || !cloudName || !assetFolder || !timestamp || format !== "webp" || !transformation) {
+  if (!signature || !apiKey || !cloudName || !assetFolder || !publicId || !timestamp || format !== "webp" || !transformation) {
     throw new Error("The image upload authorization was incomplete.");
   }
   if (!/^[a-z0-9_-]+$/i.test(cloudName)) throw new Error("The Cloudinary cloud name was invalid.");
-  return { signature, timestamp, apiKey, cloudName, assetFolder, format, transformation };
+  if (assetFolder !== "rupantar-homes/works" || !workDraftIdPattern.test(publicId)) {
+    throw new Error("The image upload authorization returned an invalid storage path.");
+  }
+  return { signature, timestamp, apiKey, cloudName, assetFolder, publicId, format, transformation };
 }
 
 async function requestUploadSignature(): Promise<SignatureResponse> {
@@ -98,6 +114,7 @@ function validateUploadedImage(uploaded: UploadResponse, signed: SignatureRespon
   const height = positiveInteger(uploaded.height);
   const bytes = positiveInteger(uploaded.bytes);
   if (!secureUrl || !publicId) throw new Error(`Cloudinary did not store ${file.name} correctly.`);
+  if (publicId !== signed.publicId) throw new Error("Cloudinary returned an unexpected Work image ID.");
   if (format !== "webp") throw new Error(`${file.name} was not converted to WebP.`);
   if (!width || !height || !bytes) throw new Error(`${file.name} returned incomplete image details.`);
   if (width > 1920 || height > 1080) {
@@ -135,28 +152,31 @@ async function uploadOne(file: File, sortOrder: number): Promise<WorkImage> {
   body.set("timestamp", String(signed.timestamp));
   body.set("signature", signed.signature);
   body.set("asset_folder", signed.assetFolder);
+  body.set("public_id", signed.publicId);
   body.set("format", signed.format);
   body.set("transformation", signed.transformation);
 
-  const response = await fetch(`${cloudinaryApiBase}/v1_1/${encodeURIComponent(signed.cloudName)}/image/upload`, {
+  const response = await fetchWithTimeout(`${cloudinaryApiBase}/v1_1/${encodeURIComponent(signed.cloudName)}/image/upload`, {
     method: "POST",
     body,
-  });
+  }, 45_000);
   const uploaded = (await readJson(response)) as UploadResponse | null;
   if (!response.ok || !uploaded || uploaded.error) {
+    try {
+      await deleteCloudinaryImages([signed.publicId]);
+    } catch (cleanupError) {
+      console.error("Unable to reconcile a failed Cloudinary Work upload", cleanupError);
+    }
     throw new Error(responseError(uploaded, `Unable to upload ${file.name}.`));
   }
 
   try {
     return validateUploadedImage(uploaded, signed, file, sortOrder);
   } catch (error) {
-    const publicId = nonEmptyString(uploaded.public_id);
-    if (publicId) {
-      try {
-        await deleteCloudinaryImages([publicId]);
-      } catch (cleanupError) {
-        console.error("Unable to clean up a rejected Cloudinary upload", cleanupError);
-      }
+    try {
+      await deleteCloudinaryImages([signed.publicId]);
+    } catch (cleanupError) {
+      console.error("Unable to clean up a rejected Cloudinary upload", cleanupError);
     }
     throw error;
   }
@@ -183,7 +203,7 @@ export async function uploadWorkImages(files: File[]): Promise<WorkImage[]> {
       await deleteCloudinaryImages(uploaded.map((image) => image.publicId));
     } catch (cleanupError) {
       console.error("Unable to roll back a partially completed Cloudinary upload", cleanupError);
-      throw new Error(`${uploadError instanceof Error ? uploadError.message : "Image upload failed."} Some uploaded images may need manual cleanup.`);
+      throw new Error(`${uploadError instanceof Error ? uploadError.message : "Image upload failed."} Some uploaded images may need automatic cleanup on the next Admin session.`);
     }
     throw uploadError;
   }

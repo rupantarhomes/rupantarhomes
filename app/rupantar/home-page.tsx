@@ -14,7 +14,7 @@ import {
   Star,
   Upload,
 } from "lucide-react";
-import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useState, type Dispatch, type MouseEvent as ReactMouseEvent, type SetStateAction } from "react";
 import { categories, interiorDesignCategories } from "./data";
 import { categoryIcons, WorkPhoto } from "./shared";
 import type {
@@ -78,6 +78,10 @@ function acceptedPhoto(file: File | undefined): File | null {
   return file;
 }
 
+function isInteractiveTarget(target: EventTarget) {
+  return target instanceof Element && Boolean(target.closest("button, a, input, select, textarea, label"));
+}
+
 export function HomePage({
   works,
   reviews,
@@ -102,6 +106,11 @@ export function HomePage({
   const [heroSlidesReady, setHeroSlidesReady] = useState<Set<string>>(
     () => new Set([heroSlides[0].desktop, heroSlides[0].mobile]),
   );
+
+  const openWorkCard = (event: ReactMouseEvent<HTMLElement>, id: string) => {
+    if (isInteractiveTarget(event.target)) return;
+    onWork(id);
+  };
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -282,7 +291,16 @@ export function HomePage({
           {featured.map((work) => (
             <article
               key={work.id}
-              className="group bg-white border border-zinc-100/90 rounded-[1.5rem] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-[border-color,box-shadow,transform] duration-300 ease-out hover:border-zinc-200 hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(0,0,0,0.08)]"
+              role="button"
+              tabIndex={0}
+              aria-label={`View ${work.title}`}
+              onClick={(event) => openWorkCard(event, work.id)}
+              onKeyDown={(event) => {
+                if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
+                event.preventDefault();
+                onWork(work.id);
+              }}
+              className="group cursor-pointer bg-white border border-zinc-100/90 rounded-[1.5rem] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-[border-color,box-shadow,transform] duration-300 ease-out hover:border-zinc-200 hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(0,0,0,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF1A3D]/30"
             >
               <div className="p-3">
                 <WorkPhoto image={work.images[0]} alt={work.title} />

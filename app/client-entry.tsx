@@ -13,6 +13,7 @@ import "./recent-works-unified-covers.css";
 import "./recent-works-location-badge.css";
 import "./recent-works-mobile-readable.css";
 import { BrandIntro } from "./rupantar/brand-intro";
+import { SiteErrorBoundary } from "./rupantar/error-boundary";
 import { RupantarSite } from "./rupantar/site";
 import { initWorkMediaEnhancements } from "./rupantar/work-media-enhancer";
 import { initAdminLeadsEnhancements } from "./rupantar/admin-leads-enhancer";
@@ -33,8 +34,10 @@ try {
 
 createRoot(root).render(
   <StrictMode>
-    <RupantarSite />
-    <BrandIntro enabled={showBrandIntro} />
+    <SiteErrorBoundary>
+      <RupantarSite />
+      <BrandIntro enabled={showBrandIntro} />
+    </SiteErrorBoundary>
   </StrictMode>,
 );
 
@@ -159,8 +162,16 @@ function ensureReviewCardClasses() {
         if (identity[1] instanceof HTMLElement) identity[1].classList.add("rh-review-location");
       }
     }
-    const link = card.querySelector<HTMLElement>("a");
-    if (link) link.classList.add("rh-review-link");
+    const link = card.querySelector<HTMLAnchorElement>("a");
+    if (link) {
+      link.classList.add("rh-review-link");
+      if (link.getAttribute("href") === "#") {
+        link.hidden = true;
+        link.removeAttribute("target");
+        link.setAttribute("aria-hidden", "true");
+        link.tabIndex = -1;
+      }
+    }
   }
 }
 

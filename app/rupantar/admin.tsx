@@ -19,7 +19,6 @@ import { maximumWorkImages } from "./cloudinary";
 import { AdminBlogs } from "./blog-admin";
 import type { Blog, BlogForm } from "./blog";
 import { brandAssets, categories, emptyWork } from "./data";
-import { getSupabase } from "./supabase";
 import type {
   AdminStats,
   Lead,
@@ -33,7 +32,7 @@ import type {
 } from "./types";
 
 export function AdminLogin({
-  navigate,
+  navigate: _navigate,
   onLogin,
   error,
   busy,
@@ -50,7 +49,7 @@ export function AdminLogin({
     <div className="min-h-screen bg-[#fbfbfb] flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-[420px] bg-white border border-zinc-100 rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.06)] p-8">
         <button
-          onClick={() => navigate("home")}
+          onClick={() => window.location.assign("/")}
           className="text-[12px] text-zinc-500 flex items-center gap-1 hover:text-zinc-900 mb-6"
         >
           <ArrowLeft className="w-4 h-4" /> Back to site
@@ -94,7 +93,7 @@ export function AdminLogin({
           <button
             type="submit"
             disabled={busy}
-            className="w-full h-11 rounded-full bg-[#FF1A3D] text-white font-semibold text-[14px] shadow-[0_8px_20px_rgba(255,26,61,0.25)]"
+            className="w-full h-11 rounded-full bg-[#FF1A3D] text-white font-semibold text-[14px] shadow-[0_8px_20px_rgba(255,26,61,0.25)] disabled:opacity-60"
           >
             {busy ? "Signing in..." : "Login"}
           </button>
@@ -111,7 +110,8 @@ type AdminPortalProps = {
   page: Page;
   navigate: (page: Page) => void;
   onLogout: () => void | Promise<void>;
-  works: Work[];  blogs: Blog[];
+  works: Work[];
+  blogs: Blog[];
   blogForm: BlogForm;
   setBlogForm: Dispatch<SetStateAction<BlogForm>>;
   editingBlogId: string | null;
@@ -119,7 +119,6 @@ type AdminPortalProps = {
   onEditBlog: (blog: Blog) => void;
   onDeleteBlog: (id: string) => void | Promise<void>;
   onCancelBlog: () => void | Promise<void>;
-
   workForm: WorkForm;
   setWorkForm: Dispatch<SetStateAction<WorkForm>>;
   editingWorkId: string | null;
@@ -135,11 +134,12 @@ type AdminPortalProps = {
   leadsLoadingOlder: boolean;
   onLoadOlderLeads: () => Promise<void>;
   onUpdateLeadStatus: (id: string, status: LeadStatus) => Promise<void>;
+  onDeleteLead: (id: string) => Promise<void>;
   reviews: Review[];
   reviewForm: ReviewForm;
   setReviewForm: Dispatch<SetStateAction<ReviewForm>>;
-  onSaveReview: () => void;
-  onDeleteReview: (id: string) => void;
+  onSaveReview: () => void | Promise<void>;
+  onDeleteReview: (id: string) => void | Promise<void>;
   settings: SiteSettings;
   setSettings: Dispatch<SetStateAction<SiteSettings>>;
   onSaveSettings: () => Promise<void>;
@@ -197,14 +197,15 @@ export function AdminPortal(props: AdminPortalProps) {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => navigate("home")}
+              onClick={() => window.location.assign("/")}
               className="hidden sm:inline-flex h-10 px-5 rounded-full bg-white border border-[#111111] text-[#111111] text-[14px] font-['Space_Grotesk'] font-medium tracking-[-0.01em] items-center justify-center hover:bg-zinc-50 transition"
             >
               View Site
             </button>
             <button
               onClick={onLogout}
-              className="h-10 px-5 rounded-full bg-[#111111] text-white text-[14px] font-['Space_Grotesk'] font-medium tracking-[-0.01em] flex items-center justify-center gap-2 hover:opacity-90 transition"
+              disabled={props.busy}
+              className="h-10 px-5 rounded-full bg-[#111111] text-white text-[14px] font-['Space_Grotesk'] font-medium tracking-[-0.01em] flex items-center justify-center gap-2 hover:opacity-90 transition disabled:opacity-60"
             >
               <LogOut className="w-4 h-4" /> Logout
             </button>
@@ -290,7 +291,7 @@ function AdminDashboard({ works, leads, navigate, adminStats }: AdminPortalProps
             <button onClick={() => navigate("admin-works")} className="h-11 rounded-full border border-zinc-200 text-[13px] font-medium hover:bg-zinc-50">+ Add New Work</button>
             <button onClick={() => navigate("admin-reviews")} className="h-11 rounded-full border border-zinc-200 text-[13px] font-medium hover:bg-zinc-50">+ Add Review</button>
             <button onClick={() => navigate("admin-settings")} className="h-11 rounded-full border border-zinc-200 text-[13px] font-medium hover:bg-zinc-50">Edit Settings</button>
-            <button onClick={() => navigate("home")} className="h-11 rounded-full bg-zinc-900 text-white text-[13px] font-medium">View Site</button>
+            <button onClick={() => window.location.assign("/")} className="h-11 rounded-full bg-zinc-900 text-white text-[13px] font-medium">View Site</button>
           </div>
         </div>
       </div>
@@ -312,9 +313,7 @@ function leadWhatsAppUrl(lead: Lead): string {
 
 const seenLeadsStorageKey = "rupantar-admin-seen-leads";
 
-function AdminLeads({ leads, leadsHasMore, leadsLoadingOlder, onLoadOlderLeads, onUpdateLeadStatus, busy }: AdminPortalProps) {
-  const [deletedLeadIds, setDeletedLeadIds] = useState<Set<string>>(() => new Set());
-  const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
+function AdminLeads({ leads, leadsHasMore, leadsLoadingOlder, onLoadOlderLeads, onUpdateLeadStatus, onDeleteLead, busy }: AdminPortalProps) {
   const [firstViewLeadIds] = useState<Set<string>>(() => {
     if (typeof window === "undefined") return new Set();
     try {
@@ -325,7 +324,7 @@ function AdminLeads({ leads, leadsHasMore, leadsLoadingOlder, onLoadOlderLeads, 
       return new Set(leads.filter((lead) => lead.status === "new").map((lead) => lead.id));
     }
   });
-  const visibleLeads = leads.filter((lead) => !deletedLeadIds.has(lead.id));
+  const visibleLeads = leads;
   const visibleLeadIdsKey = visibleLeads.map((lead) => lead.id).join("|");
   const isEstimateLead = (lead: Lead) => Boolean(
     lead.referenceImageUrl || lead.location || lead.approximateArea || lead.materialPreference,
@@ -348,32 +347,6 @@ function AdminLeads({ leads, leadsHasMore, leadsLoadingOlder, onLoadOlderLeads, 
   const formatDate = (value: string) => {
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
-  };
-
-  const deleteLead = async (lead: Lead) => {
-    if (!window.confirm(`Delete the lead from ${lead.name}?`)) return;
-    setDeletingLeadId(lead.id);
-    try {
-      const supabase = getSupabase() as any;
-      const { data, error } = await supabase
-        .from("leads")
-        .delete()
-        .eq("id", lead.id)
-        .select("id")
-        .maybeSingle();
-      if (error || !data) throw new Error(error?.message ?? "The lead could not be deleted.");
-      setDeletedLeadIds((current) => {
-        const next = new Set(current);
-        next.add(lead.id);
-        return next;
-      });
-      const index = leads.findIndex((item) => item.id === lead.id);
-      if (index >= 0) leads.splice(index, 1);
-    } catch (error) {
-      window.alert(error instanceof Error ? error.message : "The lead could not be deleted.");
-    } finally {
-      setDeletingLeadId(null);
-    }
   };
 
   const contactLinks = (lead: Lead) => (
@@ -407,7 +380,7 @@ function AdminLeads({ leads, leadsHasMore, leadsLoadingOlder, onLoadOlderLeads, 
       <div className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white p-1 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
         <button
           type="button"
-          disabled={busy || deletingLeadId === lead.id}
+          disabled={busy}
           onClick={() => void onUpdateLeadStatus(lead.id, "contacted")}
           className={`h-8 px-3.5 rounded-full text-[11px] font-semibold transition-all disabled:opacity-50 ${
             lead.status === "contacted"
@@ -419,7 +392,7 @@ function AdminLeads({ leads, leadsHasMore, leadsLoadingOlder, onLoadOlderLeads, 
         </button>
         <button
           type="button"
-          disabled={busy || deletingLeadId === lead.id}
+          disabled={busy}
           onClick={() => void onUpdateLeadStatus(lead.id, "closed")}
           className={`h-8 px-3.5 rounded-full text-[11px] font-semibold transition-all disabled:opacity-50 ${
             lead.status === "closed"
@@ -432,11 +405,11 @@ function AdminLeads({ leads, leadsHasMore, leadsLoadingOlder, onLoadOlderLeads, 
       </div>
       <button
         type="button"
-        disabled={busy || deletingLeadId === lead.id}
-        onClick={() => void deleteLead(lead)}
+        disabled={busy}
+        onClick={() => void onDeleteLead(lead.id)}
         className="h-10 px-4 rounded-full border border-red-200 bg-white text-red-600 text-[12px] font-medium hover:bg-red-50 disabled:opacity-50 transition"
       >
-        {deletingLeadId === lead.id ? "Deleting..." : "Delete"}
+        Delete
       </button>
     </div>
   );
@@ -699,8 +672,8 @@ function AdminWorks({
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
-                  <button onClick={() => onEditWork(work)} className="h-7 px-3 rounded-full bg-zinc-900 text-white text-[11px]">Edit</button>
-                  <button onClick={() => onDeleteWork(work.id)} className="h-7 px-3 rounded-full border border-zinc-200 text-[11px]">Delete</button>
+                  <button disabled={busy} onClick={() => onEditWork(work)} className="h-7 px-3 rounded-full bg-zinc-900 text-white text-[11px] disabled:opacity-60">Edit</button>
+                  <button disabled={busy} onClick={() => onDeleteWork(work.id)} className="h-7 px-3 rounded-full border border-zinc-200 text-[11px] disabled:opacity-60">Delete</button>
                 </div>
               </div>
             ))}
@@ -741,7 +714,7 @@ function AdminReviews({ reviews, reviewForm, setReviewForm, onSaveReview, onDele
                   <div className="flex">{Array.from({ length: review.rating }).map((_, index) => <Star key={index} className="w-3 h-3 fill-[#FF1A3D] text-[#FF1A3D]" />)}</div>
                 </div>
                 <div className="text-[12px] text-zinc-600 mt-2 leading-5">{review.message}</div>
-                <div className="mt-3 flex gap-2"><button onClick={() => onDeleteReview(review.id)} className="h-7 px-3 rounded-full border border-zinc-200 text-[11px]">Delete</button></div>
+                <div className="mt-3 flex gap-2"><button disabled={busy} onClick={() => onDeleteReview(review.id)} className="h-7 px-3 rounded-full border border-zinc-200 text-[11px] disabled:opacity-60">Delete</button></div>
               </div>
             ))}
           </div>

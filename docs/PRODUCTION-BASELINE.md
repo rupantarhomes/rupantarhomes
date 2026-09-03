@@ -281,6 +281,116 @@ Scope is limited to the underlying Work-save RPC validation:
 
 Accepted supabase fingerprint after this scoped update: 0ebbd43b8c4f09e975c5aa1df7297780c0f8f7a8.
 
+## Admin performance and reliability update — 2026-09-03
+
+Scope is limited to Admin-side loading, save responsiveness, Work image draft ownership, empty Work image-slot interaction, and the saved-content handoff to the public site:
+
+- preserve Supabase Auth, active-admin membership checks, RLS, grants, RPCs, the ten-category system, and database schema unchanged;
+- load the full Admin Works collection separately from the public 12-item Works pagination so Admin records cannot disappear when the public page limit is reached;
+- stop full Works/Reviews/Settings/Leads/Blogs reloads on every Admin tab switch and open the Admin dashboard immediately after successful authorization while the first Admin data refresh completes;
+- preserve only the lightweight Admin totals refresh when navigating back to the Dashboard;
+- after Work saves/deletes, refresh only the Admin Works collection on the critical path and refresh the public content cache separately without overwriting Admin Works state;
+- pin the set of persisted Cloudinary public IDs when a Work edit begins so later state refreshes cannot reclassify saved images as disposable draft uploads;
+- make existing empty Work image slots activate the existing signed uploader without changing layout, colors, file rules, or upload contract;
+- make the homepage public-content request contain the six newest Works in database creation order so a newly saved non-featured Work cannot be excluded by older Featured records;
+- make Admin `View Site` perform a fresh root-page load so the public landing page reads current Supabase data and current saved image URLs instead of stale in-memory Admin state;
+- keep the existing Featured badge and all homepage card layout, styling, copy, and interaction unchanged;
+- keep JPEG/PNG input, 10 MB maximum, maximum 3 images, WebP output, 1920×1080 transformation, `rupantar-homes/works`, signed uploads, and reference-safe cleanup unchanged;
+- add regression coverage for Admin loading, navigation, save refresh boundaries, stable image ownership, empty-slot activation, newest-six landing data, and the fresh Admin-to-public handoff.
+
+## Complete Admin reliability audit — 2026-09-03
+
+This audit extends the same Admin reliability scope across Admin Login, Dashboard, Works, Blogs, Leads, Reviews, Settings, public detail navigation, and touch/click behavior without changing the site design or security model.
+
+- Admin Login starts with an empty live-data Works state instead of seeded demo Works, prevents duplicate in-flight login submissions, enters Dashboard immediately after successful authorization, and keeps the existing active-admin check unchanged;
+- all Admin-to-public exits (`Back to site`, header `View Site`, Dashboard `View Site`, and Logout) perform a fresh root load so public pages cannot inherit stale Admin memory;
+- Dashboard keeps lightweight totals refresh behavior and reflects live Works/Lead state without forcing full content reloads on tab navigation;
+- Work save now uses the exact confirmed RPC result to update Admin state immediately, invalidates stale Works/public requests, updates the six-item homepage cache immediately, and does not wait for a second Admin Works fetch before the saved Work appears;
+- Work delete removes the confirmed deleted Work immediately from Admin/home state and preserves the existing reference-safe Cloudinary cleanup sequence;
+- Work image ownership, failed-save cleanup, Cancel behavior, maximum image count, source formats, WebP validation, 1920×1080 bounds, signed upload path, and Cloudinary folder remain unchanged;
+- Blog save/update returns the exact confirmed saved Blog row and commits it to Admin/public Blog state immediately without a second list fetch; delete removes the confirmed row locally immediately;
+- Lead status updates and deletes commit locally immediately after the confirmed database write instead of doing an additional full Leads fetch, and Admin no longer mutates the Leads prop array directly;
+- Review save/delete updates only Review state immediately after the confirmed database operation instead of reloading Works + Reviews + Settings;
+- Settings save applies the exact confirmed settings row immediately instead of performing a broad public-content reload;
+- selected Work and Blog detail records are pinned independently from mutable paginated lists so a late list response cannot blank or replace a just-clicked detail page;
+- public Works/Blog/Admin content reads use request-generation guards so stale in-flight responses cannot overwrite a newer confirmed mutation;
+- Login, Admin mutations, Work image upload/removal, estimate submission, and query submission reject duplicate in-flight handler calls, protecting rapid taps/double clicks before React can render a disabled state;
+- no Supabase Auth/RLS/grant/schema/RPC/category changes, no Cloudinary configuration changes, no deployment/security-header changes, and no visual redesign were made in this audit;
+- live Supabase API inspection during the audit showed healthy successful API responses, so the removed delays were client-side redundant reads/state races rather than a database outage.
+
+Accepted scoped fingerprints after the complete audit:
+
+- `supabase`: unchanged at `0ebbd43b8c4f09e975c5aa1df7297780c0f8f7a8`
+- `functions`: unchanged at `93a01f847b4dfe665ee5d4d7df7b8eae518efd04`
+
+The accepted behavior is: once the required network write is confirmed successful, the affected Admin/public in-memory state is updated immediately from that confirmed result without an additional blocking list/content reload. Network persistence itself is still a real request and therefore is not treated as zero-time.
+
+## Final Admin edge hardening — 2026-09-03
+
+The final hardening pass closes the remaining slow-network, rapid-touch, first-load, and direct-route edge cases without changing layout, colors, public copy, data contracts, or security boundaries:
+
+- Work save and Work image upload/removal are mutually exclusive at handler level, so an image cannot begin uploading after the save payload has already been committed in flight;
+- Work, Blog, Review, and Settings saves use immutable form snapshots captured at the moment Save is accepted, preventing later UI edits from changing which version is persisted;
+- Admin controls and navigation are temporarily disabled while a confirmed Admin mutation or Work upload is active, preventing tab changes or `View Site` from unloading the page before an operation finishes;
+- controls that were already disabled for their own logical reason are not incorrectly re-enabled when the temporary mutation lock ends;
+- if a Work is saved before the initial full Admin Works list has finished loading, the confirmed Work still appears immediately and a non-blocking full Admin Works reconciliation restores the complete list afterward;
+- if a Blog is saved before the initial Blog list has finished loading, the confirmed article appears immediately and a non-blocking Blog reconciliation restores the complete list afterward;
+- Recent Works and Blog listing full-card interactions now live natively in React with mouse/touch, Enter/Space keyboard support, and nested interactive-control exclusion, eliminating post-render heading/text matching and duplicate click dispatch;
+- direct Work or Blog detail requests that fail because of a real network/API error now show a visible retry/back-home state instead of remaining on an indefinite blank loader;
+- existing not-found routing behavior remains separate from request-failure behavior;
+- the existing Work image lifecycle remains reference-safe: failed Work saves clean only new draft uploads, persisted removals remain draft-only until successful save, Cancel preserves persisted originals, and removed persisted assets are cleaned only after the confirmed Work save;
+- no Supabase schema, RLS, grants, RPCs, Auth rules, categories, Cloudinary upload configuration, inquiry security, CSP/security headers, or deployment configuration changed in this pass.
+
+Final accepted review fingerprints:
+
+- `app`: `83acc4ea9f23ebdc15a585fe905b86621c6e534a`
+- `tests`: `dee6f5885f632d5560817e20be0424cb911aff94`
+- `supabase`: unchanged at `0ebbd43b8c4f09e975c5aa1df7297780c0f8f7a8`
+- `functions`: unchanged at `93a01f847b4dfe665ee5d4d7df7b8eae518efd04`
+
+The production workflow must pass the handover lock and `npm run verify` on the exact final PR head before merge. Production smoke testing of disposable Work/Blog writes and real browser navigation remains a post-merge/deploy step because Cloudflare deploys from `main`.
+
+## End-to-end durability hardening — 2026-09-03
+
+This section is the authoritative final system-level durability contract for PR #85 and supersedes any intermediate statement above that described an earlier implementation state.
+
+- The browser, Cloudflare inquiry Function, Supabase Edge Function, and database use the same canonical ten service categories, including `interior`.
+- Public Query and Estimate retries are idempotent. An unchanged failed submission reuses its submission UUID; editing the payload creates a new attempt. Estimate retry identity includes a SHA-256 digest of the actual attachment bytes, so a different photo cannot inherit a lost-response key merely because metadata matches.
+- `queries` and `estimate_requests` have nullable `submission_id` columns with unique non-null indexes. A lost HTTP response followed by retry resolves to the already-persisted submission instead of creating a duplicate row/Lead.
+- The legacy ten-argument and idempotent eleven-argument `submit_public_inquiry` RPC overloads coexist for zero-downtime rollout. Public/anon/authenticated callers cannot execute them directly; the server-side path uses service-role access through the internal-secret-protected Edge Function.
+- Supabase Edge Function `submit-public-inquiry` version 4 is ACTIVE and dual-compatible with both the pre-PR Cloudflare caller and the new idempotent caller.
+- Estimate media uses a deterministic Cloudinary public ID under `rupantar-homes/inquiries` for each submission attempt. Ambiguous persistence failures preserve media that may already be referenced, and confirmed duplicate retries do not emit duplicate Web3Forms notifications.
+- Admin Work images are registered as server-authorized drafts before Cloudinary receives the upload. Saved/referenced images are never eligible for stale-draft deletion. Only unreferenced drafts at least seven days old (`10080` minutes minimum) may be claimed, and failed cleanup claims become retryable after a 15-minute lease.
+- `claim_unreferenced_cloudinary_images` remains the final reference-safety check immediately before Cloudinary deletion, and successful/not-found cleanup reconciles the draft registry.
+- Work save/upload/removal/cancel/logout operations are cross-locked so a save payload cannot race with a Work image operation. Confirmed Work writes update Admin/home state immediately, while background reconciliation is used only where needed.
+- The canonical production `save_work_with_images(text,text,text,text,text,text,boolean,text,jsonb,bigint)` RPC is self-contained. A forward-only production migration removed its dependency on the retired pre-blog helper overload while preserving active-Admin authorization, all ten categories, image count/format validation, advisory cleanup locks, reference-safe persistence, and normalized HTTPS blog URL behavior.
+- Production verification confirms the canonical Work RPC is the only live `save_work_with_images` signature, is executable by `authenticated`, not executable by `anon`, and no longer delegates to a missing overload.
+- `app/rupantar/database.types.ts` was regenerated from the live production Supabase schema after the migrations were applied. Repository mapping validates required Work image URL/public ID fields and converts nullable legacy width/height/byte metadata into the app's supported optional representation. New Work saves omit `p_work_id` so PostgreSQL uses its `NULL` default; an empty blog URL is passed as an empty string and normalized to `NULL` inside the RPC.
+- Settings cannot be written from fallback or unconfirmed state: a live production `site_settings` row must be fetched successfully before `saveSettings` is allowed.
+- Admin authorization is revalidated through Supabase auth-state changes, browser focus/visibility, and a five-minute interval. Confirmed missing/revoked access returns the operator to Admin login; a transient provider/network verification failure is surfaced/logged without being treated as revocation.
+- Public Works and Blog list failures use native React error state and Retry controls. Public Work/Blog detail failures retain explicit Retry/Back Home recovery. The removed global `runtime-resilience.ts` history/DOM probe is not part of the final architecture.
+- Recent Works and Blog cards use native React mouse/touch/keyboard interaction and exclude nested interactive controls to prevent double firing.
+- Admin Works fetches transparently in 1,000-row batches when needed rather than having a hidden 1,000-record lifetime ceiling. Public Works remains paginated at 12 items per request.
+- CI exposes production-lock enforcement, strict TypeScript, production Vite build, and regression tests as separate named gates so failures are diagnosable. The full regression suite must remain green before merge.
+- The production Supabase migration ledger is authoritative. Database changes made during this hardening were applied forward-only and verified before generated types were refreshed.
+- `/api/health` and the production operations runbook remain the operational contract for dependency monitoring, backup/export expectations, restore testing, migration discipline, secret rotation, incident response, media-orphan audits, and post-deploy smoke checks.
+- "Immediate" display means immediately after the required persistence write is confirmed, without a redundant blocking list/content reload. No network/database operation is represented as literal zero-time.
+
+Final protected fingerprints for the code/schema state validated by GitHub Actions:
+
+- `app`: `9ff837db045f98589f69e3c02eb2946ea5894859`
+- `functions`: `475f088510f369c3e527f64972e2e6a5e9d5ff93`
+- `index.html`: `4b125b1b6df3c609babab6bdd513479be2cae7d7`
+- `package.json`: `30aede1d9522c36b1abef1fccf843f1c5edbd67f`
+- `public`: `0536c426ff9be2776c277c71fd7bea91257ed0f8`
+- `supabase`: `f8d7073f76d3100d9bd404231cbbd61beec56e9a`
+- `tests`: `3586c3cece8740b04e22f3417d1bac08b99173ae`
+- `tsconfig.json`: `e7a4b1bc1895736832e2af16296bdf5c434591ad`
+
+The exact code/schema head `c8153ebcc6b4aefdccf7a6c5c9b8166a95e9e09a` passed production-lock enforcement, strict TypeScript, production build, and the regression suite in GitHub Actions run `33701585799`, job `100481827057`. Documentation-only commits may advance the PR head after that code-validation point and must also pass the same workflow before merge.
+
+Production database/Edge compatibility work described above is already live because it was deliberately rolled out backward-compatibly before the application merge. The application/UI branch remains unmerged. Destructive/disposable browser smoke testing of the new application behavior remains a post-merge/Cloudflare-deploy step.
+
 ## AI/Codex instruction block
 
 Use this at the start of future implementation requests:

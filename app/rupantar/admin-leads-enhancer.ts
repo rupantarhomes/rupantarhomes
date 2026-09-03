@@ -71,6 +71,96 @@ function enhanceAdminLeads() {
   leadSectionTitles.forEach(enhanceLeadSection);
 }
 
+function adminIsBusy() {
+  if (window.location.pathname !== "/admin") return false;
+  const logout = Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find(
+    (button) => button.textContent?.includes("Logout"),
+  );
+  return Boolean(logout?.disabled);
+}
+
+function syncAdminBusyControls() {
+  if (window.location.pathname !== "/admin") return;
+  const busy = adminIsBusy();
+  const controls = Array.from(document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement>("input, select, textarea, button"));
+
+  for (const control of controls) {
+    if (busy) {
+      if (!control.disabled) {
+        control.dataset.rhBusyDisabled = "true";
+        control.disabled = true;
+      }
+      continue;
+    }
+
+    if (control.dataset.rhBusyDisabled === "true") {
+      delete control.dataset.rhBusyDisabled;
+      control.disabled = false;
+    }
+  }
+}
+
+function enhanceWorkImageSlots() {
+  const worksHeading = Array.from(document.querySelectorAll<HTMLHeadingElement>("h1")).find(
+    (heading) => heading.textContent?.trim() === "Manage Works",
+  );
+  if (!worksHeading) return;
+
+  const fileInput = Array.from(document.querySelectorAll<HTMLInputElement>('input[type="file"]')).find(
+    (input) => input.multiple && input.accept.includes("image/jpeg"),
+  );
+  if (!fileInput) return;
+
+  const emptyLabels = Array.from(document.querySelectorAll<HTMLElement>("span")).filter(
+    (label) => label.textContent?.trim() === "Empty",
+  );
+
+  for (const emptyLabel of emptyLabels) {
+    const slot = emptyLabel.parentElement;
+    if (!(slot instanceof HTMLElement) || slot.dataset.rhWorkSlotReady === "true") continue;
+
+    slot.dataset.rhWorkSlotReady = "true";
+    slot.setAttribute("role", "button");
+    slot.setAttribute("tabindex", "0");
+    slot.setAttribute("aria-label", "Add work image");
+    slot.style.cursor = "pointer";
+
+    const openPicker = () => {
+      if (!fileInput.disabled && !adminIsBusy()) fileInput.click();
+    };
+
+    slot.addEventListener("click", openPicker);
+    slot.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      openPicker();
+    });
+  }
+}
+
+function enhanceViewSiteButton() {
+  const button = Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find(
+    (candidate) => candidate.textContent?.trim() === "View Site",
+  );
+  if (!button || button.dataset.rhFreshViewSite === "true") return;
+
+  button.dataset.rhFreshViewSite = "true";
+  button.addEventListener(
+    "click",
+    (event) => {
+      if (adminIsBusy()) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+      }
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      window.location.assign("/");
+    },
+    true,
+  );
+}
+
 export function initAdminLeadsEnhancements() {
   let scheduled = false;
 
@@ -79,12 +169,15 @@ export function initAdminLeadsEnhancements() {
     scheduled = true;
     window.requestAnimationFrame(() => {
       scheduled = false;
+      syncAdminBusyControls();
       enhanceAdminLeads();
+      enhanceWorkImageSlots();
+      enhanceViewSiteButton();
     });
   };
 
   schedule();
 
   const observer = new MutationObserver(schedule);
-  observer.observe(document.body, { childList: true, subtree: true });
+  observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["disabled"] });
 }

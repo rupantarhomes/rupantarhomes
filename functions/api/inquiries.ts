@@ -1,10 +1,12 @@
 import { cloudinarySignature, destroyCloudinaryImage } from "../_lib/cloudinary";
 import { requireInquiryRuntimeEnv, type InquiryRuntimeEnv, type RuntimeEnv } from "../_lib/env";
-import { errorMessage, json } from "../_lib/http";
+import { errorMessage, fetchWithTimeout, json } from "../_lib/http";
 
 const maximumAttachmentBytes = 10 * 1024 * 1024;
 const maximumRequestBytes = 11 * 1024 * 1024;
 const acceptedAttachmentTypes = new Set(["image/jpeg", "image/png"]);
+const inquiryAssetFolder = "rupantar-homes/inquiries";
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const allowedCategories = new Set([
   "architect",
   "modular-kitchen",
@@ -15,6 +17,7 @@ const allowedCategories = new Set([
   "parqueting",
   "railing",
   "home-construction",
+  "interior",
 ]);
 
 type InquiryKind = "query" | "estimate";
@@ -32,9 +35,16 @@ type Web3FormsResult = {
   success?: unknown;
   message?: unknown;
 };
+type InquiryInsertResult = { duplicate: boolean };
 
 class PublicRequestError extends Error {
   constructor(message: string, readonly status = 400) {
+    super(message);
+  }
+}
+
+class InquiryPersistenceError extends Error {
+  constructor(message: string, readonly safeToCleanupAttachment: boolean) {
     super(message);
   }
 }
@@ -57,6 +67,12 @@ function inquiryKind(form: FormData): InquiryKind {
   const kind = form.get("kind");
   if (kind === "query" || kind === "estimate") return kind;
   throw new PublicRequestError("Invalid request type.");
+}
+
+function submissionId(form: FormData): string {
+  const value = textField(form, "submission_id", "Submission ID", 36);
+  if (!uuidPattern.test(value)) throw new PublicRequestError("Invalid submission ID.");
+  return value.toLowerCase();
 }
 
 function category(form: FormData): string {
@@ -130,6 +146,7 @@ function cloudinaryUrl(value: unknown, cloudName: string): string {
 async function uploadAttachment(
   file: File,
   kind: InquiryKind,
+  requestSubmissionId: string,
   env: RuntimeEnv,
 ): Promise<{ publicId: string; url: string }> {
   await verifyImageSignature(file);
@@ -138,9 +155,10 @@ async function uploadAttachment(
   const apiSecret = requiredEnv(env, "CLOUDINARY_API_SECRET");
   const uploadPreset = requiredEnv(env, "CLOUDINARY_UPLOAD_PRESET");
   const timestamp = Math.floor(Date.now() / 1000);
-  const publicId = `rupantar-homes/inquiries/${kind}-${crypto.randomUUID()}`;
+  const publicId = `${inquiryAssetFolder}/${kind}-${requestSubmissionId}`;
   const parameters = {
-    overwrite: "false",
+    asset_folder: inquiryAssetFolder,
+    overwrite: "true",
     public_id: publicId,
     timestamp,
     upload_preset: uploadPreset,
@@ -148,16 +166,18 @@ async function uploadAttachment(
   const signature = await cloudinarySignature(parameters, apiSecret);
   const body = new FormData();
   body.set("api_key", apiKey);
+  body.set("asset_folder", inquiryAssetFolder);
   body.set("file", file, file.name);
-  body.set("overwrite", "false");
+  body.set("overwrite", "true");
   body.set("public_id", publicId);
   body.set("signature", signature);
   body.set("timestamp", String(timestamp));
   body.set("upload_preset", uploadPreset);
 
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/image/upload`,
     { method: "POST", body },
+    30_000,
   );
   let result: CloudinaryUpload | null = null;
   try {
@@ -192,34 +212,48 @@ async function uploadAttachment(
   }
 }
 
-async function insertInquiry(kind: InquiryKind, payload: InquiryPayload, env: RuntimeEnv): Promise<void> {
+async function insertInquiry(kind: InquiryKind, payload: InquiryPayload, env: RuntimeEnv): Promise<InquiryInsertResult> {
   const supabaseUrl = requiredEnv(env, "SUPABASE_URL");
   const internalSecret = requiredEnv(env, "PUBLIC_INQUIRY_INTERNAL_SECRET");
-  const response = await fetch(`${supabaseUrl}/functions/v1/submit-public-inquiry`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      "X-Rupantar-Internal-Secret": internalSecret,
-    },
-    body: JSON.stringify({
-      p_kind: kind,
-      p_name: payload.name,
-      p_phone: payload.phone,
-      p_category: payload.category,
-      p_message: payload.message,
-      p_attachment_public_id: payload.attachment_public_id,
-      p_attachment_url: payload.attachment_url,
-      p_location: payload.location,
-      p_approximate_size: payload.approximate_size,
-      p_material_preference: payload.material_preference,
-    }),
-  });
-  const responseBody = await response.text();
-  if (!response.ok) {
-    console.error(JSON.stringify({ message: "Supabase inquiry RPC failed", status: response.status, responseBody }));
-    throw new Error(`Supabase inquiry RPC failed with status ${response.status}`);
+  let response: Response;
+  try {
+    response = await fetchWithTimeout(`${supabaseUrl}/functions/v1/submit-public-inquiry`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "X-Rupantar-Internal-Secret": internalSecret,
+      },
+      body: JSON.stringify({
+        p_kind: kind,
+        p_submission_id: payload.submission_id,
+        p_name: payload.name,
+        p_phone: payload.phone,
+        p_category: payload.category,
+        p_message: payload.message,
+        p_attachment_public_id: payload.attachment_public_id,
+        p_attachment_url: payload.attachment_url,
+        p_location: payload.location,
+        p_approximate_size: payload.approximate_size,
+        p_material_preference: payload.material_preference,
+      }),
+    }, 15_000);
+  } catch (error) {
+    throw new InquiryPersistenceError(`Supabase inquiry request did not confirm: ${errorMessage(error)}`, false);
   }
+
+  let result: { duplicate?: unknown; error?: unknown } | null = null;
+  try {
+    result = (await response.json()) as { duplicate?: unknown; error?: unknown };
+  } catch {
+    // Status handling below provides the safe fallback.
+  }
+  if (!response.ok) {
+    console.error(JSON.stringify({ message: "Supabase inquiry RPC failed", status: response.status, result }));
+    const safeToCleanup = response.status >= 400 && response.status < 500;
+    throw new InquiryPersistenceError(`Supabase inquiry RPC failed with status ${response.status}`, safeToCleanup);
+  }
+  return { duplicate: result?.duplicate === true };
 }
 
 async function sendWeb3FormsNotification(
@@ -245,11 +279,11 @@ async function sendWeb3FormsNotification(
     notification.photo_url = payload.attachment_url ?? "";
   }
 
-  const response = await fetch("https://api.web3forms.com/submit", {
+  const response = await fetchWithTimeout("https://api.web3forms.com/submit", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify(notification),
-  });
+  }, 10_000);
 
   let result: Web3FormsResult | null = null;
   try {
@@ -288,49 +322,77 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
     }
 
     const kind = inquiryKind(form);
+    const requestSubmissionId = submissionId(form);
     const name = textField(form, "name", "Name", 150);
     const phone = textField(form, "phone", "Phone", 40);
     const normalizedCategory = category(form);
     const message = textField(form, "message", "Message / Requirements", 4000);
     if (!/^[0-9+()\-\s]{5,40}$/.test(phone)) throw new PublicRequestError("Please enter a valid phone number.");
-    await enforceOptionalRateLimits(phone, runtime);
 
+    const estimateFields = kind === "estimate"
+      ? {
+          location: textField(form, "location", "Location", 200),
+          approximate_size: textField(form, "approximate_size", "Approximate size", 100),
+          material_preference: textField(form, "material_preference", "Material preference", 200),
+        }
+      : {};
+
+    await enforceOptionalRateLimits(phone, runtime);
     const photo = attachment(form, kind === "estimate");
-    const uploaded = photo ? await uploadAttachment(photo, kind, runtime) : null;
+    const uploaded = photo ? await uploadAttachment(photo, kind, requestSubmissionId, runtime) : null;
     uploadedPublicId = uploaded?.publicId ?? null;
 
-    const common: InquiryPayload = {
+    const payload: InquiryPayload = {
+      submission_id: requestSubmissionId,
       name,
       phone,
       category: normalizedCategory,
       message,
       attachment_public_id: uploaded?.publicId ?? null,
       attachment_url: uploaded?.url ?? null,
+      location: null,
+      approximate_size: null,
+      material_preference: null,
+      ...estimateFields,
     };
-    const payload: InquiryPayload = kind === "query"
-      ? common
-      : {
-          ...common,
-          location: textField(form, "location", "Location", 200),
-          approximate_size: textField(form, "approximate_size", "Approximate size", 100),
-          material_preference: textField(form, "material_preference", "Material preference", 200),
-        };
 
-    await insertInquiry(kind, payload, runtime);
-
+    let persistence: InquiryInsertResult;
     try {
-      await sendWeb3FormsNotification(kind, payload, runtime);
-    } catch (notificationError) {
-      console.error(JSON.stringify({
-        message: "Web3Forms notification failed after inquiry save",
-        requestId,
-        kind,
-        error: errorMessage(notificationError),
-      }));
+      persistence = await insertInquiry(kind, payload, runtime);
+    } catch (persistenceError) {
+      if (persistenceError instanceof InquiryPersistenceError && !persistenceError.safeToCleanupAttachment) {
+        // The database may have committed before a network timeout. Preserve a
+        // deterministic attachment rather than risk breaking a persisted lead.
+        uploadedPublicId = null;
+      }
+      throw persistenceError;
     }
 
-    console.log(JSON.stringify({ message: "public inquiry accepted", requestId, kind, attachment: Boolean(uploaded) }));
-    return json({ ok: true }, 201);
+    // A successful or duplicate database response owns the deterministic
+    // attachment. Never clean it up from the outer error path after this point.
+    uploadedPublicId = null;
+
+    if (!persistence.duplicate) {
+      try {
+        await sendWeb3FormsNotification(kind, payload, runtime);
+      } catch (notificationError) {
+        console.error(JSON.stringify({
+          message: "Web3Forms notification failed after inquiry save",
+          requestId,
+          kind,
+          error: errorMessage(notificationError),
+        }));
+      }
+    }
+
+    console.log(JSON.stringify({
+      message: "public inquiry accepted",
+      requestId,
+      kind,
+      attachment: Boolean(uploaded),
+      duplicate: persistence.duplicate,
+    }));
+    return json({ ok: true, duplicate: persistence.duplicate }, persistence.duplicate ? 200 : 201);
   } catch (error) {
     const message = errorMessage(error);
     const status = error instanceof PublicRequestError ? error.status : 500;
@@ -349,4 +411,3 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
     return json({ error: status < 500 ? message : "Your request could not be sent. Please try again." }, status);
   }
 };
-

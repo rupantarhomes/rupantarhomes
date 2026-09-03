@@ -1,3 +1,5 @@
+export {};
+
 function ensureFooterAdminLink() {
   const footer = document.querySelector("footer");
   if (!footer || footer.querySelector('[data-rh-footer-admin-link="true"]')) return;
