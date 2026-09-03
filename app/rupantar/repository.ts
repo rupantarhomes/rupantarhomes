@@ -107,6 +107,10 @@ async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit, tim
   }
 }
 
+function digestHex(buffer: ArrayBuffer): string {
+  return Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
 async function inquiryFingerprint(
   kind: "estimate" | "query",
   payload: Record<string, string>,
@@ -114,11 +118,10 @@ async function inquiryFingerprint(
 ): Promise<string> {
   const canonicalPayload = Object.entries(payload).sort(([left], [right]) => left.localeCompare(right));
   const attachmentIdentity = attachment
-    ? [attachment.name, attachment.type, attachment.size, attachment.lastModified]
+    ? [attachment.type, attachment.size, digestHex(await crypto.subtle.digest("SHA-256", await attachment.arrayBuffer()))]
     : null;
   const canonical = JSON.stringify([kind, canonicalPayload, attachmentIdentity]);
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(canonical));
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return digestHex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(canonical)));
 }
 
 function submissionIdForFingerprint(fingerprint: string): string {
