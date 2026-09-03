@@ -27,6 +27,15 @@ test("shows the reverse project card only when a linked Work resolves", async ()
   assert.match(source, /setLinkedWork\(null\)/);
 });
 
+test("keeps desktop Blog spacing while giving mobile and the linked project card more breathing room", async () => {
+  const source = await read("../app/rupantar/blog-pages.tsx");
+
+  assert.match(source, /pt-\[4\.75rem\] pb-14 sm:py-16/);
+  assert.match(source, /mt-12 w-full rounded-\[1\.75rem\]/);
+  assert.match(source, /p-6 sm:p-7/);
+  assert.doesNotMatch(source, /max-w-\[640px\]/);
+});
+
 test("does not change the existing Work-to-Blog project story contract", async () => {
   const source = await read("../app/rupantar/public-pages.tsx");
 
