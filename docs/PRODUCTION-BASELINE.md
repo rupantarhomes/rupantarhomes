@@ -352,41 +352,44 @@ The production workflow must pass the handover lock and `npm run verify` on the 
 
 ## End-to-end durability hardening — 2026-09-03
 
-This is the final system-level durability contract for the current PR. It extends the Admin reliability work across public forms, media recovery, session recovery, live-data confirmation, public read failures, verification, and operations without changing the normal successful-state layout, colors, branding, or public copy.
+This section is the authoritative final system-level durability contract for PR #85 and supersedes any intermediate statement above that described an earlier implementation state.
 
-- the browser, Cloudflare inquiry Function, Supabase Edge Function, and database now share the same canonical ten service categories, including `interior`;
-- public Query and Estimate retries are idempotent: an unchanged failed submission reuses a content-aware UUID, while edited content or a replaced Estimate attachment creates a new attempt ID;
-- `queries` and `estimate_requests` gain nullable `submission_id` columns and unique non-null indexes, so a lost HTTP response followed by retry resolves to the already-persisted submission instead of creating a second row/Lead;
-- the idempotent eleven-argument `submit_public_inquiry` overload is added alongside the existing deployed ten-argument overload for a backward-compatible rollout; both remain inaccessible to public/anon/authenticated callers, and the new overload is service-role-only;
-- Estimate media uses a deterministic Cloudinary public ID under `rupantar-homes/inquiries` for each submission attempt; an ambiguous database timeout preserves the media because persistence may already have committed, and a confirmed duplicate retry does not emit a duplicate Web3Forms notification;
-- Admin Work images are registered as server-authorized drafts before Cloudinary receives the upload; saved/referenced images are never eligible for stale-draft deletion, while unreferenced drafts older than 24 hours may be claimed in bounded batches and retried after a 15-minute cleanup lease;
-- the existing reference-safe `claim_unreferenced_cloudinary_images` check remains authoritative immediately before Cloudinary deletion, and successful/not-found cleanup reconciles the new draft registry without weakening persisted-image safety;
-- Settings cannot be written from fallback or unconfirmed state: a live production `site_settings` row must be fetched successfully before `saveSettings` is allowed;
-- Admin session/access is revalidated on auth events, browser focus/visibility, route activity, and a five-minute interval; confirmed revoked/missing access returns the operator to Admin login, while a transient Supabase/provider verification failure is logged and does not destroy a valid session;
-- public Works and Blog list routes gain a failure-only recovery probe/Retry surface so a real read failure cannot indefinitely masquerade as empty/still-loading content; successful routes keep their existing presentation unchanged;
-- public Work/Blog detail failures retain their explicit Retry/Back Home recovery and the application retains its top-level render error boundary;
-- Work saves, Blog saves, Review writes, Settings writes, Lead writes, public forms, and image operations retain their duplicate-call, stale-response, immutable-snapshot, immediate-confirmed-state, and bounded-request protections from the earlier audit;
-- Admin Works continues to fetch transparently in 1,000-row batches rather than having a hidden 1,000-record lifetime ceiling, while public Works remains paginated at its existing public size;
-- `npm run verify` is now a release gate of strict TypeScript (`tsc --noEmit`) followed by the production Vite build and regression suite; the final durability suite contains 68 tests;
-- `/api/health` and the production operations runbook define dependency monitoring, backup/export expectations, restore testing, media-orphan audits, migration discipline, secret rotation, incident handling, and post-deploy desktop/mobile smoke checks;
-- live audit data at the time of this work showed structurally healthy Supabase data and complete current Work-media references in Cloudinary; historical unrelated Cloudinary assets were deliberately not mass-deleted without ownership certainty;
-- production's Supabase migration ledger is authoritative. Historical repository migrations are references and must not be blindly replayed. Every new database change must be forward-only, verified, and followed by regenerated production types after deployment;
-- `app/rupantar/database.types.ts` intentionally continues to describe the currently deployed production schema on this unmerged branch; regenerate it only after the new migration is actually deployed so source types never falsely claim an unapplied live schema;
-- disaster recovery remains an operational responsibility rather than a code guarantee: database exports/restores and Cloudinary backup policy must be maintained and tested according to the operations runbook;
-- "immediate" display continues to mean immediately after the required persistence write is confirmed, without a redundant blocking list reload; no network/database write is represented as literal zero-time.
+- The browser, Cloudflare inquiry Function, Supabase Edge Function, and database use the same canonical ten service categories, including `interior`.
+- Public Query and Estimate retries are idempotent. An unchanged failed submission reuses its submission UUID; editing the payload creates a new attempt. Estimate retry identity includes a SHA-256 digest of the actual attachment bytes, so a different photo cannot inherit a lost-response key merely because metadata matches.
+- `queries` and `estimate_requests` have nullable `submission_id` columns with unique non-null indexes. A lost HTTP response followed by retry resolves to the already-persisted submission instead of creating a duplicate row/Lead.
+- The legacy ten-argument and idempotent eleven-argument `submit_public_inquiry` RPC overloads coexist for zero-downtime rollout. Public/anon/authenticated callers cannot execute them directly; the server-side path uses service-role access through the internal-secret-protected Edge Function.
+- Supabase Edge Function `submit-public-inquiry` version 4 is ACTIVE and dual-compatible with both the pre-PR Cloudflare caller and the new idempotent caller.
+- Estimate media uses a deterministic Cloudinary public ID under `rupantar-homes/inquiries` for each submission attempt. Ambiguous persistence failures preserve media that may already be referenced, and confirmed duplicate retries do not emit duplicate Web3Forms notifications.
+- Admin Work images are registered as server-authorized drafts before Cloudinary receives the upload. Saved/referenced images are never eligible for stale-draft deletion. Only unreferenced drafts at least seven days old (`10080` minutes minimum) may be claimed, and failed cleanup claims become retryable after a 15-minute lease.
+- `claim_unreferenced_cloudinary_images` remains the final reference-safety check immediately before Cloudinary deletion, and successful/not-found cleanup reconciles the draft registry.
+- Work save/upload/removal/cancel/logout operations are cross-locked so a save payload cannot race with a Work image operation. Confirmed Work writes update Admin/home state immediately, while background reconciliation is used only where needed.
+- The canonical production `save_work_with_images(text,text,text,text,text,text,boolean,text,jsonb,bigint)` RPC is self-contained. A forward-only production migration removed its dependency on the retired pre-blog helper overload while preserving active-Admin authorization, all ten categories, image count/format validation, advisory cleanup locks, reference-safe persistence, and normalized HTTPS blog URL behavior.
+- Production verification confirms the canonical Work RPC is the only live `save_work_with_images` signature, is executable by `authenticated`, not executable by `anon`, and no longer delegates to a missing overload.
+- `app/rupantar/database.types.ts` was regenerated from the live production Supabase schema after the migrations were applied. Repository mapping validates required Work image URL/public ID fields and converts nullable legacy width/height/byte metadata into the app's supported optional representation. New Work saves omit `p_work_id` so PostgreSQL uses its `NULL` default; an empty blog URL is passed as an empty string and normalized to `NULL` inside the RPC.
+- Settings cannot be written from fallback or unconfirmed state: a live production `site_settings` row must be fetched successfully before `saveSettings` is allowed.
+- Admin authorization is revalidated through Supabase auth-state changes, browser focus/visibility, and a five-minute interval. Confirmed missing/revoked access returns the operator to Admin login; a transient provider/network verification failure is surfaced/logged without being treated as revocation.
+- Public Works and Blog list failures use native React error state and Retry controls. Public Work/Blog detail failures retain explicit Retry/Back Home recovery. The removed global `runtime-resilience.ts` history/DOM probe is not part of the final architecture.
+- Recent Works and Blog cards use native React mouse/touch/keyboard interaction and exclude nested interactive controls to prevent double firing.
+- Admin Works fetches transparently in 1,000-row batches when needed rather than having a hidden 1,000-record lifetime ceiling. Public Works remains paginated at 12 items per request.
+- CI exposes production-lock enforcement, strict TypeScript, production Vite build, and regression tests as separate named gates so failures are diagnosable. The full regression suite must remain green before merge.
+- The production Supabase migration ledger is authoritative. Database changes made during this hardening were applied forward-only and verified before generated types were refreshed.
+- `/api/health` and the production operations runbook remain the operational contract for dependency monitoring, backup/export expectations, restore testing, migration discipline, secret rotation, incident response, media-orphan audits, and post-deploy smoke checks.
+- "Immediate" display means immediately after the required persistence write is confirmed, without a redundant blocking list/content reload. No network/database operation is represented as literal zero-time.
 
-Final protected fingerprints accepted for this review state:
+Final protected fingerprints for the code/schema state validated by GitHub Actions:
 
-- `app`: `fe6d2e83fc97c5b65f131f93dc7bbdc66b496fe8`
+- `app`: `9ff837db045f98589f69e3c02eb2946ea5894859`
 - `functions`: `475f088510f369c3e527f64972e2e6a5e9d5ff93`
-- `index.html`: `4a9013e5bef9d5d092f082422d188a96a335674f`
+- `index.html`: `4b125b1b6df3c609babab6bdd513479be2cae7d7`
 - `package.json`: `30aede1d9522c36b1abef1fccf843f1c5edbd67f`
 - `public`: `0536c426ff9be2776c277c71fd7bea91257ed0f8`
-- `supabase`: `ad51204fdf94de46c03399033d94d5910d832d8d`
-- `tests`: `4843bb2e48e553e569114ef8bfb290125da46321`
+- `supabase`: `f8d7073f76d3100d9bd404231cbbd61beec56e9a`
+- `tests`: `3586c3cece8740b04e22f3417d1bac08b99173ae`
 - `tsconfig.json`: `e7a4b1bc1895736832e2af16296bdf5c434591ad`
 
-The exact pre-documentation code head `092d30bed91a2a26e3a99e226edd98b1444c4687` passed production-lock enforcement, strict TypeScript, production build, and all 68 regression tests in GitHub Actions run `33698990206`. This PR remains unmerged at this stage. The new database migration, Edge/Cloudflare caller, and runtime hardening must deploy as the reviewed PR set; no production migration or post-deploy destructive smoke test is to be performed before explicit merge approval.
+The exact code/schema head `c8153ebcc6b4aefdccf7a6c5c9b8166a95e9e09a` passed production-lock enforcement, strict TypeScript, production build, and the regression suite in GitHub Actions run `33701585799`, job `100481827057`. Documentation-only commits may advance the PR head after that code-validation point and must also pass the same workflow before merge.
+
+Production database/Edge compatibility work described above is already live because it was deliberately rolled out backward-compatibly before the application merge. The application/UI branch remains unmerged. Destructive/disposable browser smoke testing of the new application behavior remains a post-merge/Cloudflare-deploy step.
 
 ## AI/Codex instruction block
 
