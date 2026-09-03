@@ -1,6 +1,6 @@
 /* Dedicated Blog article page only. Keep this scoped so Blog index and all other public pages remain untouched. */
 .rh-blog-article-page {
-  padding-top: 56px !important;
+  padding-top: 64px !important;
   padding-bottom: 56px !important;
 }
 
@@ -9,6 +9,7 @@
   max-width: 800px !important;
   margin-left: 0 !important;
   margin-right: auto !important;
+  padding-top: 0 !important;
 }
 
 .rh-blog-article-title {
@@ -36,27 +37,36 @@
   padding: 24px !important;
 }
 
+.rh-blog-project-eyebrow {
+  font-size: 11px !important;
+  line-height: 1.35 !important;
+}
+
 .rh-blog-project-title {
   margin-top: 8px !important;
-  font-size: 20px !important;
+  font-size: 22px !important;
   line-height: 1.25 !important;
 }
 
 .rh-blog-project-description {
   margin-top: 8px !important;
-  font-size: 13px !important;
-  line-height: 24px !important;
+  font-size: 14px !important;
+  line-height: 25px !important;
 }
 
 .rh-blog-project-link {
   margin-top: 20px !important;
-  font-size: 12px !important;
+  font-size: 13px !important;
 }
 
 @media (max-width: 639px) {
   .rh-blog-article-page {
-    padding-top: 32px !important;
+    padding-top: 40px !important;
     padding-bottom: 56px !important;
+  }
+
+  .rh-blog-article {
+    padding-top: 0 !important;
   }
 
   .rh-blog-article-title {
@@ -82,6 +92,6 @@
   }
 
   .rh-blog-project-title {
-    font-size: 18px !important;
+    font-size: 20px !important;
   }
 }
