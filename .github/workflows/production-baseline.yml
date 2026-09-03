@@ -35,12 +35,33 @@ jobs:
       - name: Enforce production handover lock
         run: node scripts/verify-production-lock.mjs
 
-      - name: Enforce UI-only production boundary
-        if: ${{ github.event_name == 'pull_request' && startsWith(github.head_ref, 'enhancement/premium-motion-') }}
+      - name: Enforce frontend-only production boundary
+        if: >-
+          ${{ github.event_name == 'pull_request' && (
+            startsWith(github.head_ref, 'frontend/') ||
+            startsWith(github.head_ref, 'ui/') ||
+            startsWith(github.head_ref, 'design/') ||
+            startsWith(github.head_ref, 'style/') ||
+            startsWith(github.head_ref, 'enhancement/')
+          ) }}
         run: node scripts/check-ui-enhancement-diff.mjs "${{ github.event.pull_request.base.sha }}"
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+
+      - name: Self-test frontend reliability guard
+        run: node scripts/check-frontend-behavior-diff.mjs --self-test
+
+      - name: Enforce frontend reliability behavior
+        if: >-
+          ${{ github.event_name == 'pull_request' && (
+            startsWith(github.head_ref, 'frontend/') ||
+            startsWith(github.head_ref, 'ui/') ||
+            startsWith(github.head_ref, 'design/') ||
+            startsWith(github.head_ref, 'style/') ||
+            startsWith(github.head_ref, 'enhancement/')
+          ) }}
+        run: node scripts/check-frontend-behavior-diff.mjs "${{ github.event.pull_request.base.sha }}"
 
       - name: TypeScript
         run: npm run typecheck
