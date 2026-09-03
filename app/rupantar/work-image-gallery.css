@@ -16,7 +16,7 @@
 .rh-native-work-rear { position: absolute; aspect-ratio: 1 / 1; pointer-events: none; border-radius: 1.25rem; box-shadow: 0 3px 7px rgb(0 0 0 / .16); background: #f8f8f8; }
 .rh-native-work-rear > div { height: 100%; }
 .rh-native-work-front { position: relative; display: block; width: 100%; height: 100%; border: 0; padding: 0; border-radius: 1.25rem; background: #f8f8f8; cursor: zoom-in; box-shadow: 0 4px 16px rgb(0 0 0 / .08); }
-.rh-native-work-stack-photo { height: 100%; }
+.rh-native-work-stack-photo { height: 100%; --tw-ring-color: #ffffff; }
 .rh-native-work-stack-photo img { object-fit: cover; }
 @media (min-width: 1024px) { .rh-native-work-gallery { max-width: 520px; } }
 .rh-native-work-viewer { position: fixed; inset: 0; width: 100%; height: 100dvh; z-index: 2147483647; display: flex; align-items: center; justify-content: center; background: rgb(8 8 10 / .96); color: #fff; overscroll-behavior: contain; }

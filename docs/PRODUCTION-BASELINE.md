@@ -471,3 +471,7 @@ Correction from PR head `2b7407281061d8de48e8f839ce4532c0a28fdab1`: normal Work-
 TypeScript, production build, 79 regression tests, reliability guard self-test and diff whitespace check pass. Local intercepted browser fixtures pass at 320, 375, 390, 393, 414, 430, 1280 and 1440px: square front/rear cards, no overflow/Overview overlap, 520px desktop limit, landscape/portrait contain in fullscreen, six-image navigation, one-image compatibility and unchanged Admin lifecycle. Screenshots inspected; Chromium, not a physical iPhone test.
 
 Only `app` (`01b32cc07d6075027284b393fd0f3bc41e3e5306`) and `tests` (`43011b16725aeb4809a53254333de54295aee718`) fingerprints are updated for this correction. No additional Supabase change. PR #92 must remain unmerged pending explicit approval.
+
+## PR #92 stacked-image white ring — 2026-09-04
+
+From PR head `e4257bc7f3ab6e2d0165528fa9ff78fef715106f`, change only `.rh-native-work-stack-photo` ring color to `#ffffff`. Preview inspection showed the existing 1px ring computed as `rgba(59, 130, 246, 0.5)`; its width, geometry and shadow construction are unchanged. Fullscreen, Admin and every other surface remain unchanged. TypeScript, build, all 79 existing regression tests and gallery browser fixtures at all eight approved widths pass; no tests changed. Only the `app` fingerprint becomes `9c59af36e216d7d97e6daa8b1fbd602d7ed8e45b`. PR remains unmerged pending approval.
