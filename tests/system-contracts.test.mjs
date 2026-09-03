@@ -32,8 +32,9 @@ test("keeps the public inquiry path aligned with every canonical service categor
 
   assert.match(migration, /queries_category_allowed/);
   assert.match(migration, /estimate_requests_category_allowed/);
-  assert.match(migration, /create or replace function public\.submit_public_inquiry/);
-  assert.match(migration, /existing ten-argument submit_public_inquiry overload in place/i);
+  assert.equal((migration.match(/create or replace function public\.submit_public_inquiry/g) ?? []).length, 2);
+  assert.match(migration, /Upgrade the currently deployed ten-argument caller/i);
+  assert.match(migration, /Add the idempotent eleven-argument overload/i);
   assert.match(migration, /when btrim\(coalesce\(p_category, ''\)\) = 'interior-designing' then 'architect'/);
   assert.match(migration, /revoke all on function public\.submit_public_inquiry[\s\S]*from public, anon, authenticated/);
   assert.match(migration, /grant execute on function public\.submit_public_inquiry[\s\S]*to service_role/);
@@ -68,6 +69,7 @@ test("public inquiry delivery stays server mediated, bounded and rate limited", 
   assert.match(edge, /X-Rupantar-Internal-Secret/);
   assert.match(edge, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(edge, /fetchWithTimeout/);
+  assert.match(edge, /response\.status >= 500 \? 503/);
   assert.match(restriction, /revoke execute[\s\S]*from anon, authenticated/i);
   assert.match(restriction, /grant execute[\s\S]*to service_role/i);
   assert.match(http, /AbortController/);
@@ -95,9 +97,10 @@ test("public inquiry retries are idempotent from browser through database", asyn
   assert.match(cloudflare, /!persistence\.duplicate[\s\S]*sendWeb3FormsNotification/);
   assert.match(cloudflare, /!persistenceError\.safeToCleanupAttachment[\s\S]*uploadedPublicId = null/);
 
-  assert.match(edge, /p_submission_id: string/);
-  assert.match(edge, /uuidPattern\.test\(p_submission_id\)/);
-  assert.match(edge, /body: JSON\.stringify\(input\)/);
+  assert.match(edge, /p_submission_id: string \| null/);
+  assert.match(edge, /rawSubmissionId && !uuidPattern\.test\(rawSubmissionId\)/);
+  assert.match(edge, /const rpcInput = input\.p_submission_id/);
+  assert.match(edge, /body: JSON\.stringify\(rpcInput\)/);
   assert.match(edge, /duplicate: result\.duplicate === true/);
 
   assert.match(migration, /add column if not exists submission_id uuid/);
@@ -151,6 +154,8 @@ test("abandoned Work uploads are registered and safely reclaimed", async () => {
   assert.match(migration, /register_cloudinary_draft_image/);
   assert.match(migration, /claim_expired_cloudinary_drafts/);
   assert.match(migration, /complete_cloudinary_draft_cleanup/);
+  assert.match(migration, /p_min_age_minutes integer default 10080/);
+  assert.match(migration, /greatest\(coalesce\(p_min_age_minutes, 10080\), 10080\)/);
   assert.match(migration, /not exists \([\s\S]*public\.work_images/);
   assert.match(migration, /cleanup_claimed_at < now\(\) - interval '15 minutes'/);
   assert.match(signature, /registerDraftImage\(publicId, request, runtime\)/);
@@ -158,6 +163,7 @@ test("abandoned Work uploads are registered and safely reclaimed", async () => {
   assert.match(client, /publicId !== signed\.publicId/);
   assert.match(deleteEndpoint, /completeDraftRegistryCleanup/);
   assert.match(repository, /export async function claimExpiredCloudinaryDrafts/);
+  assert.match(repository, /p_min_age_minutes: 10080/);
   assert.match(runtime, /claimExpiredCloudinaryDrafts/);
   assert.match(runtime, /await deleteCloudinaryImages\(publicIds\)/);
 });
