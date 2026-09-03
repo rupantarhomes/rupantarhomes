@@ -31,7 +31,8 @@ test("keeps desktop Blog spacing while giving mobile and the linked project card
   const source = await read("../app/rupantar/blog-pages.tsx");
 
   assert.match(source, /pt-\[4\.75rem\] pb-14 sm:py-16/);
-  assert.match(source, /mt-12 w-full rounded-\[1\.75rem\]/);
+  assert.match(source, /<div aria-hidden="true" style=\{\{ height: "64px" \}\} \/>/);
+  assert.match(source, /className="w-full rounded-\[1\.75rem\]/);
   assert.match(source, /p-6 sm:p-7/);
   assert.doesNotMatch(source, /max-w-\[640px\]/);
 });

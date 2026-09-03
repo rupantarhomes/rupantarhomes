@@ -81,19 +81,25 @@ export function BlogArticlePage({ blog, navigate }: { blog: Blog; navigate: (pag
 
   return (
     <main className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-[4.75rem] pb-14 sm:py-16">
-      <article className="max-w-[800px]">
+      <article className="rh-blog-article max-w-[800px]">
         <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#FF1A3D]">{label}</div>
         <h1 className="mt-3 font-heading text-[40px] sm:text-[56px] leading-[1.04] font-bold tracking-[-0.045em]">{blog.title}</h1>
         <div className="mt-9 space-y-6 text-[16px] leading-7 sm:leading-8 text-zinc-700">{paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
         {linkedWork && (
-          <aside className="mt-12 w-full rounded-[1.75rem] border border-zinc-100 bg-[#fffdfa] p-6 sm:p-7 shadow-[0_10px_30px_rgba(0,0,0,0.04)]" aria-label="Linked project images">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#FF1A3D]">Project Images</div>
-            <h2 className="mt-2 font-heading text-[18px] sm:text-[20px] font-bold leading-tight text-zinc-950">{linkedWork.title}</h2>
-            <p className="mt-3 text-[13px] leading-6 text-zinc-600">See the completed project and its full image gallery.</p>
-            <a href={workPath(linkedWork)} className="mt-6 inline-flex h-10 items-center gap-2 rounded-full bg-[#FF1A3D] px-5 text-[12px] font-semibold text-white transition hover:bg-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF1A3D]/40 focus-visible:ring-offset-2">
-              View Project Images <ArrowRight className="w-4 h-4" />
-            </a>
-          </aside>
+          <>
+            <div aria-hidden="true" style={{ height: "64px" }} />
+            <aside
+              className="w-full rounded-[1.75rem] border border-zinc-100 bg-[#fffdfa] p-6 sm:p-7 shadow-[0_10px_30px_rgba(0,0,0,0.04)]"
+              aria-label="Linked project images"
+            >
+              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#FF1A3D]">Project Images</div>
+              <h2 className="mt-2 font-heading text-[18px] sm:text-[20px] font-bold leading-tight text-zinc-950">{linkedWork.title}</h2>
+              <p className="mt-3 text-[13px] leading-6 text-zinc-600">See the completed project and its full image gallery.</p>
+              <a href={workPath(linkedWork)} className="mt-6 inline-flex h-10 items-center gap-2 rounded-full bg-[#FF1A3D] px-5 text-[12px] font-semibold text-white transition hover:bg-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF1A3D]/40 focus-visible:ring-offset-2">
+                View Project Images <ArrowRight className="w-4 h-4" />
+              </a>
+            </aside>
+          </>
         )}
         <button onClick={() => navigate("blog")} className="mt-12 inline-flex items-center gap-1.5 text-[13px] text-zinc-600 transition-colors duration-200 hover:text-[#FF1A3D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF1A3D]/40"><ArrowLeft className="w-4 h-4" /> Back to Blog</button>
       </article>
