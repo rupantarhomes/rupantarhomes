@@ -651,7 +651,7 @@ export async function loadAdminStats(): Promise<AdminStats> {
 
 export async function claimExpiredCloudinaryDrafts(): Promise<string[]> {
   const { data, error } = await (getSupabase() as any).rpc("claim_expired_cloudinary_drafts", {
-    p_min_age_minutes: 1440,
+    p_min_age_minutes: 10080,
     p_limit: 50,
   });
   if (error) throw new Error(error.message ?? "Unable to check stale Work image drafts.");
