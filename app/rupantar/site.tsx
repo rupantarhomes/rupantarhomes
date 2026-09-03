@@ -16,6 +16,7 @@ import {
 } from "./data";
 import { HomePage } from "./home-page";
 import {
+  claimExpiredCloudinaryDrafts,
   deleteBlog,
   deleteLead,
   deleteReview,
@@ -41,6 +42,7 @@ import {
 } from "./repository";
 import { PublicFooter, PublicHeader, TopBar } from "./shared";
 import { blogArticlePath, categoryPath, pagePath, parseRoute, workPath } from "./routes";
+import { getSupabase, isSupabaseConfigured } from "./supabase";
 import type {
   AdminStats,
   Lead,
@@ -87,8 +89,30 @@ function DetailLoadFailure({ label }: { label: string }) {
   );
 }
 
+function ListLoadFailure({ label, onRetry }: { label: string; onRetry: () => void }) {
+  return (
+    <main className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="max-w-[560px] rounded-[1.5rem] border border-zinc-100 bg-white p-7 shadow-sm">
+        <h1 className="font-heading text-[22px] font-bold">Unable to load {label}</h1>
+        <p className="mt-2 text-[14px] leading-6 text-zinc-600">Nothing was deleted. This request did not finish correctly. Retry to load the latest saved data.</p>
+        <button onClick={onRetry} className="mt-5 h-10 px-5 rounded-full bg-[#FF1A3D] text-white text-[13px] font-semibold">Retry</button>
+      </div>
+    </main>
+  );
+}
+
+function AdminLoadWarning({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="fixed left-4 right-4 top-4 z-[2147483000] mx-auto max-w-[620px] rounded-2xl border border-amber-200 bg-white p-4 shadow-xl" role="alert">
+      <p className="text-[13px] leading-5 text-zinc-700">Some live Admin data could not be confirmed. Retry before relying on counts or editing Settings.</p>
+      <button type="button" onClick={onRetry} className="mt-3 h-9 rounded-full bg-zinc-950 px-4 text-[12px] font-semibold text-white">Retry live data</button>
+    </div>
+  );
+}
+
 const publicPages: Page[] = ["home", "works", "work-detail", "about", "contact", "privacy", "interior-design", "blog", "blog-detail"];
 const adminWorksLimit = 1000;
+const adminVerificationIntervalMs = 5 * 60 * 1000;
 
 type BrowserRoute = ReturnType<typeof parseRoute>;
 
@@ -137,6 +161,9 @@ export function RupantarSite() {
   const [selectedWork, setSelectedWork] = useState<Work | null>(null);
   const [selectedBlog, setSelectedBlog] = useState<Blog | null>(null);
   const [detailLoadError, setDetailLoadError] = useState("");
+  const [worksLoadError, setWorksLoadError] = useState("");
+  const [blogsLoadError, setBlogsLoadError] = useState("");
+  const [adminLoadError, setAdminLoadError] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [works, setWorks] = useState<Work[]>(initialWorksState);
   const [worksTotal, setWorksTotal] = useState(initialRouteUsesWorks || initialRouteIsAdmin ? 0 : initialWorks.length);
@@ -187,9 +214,12 @@ export function RupantarSite() {
   const uploadMutationRef = useRef(false);
   const estimateMutationRef = useRef(false);
   const queryMutationRef = useRef(false);
+  const isAdminRef = useRef(false);
+  const explicitLogoutRef = useRef(false);
 
   useEffect(() => { worksRef.current = works; }, [works]);
   useEffect(() => { blogsRef.current = blogs; }, [blogs]);
+  useEffect(() => { isAdminRef.current = isAdmin; }, [isAdmin]);
 
   useEffect(() => {
     if (!estimateSaved) return;
@@ -220,6 +250,7 @@ export function RupantarSite() {
 
   const restoreHomeWorks = () => {
     worksRequestIdRef.current += 1;
+    setWorksLoadError("");
     const homeWorks = homeWorksRef.current;
     worksRef.current = homeWorks;
     worksLoadedRef.current = true;
@@ -262,6 +293,7 @@ export function RupantarSite() {
   const refreshBlogs = useCallback(async () => {
     const requestId = ++blogsRequestIdRef.current;
     setBlogsLoading(true);
+    setBlogsLoadError("");
     try {
       const nextBlogs = await loadPublicBlogs();
       if (requestId !== blogsRequestIdRef.current) return;
@@ -269,6 +301,9 @@ export function RupantarSite() {
       blogsLoadedRef.current = true;
       setBlogs(nextBlogs);
       setBlogsLoaded(true);
+    } catch (error) {
+      if (requestId === blogsRequestIdRef.current) setBlogsLoadError(messageFrom(error));
+      throw error;
     } finally {
       if (requestId === blogsRequestIdRef.current) setBlogsLoading(false);
     }
@@ -283,13 +318,17 @@ export function RupantarSite() {
       setLeadsHasMore(result.hasMore);
       setLeadsNextBefore(result.nextBefore);
     } catch (error) {
-      if (requestId === leadsRequestIdRef.current) console.error("Unable to load leads", error);
+      if (requestId === leadsRequestIdRef.current) {
+        console.error("Unable to load leads", error);
+        setAdminLoadError("Some live Admin data could not be loaded.");
+      }
     }
   }, []);
 
   const loadWorks = useCallback(async (category: string, offset: number, clearCurrent = false) => {
     const requestId = ++worksRequestIdRef.current;
     const cacheKey = `${category}:${offset}`;
+    setWorksLoadError("");
     const cached = worksPageCacheRef.current.get(cacheKey);
     if (cached) {
       const nextWorks = offset === 0 ? cached.works : [...worksRef.current, ...cached.works];
@@ -321,11 +360,71 @@ export function RupantarSite() {
       worksLoadedRef.current = true;
       setWorksTotal(result.total);
       setWorks(nextWorks);
+    } catch (error) {
+      if (requestId === worksRequestIdRef.current) setWorksLoadError(messageFrom(error));
+      throw error;
     } finally {
       if (worksPageRequestsRef.current.get(cacheKey) === request) worksPageRequestsRef.current.delete(cacheKey);
       if (requestId === worksRequestIdRef.current) setWorksLoading(false);
     }
   }, []);
+
+  const cleanupExpiredWorkDrafts = useCallback(async () => {
+    try {
+      const publicIds = await claimExpiredCloudinaryDrafts();
+      if (publicIds.length) await deleteCloudinaryImages(publicIds);
+    } catch (error) {
+      console.error("Unable to reconcile stale Work image drafts", error);
+    }
+  }, []);
+
+  const expireAdminSession = useCallback(() => {
+    if (!isAdminRef.current || explicitLogoutRef.current) return;
+    adminWorksRequestIdRef.current += 1;
+    contentRequestIdRef.current += 1;
+    leadsRequestIdRef.current += 1;
+    blogsRequestIdRef.current += 1;
+    routeRequestIdRef.current += 1;
+    isAdminRef.current = false;
+    setIsAdmin(false);
+    setLeads([]);
+    setAdminStats({ queries: 0, estimates: 0 });
+    setEditingWorkId(null);
+    setWorkForm(emptyWork);
+    setEditingBlogId(null);
+    setBlogForm(emptyBlogForm);
+    setLoginError("Your admin session expired or access was revoked. Please log in again.");
+    if (parseRoute(window.location.pathname).kind === "admin") setPage("admin-login");
+  }, []);
+
+  const verifyOpenAdminAccess = useCallback(async () => {
+    if (!isSupabaseConfigured || !isAdminRef.current || explicitLogoutRef.current) return;
+    const supabase = getSupabase();
+    try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      const session = sessionData.session;
+      if (!session) {
+        expireAdminSession();
+        return;
+      }
+      const { data: admin, error: adminError } = await supabase
+        .from("admin_users")
+        .select("user_id,is_active")
+        .eq("user_id", session.user.id)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (adminError) throw adminError;
+      if (!admin) {
+        await supabase.auth.signOut();
+        expireAdminSession();
+        return;
+      }
+      void cleanupExpiredWorkDrafts();
+    } catch (error) {
+      console.error("Unable to verify the open Admin session", error);
+    }
+  }, [cleanupExpiredWorkDrafts, expireAdminSession]);
 
   const applyBrowserRoute = useCallback(async () => {
     const routeRequestId = ++routeRequestIdRef.current;
@@ -414,8 +513,25 @@ export function RupantarSite() {
 
   const refreshAdminStats = useCallback(async () => {
     try { setAdminStats(await loadAdminStats()); }
-    catch (error) { console.error("Unable to load admin totals", error); }
+    catch (error) {
+      console.error("Unable to load admin totals", error);
+      setAdminLoadError("Some live Admin data could not be loaded.");
+    }
   }, []);
+
+  const refreshAdminData = useCallback(async () => {
+    setAdminLoadError("");
+    const results = await Promise.allSettled([
+      refreshAdminWorks(),
+      refreshContent(),
+      refreshAdminStats(),
+      refreshLeads(),
+      refreshBlogs(),
+    ]);
+    if (results.some((result) => result.status === "rejected")) {
+      setAdminLoadError("Some live Admin data could not be loaded.");
+    }
+  }, [refreshAdminWorks, refreshContent, refreshAdminStats, refreshLeads, refreshBlogs]);
 
   const loadOlderLeads = async () => {
     if (!leadsHasMore || !leadsNextBefore || leadsLoadingOlder || adminMutationRef.current || uploadMutationRef.current) return;
@@ -427,6 +543,7 @@ export function RupantarSite() {
       setLeadsNextBefore(result.nextBefore);
     } catch (error) {
       console.error("Unable to load older leads", error);
+      setAdminLoadError("Some live Admin data could not be loaded.");
     } finally {
       setLeadsLoadingOlder(false);
     }
@@ -459,9 +576,11 @@ export function RupantarSite() {
 
     void getCurrentAdminSession().then((session) => {
       if (!active || !session) return;
+      isAdminRef.current = true;
       setIsAdmin(true);
       if (parseRoute(window.location.pathname).kind === "admin") setPage("admin-dashboard");
-      void Promise.allSettled([refreshAdminWorks(), refreshContent(), refreshAdminStats(), refreshLeads(), refreshBlogs()]);
+      void refreshAdminData();
+      void cleanupExpiredWorkDrafts();
     });
 
     const onPopState = () => void applyBrowserRoute().catch((error) => console.error("Unable to apply browser route", error));
@@ -470,7 +589,28 @@ export function RupantarSite() {
       active = false;
       window.removeEventListener("popstate", onPopState);
     };
-  }, [applyBrowserRoute, refreshAdminStats, refreshAdminWorks, refreshBlogs, refreshContent, refreshLeads]);
+  }, [applyBrowserRoute, cleanupExpiredWorkDrafts, refreshAdminData, refreshContent]);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    const supabase = getSupabase();
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) return;
+      if (event === "SIGNED_OUT") expireAdminSession();
+    });
+    const verifyWhenVisible = () => {
+      if (document.visibilityState === "visible") void verifyOpenAdminAccess();
+    };
+    const interval = window.setInterval(() => void verifyOpenAdminAccess(), adminVerificationIntervalMs);
+    window.addEventListener("focus", verifyWhenVisible);
+    document.addEventListener("visibilitychange", verifyWhenVisible);
+    return () => {
+      data.subscription.unsubscribe();
+      window.clearInterval(interval);
+      window.removeEventListener("focus", verifyWhenVisible);
+      document.removeEventListener("visibilitychange", verifyWhenVisible);
+    };
+  }, [expireAdminSession, verifyOpenAdminAccess]);
 
   const pushPath = (path: string) => {
     if (window.location.pathname !== path) window.history.pushState(null, "", path);
@@ -500,7 +640,7 @@ export function RupantarSite() {
         setSelectedWork(null);
         const categoryChanged = filter !== "all";
         setFilter("all");
-        void loadWorks("all", 0, categoryChanged);
+        void loadWorks("all", 0, categoryChanged).catch((error) => console.error("Unable to load works", error));
       }
       if (nextPage === "admin-dashboard") void refreshAdminStats();
     }
@@ -531,7 +671,7 @@ export function RupantarSite() {
     const categoryChanged = category !== filter;
     setFilter(category);
     setPage("works");
-    void loadWorks(category, 0, categoryChanged);
+    void loadWorks(category, 0, categoryChanged).catch((error) => console.error("Unable to load category", error));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -576,10 +716,13 @@ export function RupantarSite() {
     setLoginError("");
     try {
       await signInAdmin(email, password);
+      explicitLogoutRef.current = false;
+      isAdminRef.current = true;
       setIsAdmin(true);
       setPage("admin-dashboard");
       window.scrollTo({ top: 0 });
-      void Promise.allSettled([refreshAdminWorks(), refreshContent(), refreshAdminStats(), refreshLeads(), refreshBlogs()]);
+      void refreshAdminData();
+      void cleanupExpiredWorkDrafts();
     } catch (error) {
       setLoginError(messageFrom(error));
     } finally {
@@ -591,6 +734,7 @@ export function RupantarSite() {
   const handleLogout = async () => {
     if (adminMutationRef.current || uploadMutationRef.current) return;
     adminMutationRef.current = true;
+    explicitLogoutRef.current = true;
     setAdminBusy(true);
     try {
       await deleteCloudinaryImages(draftImagePublicIds());
@@ -598,11 +742,13 @@ export function RupantarSite() {
       persistedDraftImageIdsRef.current = new Set();
       setEditingWorkId(null);
       setWorkForm(emptyWork);
+      isAdminRef.current = false;
       setIsAdmin(false);
       setLeads([]);
       setAdminStats({ queries: 0, estimates: 0 });
       window.location.assign("/");
     } catch (error) {
+      explicitLogoutRef.current = false;
       window.alert(`Logout stopped: ${messageFrom(error)}`);
     } finally {
       adminMutationRef.current = false;
@@ -959,46 +1105,49 @@ export function RupantarSite() {
   if (page.startsWith("admin-")) {
     if (!isAdmin) return <Suspense fallback={<PageLoader />}><AdminLogin navigate={navigate} onLogin={handleLogin} error={loginError} busy={loginBusy} /></Suspense>;
     return (
-      <Suspense fallback={<PageLoader />}><AdminPortal
-        page={page}
-        navigate={navigate}
-        onLogout={handleLogout}
-        blogs={blogs}
-        blogForm={blogForm}
-        setBlogForm={setBlogForm}
-        editingBlogId={editingBlogId}
-        onSaveBlog={handleSaveBlog}
-        onEditBlog={editBlog}
-        onDeleteBlog={handleDeleteBlog}
-        onCancelBlog={cancelBlog}
-        works={works}
-        workForm={workForm}
-        setWorkForm={setWorkForm}
-        editingWorkId={editingWorkId}
-        onSaveWork={handleSaveWork}
-        onEditWork={editWork}
-        onDeleteWork={handleDeleteWork}
-        onCancelWork={cancelWork}
-        onUploadImages={handleUploadImages}
-        onRemoveWorkImage={handleRemoveWorkImage}
-        uploadingImages={uploadingImages}
-        leads={leads}
-        leadsHasMore={leadsHasMore}
-        leadsLoadingOlder={leadsLoadingOlder}
-        onLoadOlderLeads={loadOlderLeads}
-        onUpdateLeadStatus={handleUpdateLeadStatus}
-        onDeleteLead={handleDeleteLead}
-        reviewForm={reviewForm}
-        setReviewForm={setReviewForm}
-        reviews={reviews}
-        onSaveReview={handleSaveReview}
-        onDeleteReview={handleDeleteReview}
-        settings={settings}
-        setSettings={setSettings}
-        onSaveSettings={handleSaveSettings}
-        adminStats={adminStats}
-        busy={adminInteractionBusy}
-      /></Suspense>
+      <>
+        {adminLoadError && <AdminLoadWarning onRetry={() => void refreshAdminData()} />}
+        <Suspense fallback={<PageLoader />}><AdminPortal
+          page={page}
+          navigate={navigate}
+          onLogout={handleLogout}
+          blogs={blogs}
+          blogForm={blogForm}
+          setBlogForm={setBlogForm}
+          editingBlogId={editingBlogId}
+          onSaveBlog={handleSaveBlog}
+          onEditBlog={editBlog}
+          onDeleteBlog={handleDeleteBlog}
+          onCancelBlog={cancelBlog}
+          works={works}
+          workForm={workForm}
+          setWorkForm={setWorkForm}
+          editingWorkId={editingWorkId}
+          onSaveWork={handleSaveWork}
+          onEditWork={editWork}
+          onDeleteWork={handleDeleteWork}
+          onCancelWork={cancelWork}
+          onUploadImages={handleUploadImages}
+          onRemoveWorkImage={handleRemoveWorkImage}
+          uploadingImages={uploadingImages}
+          leads={leads}
+          leadsHasMore={leadsHasMore}
+          leadsLoadingOlder={leadsLoadingOlder}
+          onLoadOlderLeads={loadOlderLeads}
+          onUpdateLeadStatus={handleUpdateLeadStatus}
+          onDeleteLead={handleDeleteLead}
+          reviewForm={reviewForm}
+          setReviewForm={setReviewForm}
+          reviews={reviews}
+          onSaveReview={handleSaveReview}
+          onDeleteReview={handleDeleteReview}
+          settings={settings}
+          setSettings={setSettings}
+          onSaveSettings={handleSaveSettings}
+          adminStats={adminStats}
+          busy={adminInteractionBusy}
+        /></Suspense>
+      </>
     );
   }
 
@@ -1026,11 +1175,18 @@ export function RupantarSite() {
           queryBusy={queryBusy}
         />
       )}
-      {page === "blog" && <Suspense fallback={<PageLoader />}><BlogIndexPage blogs={blogs} loading={!blogsLoaded || blogsLoading} navigate={navigate} onBlog={openBlog} /></Suspense>}
+      {page === "blog" && (blogsLoadError && !blogsLoaded
+        ? <ListLoadFailure label="articles" onRetry={() => void refreshBlogs().catch((error) => console.error("Unable to retry blog", error))} />
+        : <Suspense fallback={<PageLoader />}><BlogIndexPage blogs={blogs} loading={!blogsLoaded || blogsLoading} navigate={navigate} onBlog={openBlog} /></Suspense>)}
       {page === "blog-detail" && (selectedBlog
         ? <Suspense fallback={<PageLoader />}><BlogArticlePage blog={selectedBlog} navigate={navigate} /></Suspense>
         : detailLoadError ? <DetailLoadFailure label="article" /> : <PageLoader />)}
-      {page === "works" && <Suspense fallback={<PageLoader />}><WorksPage works={works} total={worksTotal} loading={worksLoading} filter={filter} setFilter={openCategory} onLoadMore={() => void loadWorks(filter, works.length)} navigate={navigate} onWork={openWork} /></Suspense>}
+      {page === "works" && (worksLoadError && works.length === 0
+        ? <ListLoadFailure label="projects" onRetry={() => void loadWorks(filter, 0, true).catch((error) => console.error("Unable to retry works", error))} />
+        : <>
+            {worksLoadError && works.length > 0 && <div className="mx-auto mt-4 max-w-[1280px] px-4 text-[13px] text-amber-700">More projects could not be loaded. Your current list is unchanged.</div>}
+            <Suspense fallback={<PageLoader />}><WorksPage works={works} total={worksTotal} loading={worksLoading} filter={filter} setFilter={openCategory} onLoadMore={() => void loadWorks(filter, works.length).catch((error) => console.error("Unable to load more works", error))} navigate={navigate} onWork={openWork} /></Suspense>
+          </>)}
       {page === "work-detail" && (selectedWork ? (
         <Suspense fallback={<PageLoader />}><WorkDetailPage work={selectedWork} works={works} navigate={navigate} onWork={openWork} onEstimate={goToEstimate} /></Suspense>
       ) : detailLoadError ? <DetailLoadFailure label="project" /> : <PageLoader />)}
