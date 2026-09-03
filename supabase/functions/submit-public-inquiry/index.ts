@@ -156,7 +156,8 @@ Deno.serve(async (request) => {
 
   if (!response.ok || result?.ok !== true) {
     console.error(JSON.stringify({ message: "Public inquiry RPC failed", status: response.status }));
-    return Response.json({ error: "Your request could not be sent. Please try again." }, { status: response.status === 429 ? 429 : 400 });
+    const status = response.status === 429 ? 429 : response.status >= 500 ? 503 : 400;
+    return Response.json({ error: "Your request could not be sent. Please try again." }, { status });
   }
 
   return Response.json({ ok: true, duplicate: result.duplicate === true }, { status: result.duplicate === true ? 200 : 201 });
