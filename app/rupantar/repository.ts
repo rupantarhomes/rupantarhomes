@@ -62,6 +62,11 @@ const adminWorksBatchSize = 1000;
 const blogColumns = "id,title,slug,body,category,created_at,updated_at";
 const reviewColumns = "id,name,location,message,rating,instagram_url";
 const settingsColumns = "id,slogan,phone,instagram_url,tiktok_url,address,workshop_note";
+const inquiryAttemptStoragePrefix = "rupantar-inquiry-attempt:";
+const inquiryAttemptMemory = new Map<string, string>();
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const workDraftIdPattern = /^rupantar-homes\/works\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+let settingsConfirmed = false;
 
 function text(value: unknown): string {
   return typeof value === "string" ? value : value == null ? "" : String(value);
@@ -102,13 +107,64 @@ async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit, tim
   }
 }
 
+async function inquiryFingerprint(
+  kind: "estimate" | "query",
+  payload: Record<string, string>,
+  attachment?: File | null,
+): Promise<string> {
+  const canonicalPayload = Object.entries(payload).sort(([left], [right]) => left.localeCompare(right));
+  const attachmentIdentity = attachment
+    ? [attachment.name, attachment.type, attachment.size, attachment.lastModified]
+    : null;
+  const canonical = JSON.stringify([kind, canonicalPayload, attachmentIdentity]);
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(canonical));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function submissionIdForFingerprint(fingerprint: string): string {
+  const storageKey = `${inquiryAttemptStoragePrefix}${fingerprint}`;
+  try {
+    const stored = window.sessionStorage.getItem(storageKey);
+    if (stored && uuidPattern.test(stored)) {
+      inquiryAttemptMemory.set(fingerprint, stored);
+      return stored;
+    }
+  } catch {
+    // Private browsing/storage restrictions fall back to in-memory retry state.
+  }
+
+  const remembered = inquiryAttemptMemory.get(fingerprint);
+  if (remembered && uuidPattern.test(remembered)) return remembered;
+
+  const submissionId = crypto.randomUUID();
+  inquiryAttemptMemory.set(fingerprint, submissionId);
+  try {
+    window.sessionStorage.setItem(storageKey, submissionId);
+  } catch {
+    // In-memory state still preserves retry safety for this page lifetime.
+  }
+  return submissionId;
+}
+
+function clearSubmissionIdForFingerprint(fingerprint: string): void {
+  inquiryAttemptMemory.delete(fingerprint);
+  try {
+    window.sessionStorage.removeItem(`${inquiryAttemptStoragePrefix}${fingerprint}`);
+  } catch {
+    // Nothing else is required after a confirmed successful submission.
+  }
+}
+
 async function submitPublicInquiry(
   kind: "estimate" | "query",
   payload: Record<string, string>,
   attachment?: File | null,
 ): Promise<void> {
+  const fingerprint = await inquiryFingerprint(kind, payload, attachment);
+  const submissionId = submissionIdForFingerprint(fingerprint);
   const body = new FormData();
   body.set("kind", kind);
+  body.set("submission_id", submissionId);
   for (const [name, value] of Object.entries(payload)) body.set(name, value);
   if (attachment) body.set("attachment", attachment, attachment.name);
 
@@ -123,6 +179,7 @@ async function submitPublicInquiry(
     const detail = typeof result?.error === "string" ? result.error : "Your request could not be sent. Please try again.";
     throw new Error(detail);
   }
+  clearSubmissionIdForFingerprint(fingerprint);
 }
 
 function httpsUrl(value: unknown, label: string, optional = false): string | null {
@@ -191,8 +248,7 @@ function mapReview(row: ReviewRow): Review {
   };
 }
 
-function mapSettings(row: SettingsRow | null): SiteSettings {
-  if (!row) return initialSettings;
+function mapSettings(row: SettingsRow): SiteSettings {
   return {
     slogan: text(row.slogan),
     phone: text(row.phone),
@@ -301,9 +357,11 @@ export async function loadPublicContent(): Promise<{
   settings: SiteSettings;
 }> {
   if (!isSupabaseConfigured) {
+    settingsConfirmed = false;
     return { works: initialWorks.slice(0, 6), reviews: initialReviews, settings: initialSettings };
   }
 
+  settingsConfirmed = false;
   const supabase = getSupabase();
   const [worksPage, reviewsResult, settingsResult] = await Promise.all([
     loadPublicWorksPage(0, 6, "all"),
@@ -313,11 +371,13 @@ export async function loadPublicContent(): Promise<{
 
   const error = reviewsResult.error ?? settingsResult.error;
   if (error) throw new Error(error.message);
+  if (!settingsResult.data) throw new Error("The production Settings row could not be confirmed.");
 
+  settingsConfirmed = true;
   return {
     works: worksPage.works,
     reviews: ((reviewsResult.data ?? []) as ReviewRow[]).map(mapReview),
-    settings: mapSettings((settingsResult.data as SettingsRow | null) ?? null),
+    settings: mapSettings(settingsResult.data as SettingsRow),
   };
 }
 
@@ -335,6 +395,7 @@ export async function signInAdmin(email: string, password: string): Promise<Sess
 
   if (adminError || !admin) {
     await supabase.auth.signOut();
+    settingsConfirmed = false;
     throw new Error("This account is not authorized for the admin portal.");
   }
 
@@ -346,7 +407,10 @@ export async function getCurrentAdminSession(): Promise<Session | null> {
   const supabase = getSupabase();
   const { data } = await supabase.auth.getSession();
   const session = data.session;
-  if (!session) return null;
+  if (!session) {
+    settingsConfirmed = false;
+    return null;
+  }
 
   const { data: admin } = await supabase
     .from("admin_users")
@@ -357,12 +421,14 @@ export async function getCurrentAdminSession(): Promise<Session | null> {
 
   if (!admin) {
     await supabase.auth.signOut();
+    settingsConfirmed = false;
     return null;
   }
   return session;
 }
 
 export async function signOutAdmin(): Promise<void> {
+  settingsConfirmed = false;
   if (isSupabaseConfigured) await getSupabase().auth.signOut();
 }
 
@@ -403,6 +469,14 @@ export async function saveWork(form: WorkForm, editingId: string | null): Promis
     p_work_id: editingId ? databaseId(editingId, "work ID") : null,
   });
   if (error || data == null) throw new Error(error?.message ?? "The work could not be saved.");
+
+  if (imagePayload.length) {
+    void (supabase as any).rpc("complete_cloudinary_draft_cleanup", {
+      p_public_ids: imagePayload.map((image) => image.cloudinary_public_id),
+    }).then(({ error: registryError }: { error?: { message?: string } | null }) => {
+      if (registryError) console.error("Unable to finalize saved Work draft registry", registryError.message);
+    });
+  }
 
   const id = text(data);
   return {
@@ -452,6 +526,9 @@ export async function deleteReview(id: string): Promise<void> {
 }
 
 export async function saveSettings(settings: SiteSettings): Promise<SiteSettings> {
+  if (!settingsConfirmed) {
+    throw new Error("Settings are not confirmed from production yet. Reload Admin and try again after the live data loads.");
+  }
   const payload: TablesInsert<"site_settings"> = {
     id: 1,
     slogan: requiredText(settings.slogan, "Slogan"),
@@ -464,6 +541,7 @@ export async function saveSettings(settings: SiteSettings): Promise<SiteSettings
   };
   const { data, error } = await getSupabase().from("site_settings").upsert(payload, { onConflict: "id" }).select(settingsColumns).single();
   if (error || !data) throw new Error(error?.message ?? "Settings could not be saved.");
+  settingsConfirmed = true;
   return mapSettings(data as SettingsRow);
 }
 
@@ -567,6 +645,18 @@ export async function loadAdminStats(): Promise<AdminStats> {
   ]);
   if (queries.error || estimates.error) throw new Error(queries.error?.message ?? estimates.error?.message);
   return { queries: queries.count ?? 0, estimates: estimates.count ?? 0 };
+}
+
+export async function claimExpiredCloudinaryDrafts(): Promise<string[]> {
+  const { data, error } = await (getSupabase() as any).rpc("claim_expired_cloudinary_drafts", {
+    p_min_age_minutes: 1440,
+    p_limit: 50,
+  });
+  if (error) throw new Error(error.message ?? "Unable to check stale Work image drafts.");
+  if (!Array.isArray(data)) throw new Error("The stale Work image cleanup response was invalid.");
+  const publicIds = data.filter((value): value is string => typeof value === "string" && workDraftIdPattern.test(value));
+  if (publicIds.length !== data.length) throw new Error("The stale Work image cleanup returned an invalid public ID.");
+  return publicIds;
 }
 
 function blogCategory(value: unknown): BlogCategory {
