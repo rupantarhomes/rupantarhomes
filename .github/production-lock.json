@@ -17,7 +17,7 @@
     "public": "1987219a82e673b5753043add2aaf26f542c942a",
     "scripts": "0d4c8b09ecef1f0190ffe5869ca802dbbcaded98",
     "supabase": "27543b4517a14bfb6821014f5ca75356765d647b",
-    "tests": "c7a8c1d05ca499fd007cf4e2a62905607494dc7a",
+    "tests": "1b1c3b7874e367f554f8440a4afb9b464ed8e98f",
     "tsconfig.json": "e7a4b1bc1895736832e2af16296bdf5c434591ad",
     "vite.config.ts": "162bb85a23130748fcb7d1a6ea233dd776c91ac8",
     "worker-configuration.d.ts": "ffd7c212afba76bcbc9211e9a30d866cd320ff14"
