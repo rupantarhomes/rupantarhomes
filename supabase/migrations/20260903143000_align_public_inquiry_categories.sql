@@ -96,7 +96,7 @@ set search_path to ''
 as $function$
 declare
   claimed_ids text[];
-  safe_min_age integer := greatest(coalesce(p_min_age_minutes, 10080), 1440);
+  safe_min_age integer := greatest(coalesce(p_min_age_minutes, 10080), 10080);
   safe_limit integer := least(greatest(coalesce(p_limit, 50), 1), 100);
 begin
   if auth.uid() is null or not exists (
