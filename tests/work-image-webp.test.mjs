@@ -17,13 +17,18 @@ test("keeps the work-image source and WebP output contract strict", async () => 
   assert.match(client, /file\.size > maximumBytes/);
   assert.match(client, /files\.length > maximumWorkImages/);
   assert.match(client, /body\.set\("asset_folder", signed\.assetFolder\)/);
+  assert.match(client, /body\.set\("public_id", signed\.publicId\)/);
   assert.match(client, /body\.set\("format", signed\.format\)/);
   assert.match(client, /body\.set\("transformation", signed\.transformation\)/);
   assert.doesNotMatch(client, /body\.set\("upload_preset"/);
+  assert.match(client, /if \(publicId !== signed\.publicId\)/);
   assert.match(client, /if \(format !== "webp"\) throw new Error\(`\$\{file\.name\} was not converted to WebP\.`\);/);
   assert.match(client, /if \(width > 1920 \|\| height > 1080\)/);
 
   assert.match(signature, /asset_folder: workImageAssetFolder/);
+  assert.match(signature, /public_id: publicId/);
+  assert.match(signature, /register_cloudinary_draft_image/);
+  assert.match(signature, /const publicId = `\$\{workImageAssetFolder\}\/\$\{crypto\.randomUUID\(\)\}`/);
   assert.match(signature, /const workImageAssetFolder = "rupantar-homes\/works"/);
   assert.match(signature, /format: "webp"/);
   assert.match(signature, /c_limit,h_1080,w_1920\/q_auto:good/);
@@ -36,6 +41,7 @@ test("rejects malformed or untrusted Cloudinary upload responses", async () => {
 
   assert.match(client, /if \(!response\.ok \|\| !uploaded \|\| uploaded\.error\)/);
   assert.match(client, /if \(!secureUrl \|\| !publicId\)/);
+  assert.match(client, /if \(publicId !== signed\.publicId\)/);
   assert.match(client, /if \(!width \|\| !height \|\| !bytes\)/);
   assert.match(client, /url\.protocol !== "https:"/);
   assert.match(client, /url\.hostname !== "res\.cloudinary\.com"/);
@@ -45,13 +51,13 @@ test("rejects malformed or untrusted Cloudinary upload responses", async () => {
 test("preserves rejected-upload cleanup and transactional batch rollback", async () => {
   const client = await read("../app/rupantar/cloudinary.ts");
   const validation = client.indexOf("return validateUploadedImage(uploaded, signed, file, sortOrder)");
-  const rejectedCleanup = client.indexOf("await deleteCloudinaryImages([publicId])", validation);
+  const rejectedCleanup = client.indexOf("await deleteCloudinaryImages([signed.publicId])", validation);
   const batchRollback = client.indexOf("await deleteCloudinaryImages(uploaded.map((image) => image.publicId))");
 
   assert.ok(validation >= 0);
   assert.ok(rejectedCleanup > validation);
   assert.ok(batchRollback >= 0);
-  assert.match(client, /Some uploaded images may need manual cleanup/);
+  assert.match(client, /automatic cleanup on the next Admin session/);
 });
 
 test("adds previews only after the full validated batch succeeds", async () => {
@@ -131,7 +137,7 @@ test("Work save and upload handlers reject overlapping in-flight operations", as
   assert.match(upload, /if \(!files\.length \|\| uploadMutationRef\.current \|\| adminMutationRef\.current\) return;/);
 });
 
-test("keeps Cloudinary delete operations authenticated, bounded, and reference-safe", async () => {
+test("keeps Cloudinary delete operations authenticated, bounded, reference-safe, and draft-aware", async () => {
   const endpoint = await read("../functions/api/cloudinary-delete.ts");
 
   assert.match(endpoint, /await requireAdmin\(request, runtime\)/);
@@ -139,6 +145,7 @@ test("keeps Cloudinary delete operations authenticated, bounded, and reference-s
   assert.match(endpoint, /value\.trim\(\)\.length <= 255/);
   assert.match(endpoint, /new Set\(body\.publicIds\.map/);
   assert.match(endpoint, /claim_unreferenced_cloudinary_images/);
+  assert.match(endpoint, /complete_cloudinary_draft_cleanup/);
   assert.match(endpoint, /for \(const publicId of claimedPublicIds\)/);
 });
 
