@@ -1,5 +1,6 @@
 type InquiryInput = {
   p_kind: "query" | "estimate";
+  p_submission_id: string;
   p_name: string;
   p_phone: string;
   p_category: string;
@@ -10,6 +11,13 @@ type InquiryInput = {
   p_approximate_size: string | null;
   p_material_preference: string | null;
 };
+
+type InquiryRpcResult = {
+  ok?: unknown;
+  duplicate?: unknown;
+};
+
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function invalidRequest(message = "Invalid inquiry request."): Response {
   return Response.json({ error: message }, { status: 400 });
@@ -73,14 +81,18 @@ function parseInquiry(value: unknown): InquiryInput {
   const input = value as Record<string, unknown>;
   if (input.p_kind !== "query" && input.p_kind !== "estimate") throw new Error("invalid");
 
+  const p_submission_id = stringOrNull(input.p_submission_id, 36);
   const p_name = stringOrNull(input.p_name, 150);
   const p_phone = stringOrNull(input.p_phone, 40);
   const p_category = stringOrNull(input.p_category, 64);
   const p_message = stringOrNull(input.p_message, 4000);
-  if (!p_name || !p_phone || !p_category || !p_message) throw new Error("invalid");
+  if (!p_submission_id || !uuidPattern.test(p_submission_id) || !p_name || !p_phone || !p_category || !p_message) {
+    throw new Error("invalid");
+  }
 
   return {
     p_kind: input.p_kind,
+    p_submission_id: p_submission_id.toLowerCase(),
     p_name,
     p_phone,
     p_category,
@@ -130,6 +142,7 @@ Deno.serve(async (request) => {
       method: "POST",
       headers: {
         apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
         "Content-Type": "application/json",
         Accept: "application/json",
       },
@@ -140,10 +153,17 @@ Deno.serve(async (request) => {
     return Response.json({ error: "Your request could not be sent. Please try again." }, { status: 503 });
   }
 
-  if (!response.ok) {
+  let result: InquiryRpcResult | null = null;
+  try {
+    result = (await response.json()) as InquiryRpcResult;
+  } catch {
+    // Status handling below provides the fallback.
+  }
+
+  if (!response.ok || result?.ok !== true) {
     console.error(JSON.stringify({ message: "Public inquiry RPC failed", status: response.status }));
     return Response.json({ error: "Your request could not be sent. Please try again." }, { status: response.status === 429 ? 429 : 400 });
   }
 
-  return Response.json({ ok: true }, { status: 201 });
+  return Response.json({ ok: true, duplicate: result.duplicate === true }, { status: result.duplicate === true ? 200 : 201 });
 });
