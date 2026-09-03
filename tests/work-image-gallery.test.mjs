@@ -41,6 +41,22 @@ test("native gallery renders exactly the available layers and keeps the first im
   }
 });
 
+test("only the page stack is square and cropped; fullscreen remains contained", () => {
+  const css = read("app/rupantar/work-image-gallery.css");
+  const rule = (selector) => css.slice(css.indexOf(selector + " {"), css.indexOf("}", css.indexOf(selector + " {")) + 1);
+  assert.match(rule(".rh-native-work-stack"), /aspect-ratio: 1 \/ 1/);
+  assert.match(rule(".rh-native-work-rear"), /aspect-ratio: 1 \/ 1/);
+  assert.match(rule(".rh-native-work-stack-photo img"), /object-fit: cover/);
+  assert.match(rule(".rh-native-work-viewer-photo img"), /object-fit: contain/);
+  assert.doesNotMatch(css.split("\n").filter((line) => /viewer|stage/.test(line)).join("\n"), /aspect-ratio/);
+  const { WorkImageGallery } = load("app/rupantar/work-image-gallery.tsx");
+  for (const [width, height] of [[1920, 1080], [608, 1080]]) {
+    const html = renderToStaticMarkup(React.createElement(WorkImageGallery, { images: [{ ...images[0], width, height }], title: "Work" }));
+    assert.match(html, /class="rh-native-work-stack">/);
+    assert.doesNotMatch(html, /aspect-ratio:/);
+  }
+});
+
 test("Admin renders six compact slots using the existing upload/remove lifecycle", () => {
   const mocks = { "./supabase": {}, "./repository": {} };
   const { AdminPortal } = load("app/rupantar/admin.tsx", mocks);

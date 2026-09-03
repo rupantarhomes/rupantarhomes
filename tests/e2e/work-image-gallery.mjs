@@ -24,7 +24,7 @@ const deleted = [];
 let savedPayload;
 let signedId;
 let uploads = 0;
-const imageBytes = await readFile(new URL("../../public/hero-real-1-v2.webp", import.meta.url));
+let imageBytes = await readFile(new URL("../../public/hero-real-1-v2.webp", import.meta.url));
 await context.addInitScript(() => sessionStorage.setItem("rupantar-brand-intro-seen", "1"));
 await context.route("**/*", async (route) => {
   const request = route.request();
@@ -63,6 +63,24 @@ const artifactDir = process.env.GALLERY_ARTIFACTS;
 if (artifactDir) await mkdir(artifactDir, { recursive: true });
 const noOverflow = async () => assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "horizontal overflow");
 const visible = (selector) => page.locator(selector).waitFor({ state: "visible" });
+const squareStack = async () => {
+  const geometry = await page.locator(".rh-native-work-stack").evaluate((element) => {
+    const front = element.querySelector(".rh-native-work-front").getBoundingClientRect();
+    const rear = [...element.querySelectorAll(".rh-native-work-rear")].map((layer) => {
+      const r = layer.getBoundingClientRect();
+      return { width: r.width, height: r.height, center: r.x + r.width / 2, bottom: r.bottom };
+    });
+    return { width: front.width, height: front.height, center: front.x + front.width / 2, bottom: front.bottom, rear,
+      cover: [...element.querySelectorAll("img")].every((img) => getComputedStyle(img).objectFit === "cover") };
+  });
+  assert.ok(Math.abs(geometry.width - geometry.height) < 1, "front is exactly square");
+  assert.ok(geometry.cover, "all stacked images use cover");
+  geometry.rear.forEach((r, i) => {
+    assert.ok(Math.abs(r.width - r.height) < 1, "rear is square");
+    assert.ok(r.width <= geometry.width && Math.abs(r.center - geometry.center) < 1);
+    assert.ok(Math.abs(r.bottom - geometry.bottom - (i + 1) * 10) < 1, "approved 10px lower edges preserved");
+  });
+};
 try {
   await page.goto(`${origin}/works/interior/gallery-fixture`);
   await visible(".rh-native-work-front img");
@@ -70,6 +88,10 @@ try {
   for (const width of widths) {
     await page.setViewportSize({ width, height: width < 500 ? 844 : 900 });
     await noOverflow();
+    await squareStack();
+    const stackRect = await page.locator(".rh-native-work-gallery").boundingBox();
+    const overviewRect = await page.getByRole("heading", { name: "Project Overview", exact: true }).boundingBox();
+    assert.ok(width < 1024 ? overviewRect.y >= stackRect.y + stackRect.height : overviewRect.x >= stackRect.x + stackRect.width, "Overview clears complete stack in existing responsive layout");
     assert.equal(await page.locator(".rh-native-work-rear").count(), 5);
     const geometry = await page.locator(".rh-native-work-gallery").evaluate((element) => ({ bottom: element.getBoundingClientRect().bottom, rear: [...element.querySelectorAll(".rh-native-work-rear")].map((x) => x.getBoundingClientRect().bottom), width: element.getBoundingClientRect().width }));
     assert.ok(geometry.rear.every((bottom) => bottom <= geometry.bottom + 1));
@@ -83,6 +105,9 @@ try {
     assert.equal(await page.getByRole("dialog").count(), 1, "legacy viewer must not also open");
     assert.equal(await page.locator(".rh-native-work-counter").textContent(), "1 / 6");
     assert.equal(await page.locator(".rh-native-work-viewer-photo img").evaluate((img) => getComputedStyle(img).objectFit), "contain");
+    await page.waitForFunction(() => document.querySelector(".rh-native-work-viewer-photo img")?.naturalWidth > 0);
+    assert.ok(await page.locator(".rh-native-work-viewer-photo img").evaluate((img) => img.naturalWidth > img.naturalHeight));
+    assert.equal(await page.locator(".rh-native-work-viewer-photo").evaluate((el) => getComputedStyle(el).aspectRatio), "auto");
     assert.equal(await page.getByRole("button", { name: "Previous image", exact: true }).isDisabled(), true);
     await page.keyboard.press("ArrowRight");
     await page.waitForFunction(() => document.querySelector(".rh-native-work-counter")?.textContent === "2 / 6");
@@ -120,6 +145,25 @@ try {
   assert.equal(await page.locator(".rh-native-work-prev").count(), 0);
   await page.locator(".rh-native-work-viewer").click({ position: { x: 2, y: 70 } });
   await page.locator(".rh-native-work-viewer").waitFor({ state: "detached" });
+
+  imageBytes = await readFile(new URL("../../public/hero-real-1-mobile.webp", import.meta.url));
+  images = [{ ...makeImage(1, "rupantar-homes/works/portrait-fixture"), width: 1080, height: 1920 }];
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: width < 500 ? 844 : 900 });
+    await page.reload();
+    await visible(".rh-native-work-front");
+    await squareStack();
+    await noOverflow();
+    if (artifactDir) await page.locator(".rh-native-work-gallery").screenshot({ path: resolve(artifactDir, `portrait-stack-${width}.png`) });
+    await page.locator(".rh-native-work-front").click();
+    await visible(".rh-native-work-viewer");
+    await page.waitForFunction(() => document.querySelector(".rh-native-work-viewer-photo img")?.naturalWidth > 0);
+    assert.ok(await page.locator(".rh-native-work-viewer-photo img").evaluate((img) => img.naturalHeight > img.naturalWidth && getComputedStyle(img).objectFit === "contain"));
+    assert.equal(await page.locator(".rh-native-work-viewer-photo").evaluate((el) => getComputedStyle(el).aspectRatio), "auto");
+    if (artifactDir) await page.screenshot({ path: resolve(artifactDir, `portrait-viewer-${width}.png`) });
+    await page.keyboard.press("Escape");
+  }
+  imageBytes = await readFile(new URL("../../public/hero-real-1-v2.webp", import.meta.url));
 
   await page.goto(`${origin}/admin`);
   await page.getByPlaceholder("Email", { exact: true }).fill("gallery@example.test");

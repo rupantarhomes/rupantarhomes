@@ -99,13 +99,12 @@ export function WorkImageGallery({ images, title }: { images: WorkImage[]; title
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   if (!images.length) return <WorkPhoto alt={title} aspect="aspect-square" label="Main Gallery Photo Coming Soon" />;
   const first = images[0];
-  const aspectRatio = first.width && first.height ? `${first.width} / ${first.height}` : "16 / 10";
   return (
     <div data-native-work-gallery className="rh-native-work-gallery" style={{ paddingBottom: (images.length - 1) * 10 }}>
-      <div className="rh-native-work-stack" style={{ aspectRatio }}>
+      <div className="rh-native-work-stack">
         {images.slice(1).map((image, index) => (
           <div key={image.id} className="rh-native-work-rear" aria-hidden="true"
-            style={{ inset: `0 ${(index + 1) * 5}px`, transform: `translateY(${(index + 1) * 10}px)`, zIndex: images.length - index - 1 }}>
+            style={{ inset: `${(index + 1) * 10}px ${(index + 1) * 5}px auto`, transform: `translateY(${(index + 1) * 10}px)`, zIndex: images.length - index - 1 }}>
             <WorkPhoto image={image} alt={title} aspect="rh-native-work-stack-photo" sizes="160px" widths={[96, 160, 240]} />
           </div>
         ))}

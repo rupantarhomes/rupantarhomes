@@ -463,3 +463,11 @@ Only these protected fingerprints change:
 - `tests`: `c50fcfdd4a8bb61b00ef710e8608345c455420d0`
 
 Application deployment/merge remains pending review. The backward-compatible database count change alone is already live.
+
+## PR #92 square Work-detail presentation correction — 2026-09-04
+
+Correction from PR head `2b7407281061d8de48e8f839ce4532c0a28fdab1`: normal Work-detail front/rear cards use 1:1 CSS geometry and cover. Rear top insets compensate for their narrower square height, preserving the existing 10px lower edges, transforms, centered widths and bottom reservation. Fullscreen viewer, Admin, media URLs, upload lifecycle and database are unchanged.
+
+TypeScript, production build, 79 regression tests, reliability guard self-test and diff whitespace check pass. Local intercepted browser fixtures pass at 320, 375, 390, 393, 414, 430, 1280 and 1440px: square front/rear cards, no overflow/Overview overlap, 520px desktop limit, landscape/portrait contain in fullscreen, six-image navigation, one-image compatibility and unchanged Admin lifecycle. Screenshots inspected; Chromium, not a physical iPhone test.
+
+Only `app` (`01b32cc07d6075027284b393fd0f3bc41e3e5306`) and `tests` (`43011b16725aeb4809a53254333de54295aee718`) fingerprints are updated for this correction. No additional Supabase change. PR #92 must remain unmerged pending explicit approval.
