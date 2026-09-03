@@ -1,6 +1,6 @@
 type InquiryInput = {
   p_kind: "query" | "estimate";
-  p_submission_id: string;
+  p_submission_id: string | null;
   p_name: string;
   p_phone: string;
   p_category: string;
@@ -12,11 +12,7 @@ type InquiryInput = {
   p_material_preference: string | null;
 };
 
-type InquiryRpcResult = {
-  ok?: unknown;
-  duplicate?: unknown;
-};
-
+type InquiryRpcResult = { ok?: unknown; duplicate?: unknown };
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function invalidRequest(message = "Invalid inquiry request."): Response {
@@ -26,11 +22,8 @@ function invalidRequest(message = "Invalid inquiry request."): Response {
 async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit, timeoutMs = 10_000): Promise<Response> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(new Error("Dependency request timed out.")), timeoutMs);
-  try {
-    return await fetch(input, { ...init, signal: controller.signal });
-  } finally {
-    clearTimeout(timeout);
-  }
+  try { return await fetch(input, { ...init, signal: controller.signal }); }
+  finally { clearTimeout(timeout); }
 }
 
 async function secretHash(value: string): Promise<string> {
@@ -47,19 +40,11 @@ function hashesMatch(provided: string, expected: string): boolean {
   return difference === 0;
 }
 
-async function internalSecretIsValid(
-  providedSecret: string,
-  supabaseUrl: string,
-  serviceRoleKey: string,
-): Promise<boolean> {
+async function internalSecretIsValid(providedSecret: string, supabaseUrl: string, serviceRoleKey: string): Promise<boolean> {
   if (!providedSecret) return false;
   const response = await fetchWithTimeout(`${supabaseUrl}/rest/v1/rpc/get_public_inquiry_secret_hash`, {
     method: "POST",
-    headers: {
-      apikey: serviceRoleKey,
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
+    headers: { apikey: serviceRoleKey, "Content-Type": "application/json", Accept: "application/json" },
     body: "{}",
   });
   if (!response.ok) {
@@ -81,18 +66,17 @@ function parseInquiry(value: unknown): InquiryInput {
   const input = value as Record<string, unknown>;
   if (input.p_kind !== "query" && input.p_kind !== "estimate") throw new Error("invalid");
 
-  const p_submission_id = stringOrNull(input.p_submission_id, 36);
+  const rawSubmissionId = stringOrNull(input.p_submission_id, 36);
+  if (rawSubmissionId && !uuidPattern.test(rawSubmissionId)) throw new Error("invalid");
   const p_name = stringOrNull(input.p_name, 150);
   const p_phone = stringOrNull(input.p_phone, 40);
   const p_category = stringOrNull(input.p_category, 64);
   const p_message = stringOrNull(input.p_message, 4000);
-  if (!p_submission_id || !uuidPattern.test(p_submission_id) || !p_name || !p_phone || !p_category || !p_message) {
-    throw new Error("invalid");
-  }
+  if (!p_name || !p_phone || !p_category || !p_message) throw new Error("invalid");
 
   return {
     p_kind: input.p_kind,
-    p_submission_id: p_submission_id.toLowerCase(),
+    p_submission_id: rawSubmissionId ? rawSubmissionId.toLowerCase() : null,
     p_name,
     p_phone,
     p_category,
@@ -114,6 +98,7 @@ Deno.serve(async (request) => {
     console.error("Missing Supabase Edge Function runtime credentials.");
     return Response.json({ error: "Service unavailable." }, { status: 503 });
   }
+
   const providedSecret = request.headers.get("X-Rupantar-Internal-Secret") ?? "";
   try {
     if (!(await internalSecretIsValid(providedSecret, supabaseUrl, serviceRoleKey))) {
@@ -130,11 +115,23 @@ Deno.serve(async (request) => {
   }
 
   let input: InquiryInput;
-  try {
-    input = parseInquiry(await request.json());
-  } catch {
-    return invalidRequest();
-  }
+  try { input = parseInquiry(await request.json()); }
+  catch { return invalidRequest(); }
+
+  const rpcInput = input.p_submission_id
+    ? input
+    : {
+        p_kind: input.p_kind,
+        p_name: input.p_name,
+        p_phone: input.p_phone,
+        p_category: input.p_category,
+        p_message: input.p_message,
+        p_attachment_public_id: input.p_attachment_public_id,
+        p_attachment_url: input.p_attachment_url,
+        p_location: input.p_location,
+        p_approximate_size: input.p_approximate_size,
+        p_material_preference: input.p_material_preference,
+      };
 
   let response: Response;
   try {
@@ -146,7 +143,7 @@ Deno.serve(async (request) => {
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify(input),
+      body: JSON.stringify(rpcInput),
     });
   } catch (error) {
     console.error(JSON.stringify({ message: "Public inquiry RPC timed out", error: error instanceof Error ? error.message : "unknown" }));
@@ -154,11 +151,8 @@ Deno.serve(async (request) => {
   }
 
   let result: InquiryRpcResult | null = null;
-  try {
-    result = (await response.json()) as InquiryRpcResult;
-  } catch {
-    // Status handling below provides the fallback.
-  }
+  try { result = (await response.json()) as InquiryRpcResult; }
+  catch { /* Status handling below provides the fallback. */ }
 
   if (!response.ok || result?.ok !== true) {
     console.error(JSON.stringify({ message: "Public inquiry RPC failed", status: response.status }));
