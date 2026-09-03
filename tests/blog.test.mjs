@@ -32,3 +32,33 @@ test("blog remains text only", async () => {
   assert.match(admin, /countBlogWords/);
   assert.match(shared, />Blog<\/button>/);
 });
+
+test("Work project stories resolve the current Blog title without duplicating title data", async () => {
+  const [blog, publicPages, admin, workTypes, workBlogMigration] = await Promise.all([
+    read("app/rupantar/blog.ts"),
+    read("app/rupantar/public-pages.tsx"),
+    read("app/rupantar/admin.tsx"),
+    read("app/rupantar/types.ts"),
+    read("supabase/migrations/20260829093000_add_work_project_blog_url.sql"),
+  ]);
+
+  assert.match(blog, /rupantarBlogSlugFromUrl/);
+  assert.match(blog, /rupantarhomes\.com/);
+  assert.match(blog, /www\.rupantarhomes\.com/);
+  assert.match(blog, /segments\.length !== 2 \|\| segments\[0\] !== "blog"/);
+  assert.match(blog, /resolveRupantarBlogUrl/);
+
+  assert.match(publicPages, /loadPublicBlogBySlug/);
+  assert.match(publicPages, /rupantarBlogSlugFromUrl\(work\.blogUrl\)/);
+  assert.match(publicPages, /setProjectBlogTitle\(blog\?\.title \?\? null\)/);
+  assert.match(publicPages, /\{projectBlogTitle\}<\/h3>/);
+  assert.doesNotMatch(publicPages, /A Detail Blog for this Project/);
+
+  assert.match(admin, /resolveRupantarBlogUrl\(projectBlogUrl, blogs\)/);
+  assert.match(admin, /Linked blog:/);
+  assert.match(admin, /No existing Rupantar Homes blog matches this URL\./);
+  assert.match(admin, /This URL is not a valid Rupantar Homes blog link\./);
+
+  assert.doesNotMatch(workTypes, /blogTitle/);
+  assert.doesNotMatch(workBlogMigration, /blog_title/i);
+});
