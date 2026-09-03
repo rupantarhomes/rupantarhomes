@@ -1,0 +1,17 @@
+{
+  "name": "Rupantar Homes Admin",
+  "short_name": "Rupantar Admin",
+  "start_url": "/admin",
+  "scope": "/admin",
+  "display": "standalone",
+  "background_color": "#fbfbfb",
+  "theme_color": "#fbfbfb",
+  "icons": [
+    {
+      "src": "/assets/rupantar-favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
