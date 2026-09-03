@@ -350,6 +350,44 @@ Final accepted review fingerprints:
 
 The production workflow must pass the handover lock and `npm run verify` on the exact final PR head before merge. Production smoke testing of disposable Work/Blog writes and real browser navigation remains a post-merge/deploy step because Cloudflare deploys from `main`.
 
+## End-to-end durability hardening — 2026-09-03
+
+This is the final system-level durability contract for the current PR. It extends the Admin reliability work across public forms, media recovery, session recovery, live-data confirmation, public read failures, verification, and operations without changing the normal successful-state layout, colors, branding, or public copy.
+
+- the browser, Cloudflare inquiry Function, Supabase Edge Function, and database now share the same canonical ten service categories, including `interior`;
+- public Query and Estimate retries are idempotent: an unchanged failed submission reuses a content-aware UUID, while edited content or a replaced Estimate attachment creates a new attempt ID;
+- `queries` and `estimate_requests` gain nullable `submission_id` columns and unique non-null indexes, so a lost HTTP response followed by retry resolves to the already-persisted submission instead of creating a second row/Lead;
+- the idempotent eleven-argument `submit_public_inquiry` overload is added alongside the existing deployed ten-argument overload for a backward-compatible rollout; both remain inaccessible to public/anon/authenticated callers, and the new overload is service-role-only;
+- Estimate media uses a deterministic Cloudinary public ID under `rupantar-homes/inquiries` for each submission attempt; an ambiguous database timeout preserves the media because persistence may already have committed, and a confirmed duplicate retry does not emit a duplicate Web3Forms notification;
+- Admin Work images are registered as server-authorized drafts before Cloudinary receives the upload; saved/referenced images are never eligible for stale-draft deletion, while unreferenced drafts older than 24 hours may be claimed in bounded batches and retried after a 15-minute cleanup lease;
+- the existing reference-safe `claim_unreferenced_cloudinary_images` check remains authoritative immediately before Cloudinary deletion, and successful/not-found cleanup reconciles the new draft registry without weakening persisted-image safety;
+- Settings cannot be written from fallback or unconfirmed state: a live production `site_settings` row must be fetched successfully before `saveSettings` is allowed;
+- Admin session/access is revalidated on auth events, browser focus/visibility, route activity, and a five-minute interval; confirmed revoked/missing access returns the operator to Admin login, while a transient Supabase/provider verification failure is logged and does not destroy a valid session;
+- public Works and Blog list routes gain a failure-only recovery probe/Retry surface so a real read failure cannot indefinitely masquerade as empty/still-loading content; successful routes keep their existing presentation unchanged;
+- public Work/Blog detail failures retain their explicit Retry/Back Home recovery and the application retains its top-level render error boundary;
+- Work saves, Blog saves, Review writes, Settings writes, Lead writes, public forms, and image operations retain their duplicate-call, stale-response, immutable-snapshot, immediate-confirmed-state, and bounded-request protections from the earlier audit;
+- Admin Works continues to fetch transparently in 1,000-row batches rather than having a hidden 1,000-record lifetime ceiling, while public Works remains paginated at its existing public size;
+- `npm run verify` is now a release gate of strict TypeScript (`tsc --noEmit`) followed by the production Vite build and regression suite; the final durability suite contains 68 tests;
+- `/api/health` and the production operations runbook define dependency monitoring, backup/export expectations, restore testing, media-orphan audits, migration discipline, secret rotation, incident handling, and post-deploy desktop/mobile smoke checks;
+- live audit data at the time of this work showed structurally healthy Supabase data and complete current Work-media references in Cloudinary; historical unrelated Cloudinary assets were deliberately not mass-deleted without ownership certainty;
+- production's Supabase migration ledger is authoritative. Historical repository migrations are references and must not be blindly replayed. Every new database change must be forward-only, verified, and followed by regenerated production types after deployment;
+- `app/rupantar/database.types.ts` intentionally continues to describe the currently deployed production schema on this unmerged branch; regenerate it only after the new migration is actually deployed so source types never falsely claim an unapplied live schema;
+- disaster recovery remains an operational responsibility rather than a code guarantee: database exports/restores and Cloudinary backup policy must be maintained and tested according to the operations runbook;
+- "immediate" display continues to mean immediately after the required persistence write is confirmed, without a redundant blocking list reload; no network/database write is represented as literal zero-time.
+
+Final protected fingerprints accepted for this review state:
+
+- `app`: `fe6d2e83fc97c5b65f131f93dc7bbdc66b496fe8`
+- `functions`: `475f088510f369c3e527f64972e2e6a5e9d5ff93`
+- `index.html`: `4a9013e5bef9d5d092f082422d188a96a335674f`
+- `package.json`: `30aede1d9522c36b1abef1fccf843f1c5edbd67f`
+- `public`: `0536c426ff9be2776c277c71fd7bea91257ed0f8`
+- `supabase`: `ad51204fdf94de46c03399033d94d5910d832d8d`
+- `tests`: `4843bb2e48e553e569114ef8bfb290125da46321`
+- `tsconfig.json`: `e7a4b1bc1895736832e2af16296bdf5c434591ad`
+
+The exact pre-documentation code head `092d30bed91a2a26e3a99e226edd98b1444c4687` passed production-lock enforcement, strict TypeScript, production build, and all 68 regression tests in GitHub Actions run `33698990206`. This PR remains unmerged at this stage. The new database migration, Edge/Cloudflare caller, and runtime hardening must deploy as the reviewed PR set; no production migration or post-deploy destructive smoke test is to be performed before explicit merge approval.
+
 ## AI/Codex instruction block
 
 Use this at the start of future implementation requests:
