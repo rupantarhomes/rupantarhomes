@@ -415,3 +415,29 @@ The code-bearing head `33c822a63d03b75b4a3c1275d0c16bbcf8a06f2a` passed producti
 Use this at the start of future implementation requests:
 
 > Preserve the Rupantar Homes production baseline. Make only the requested change. Do not modify Auth/RLS, Cloudinary Work image lifecycle, inquiry security, security headers, environment/deployment configuration, or GitHub production protection unless the task explicitly requires it. Start from the latest main branch, use a dedicated branch, run `npm run verify`, review the full diff, open a PR, merge only after CI passes, then perform the appropriate production regression from `docs/PRODUCTION-BASELINE.md`.
+
+## Admin mobile and iOS home-screen hardening — 2026-09-03
+
+Scope is limited to `/admin` mobile and standalone presentation. The public site remains locked and unchanged.
+
+- respect iPhone safe-area insets in the Admin header, content edges, and bottom area so the status bar, Dynamic Island/notch, and home indicator do not cover Admin controls or content;
+- keep `View Site` and `Logout` accessible in the mobile Admin header while preserving the existing visual hierarchy and desktop Admin presentation;
+- preserve the intentionally horizontal Admin tab strip, enable native touch scrolling, hide only its scrollbar, and bring the active tab into view when navigation moves it outside the viewport;
+- prevent iOS Safari form-focus zoom by keeping Admin inputs, selects, and textareas at a mobile-safe 16px while preserving their desktop sizing;
+- prevent page-wide horizontal drift at the Admin shell level without using a blanket inner-content overflow mask that could hide information;
+- keep Dashboard stat cards in two columns on normal phone widths and use one column only on very narrow screens;
+- on mobile Work lists, remove title truncation, allow exact Work titles/category/location metadata to wrap, and place Edit/Delete actions safely below the content instead of forcing the row wider than the viewport;
+- add targeted wrapping protections for Dashboard Recent Leads, Blog cards, Lead contact/details, Review cards, Settings/forms, messages, badges, and long values without redesigning those sections;
+- add `/admin.webmanifest` with `/admin` as both `start_url` and `scope`, standalone display, the existing Rupantar brand icon, and Admin-appropriate background/theme colors;
+- while the browser is on `/admin`, switch only the install manifest, Apple app title, status-bar style, theme color, and document title to the Admin experience; restore the original public metadata immediately after leaving `/admin`;
+- keep the existing public `/site.webmanifest`, public routes, public UI, public typography/colors/spacing, and all public page behavior unchanged;
+- make no Supabase Auth/RLS/schema/RPC/CRUD changes, no Cloudinary lifecycle changes, no inquiry/form changes, no security-header changes, and no deployment/infrastructure changes;
+- add regression coverage for Admin route scoping, safe areas, mobile form sizing, intentional horizontal tabs, Work-title wrapping, standalone Admin manifest behavior, and preservation of the public manifest.
+
+Accepted fingerprints for this scoped code-bearing update:
+
+- `app`: `225f5b9eb35e7b52bbc54ab33d96ce12d289a037`
+- `public`: `1987219a82e673b5753043add2aaf26f542c942a`
+- `tests`: `c173c0f1d1fec97159608e8cb80419c091d31052`
+
+The exact code-bearing head `4cd79e270a73a083fa20b63262dfa1afe8d1fc7a` passed production handover-lock enforcement, dependency installation, the frontend reliability guard self-test, strict TypeScript, the production build, and the full regression suite in GitHub Actions run `33790451990`, job `100765508074`. The documentation commit that records this baseline must also pass the same workflow before merge. PR #88 remains unmerged until explicit approval.
