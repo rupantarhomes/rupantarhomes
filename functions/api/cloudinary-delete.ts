@@ -35,6 +35,25 @@ async function claimUnreferencedImages(
   return result.map((publicId) => publicId.trim());
 }
 
+async function completeDraftRegistryCleanup(
+  publicIds: string[],
+  request: Request,
+  runtime: RuntimeEnv,
+): Promise<void> {
+  if (!publicIds.length) return;
+  const authorization = request.headers.get("Authorization") ?? "";
+  const response = await fetchWithTimeout(`${runtime.SUPABASE_URL}/rest/v1/rpc/complete_cloudinary_draft_cleanup`, {
+    method: "POST",
+    headers: {
+      apikey: runtime.SUPABASE_PUBLISHABLE_KEY,
+      Authorization: authorization,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ p_public_ids: publicIds }),
+  }, 10_000);
+  if (!response.ok) throw new Error("Unable to clear the Cloudinary draft registry.");
+}
+
 export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env }) => {
   try {
     const runtime = requireRuntimeEnv(env);
@@ -55,11 +74,22 @@ export const onRequestPost: PagesFunction<RuntimeEnv> = async ({ request, env })
 
     let deleted = 0;
     let notFound = 0;
+    const completed: string[] = [];
     for (const publicId of claimedPublicIds) {
       const result = await destroyCloudinaryImage(publicId, runtime);
       if (result === "deleted") deleted += 1;
       else notFound += 1;
+      completed.push(publicId);
     }
+
+    try {
+      await completeDraftRegistryCleanup(completed, request, runtime);
+    } catch (registryError) {
+      // The Cloudinary action already succeeded. Leave the registry claim to
+      // expire so a later cleanup pass can safely reconcile it as not found.
+      console.error(JSON.stringify({ message: "cloudinary draft registry cleanup failed", error: errorMessage(registryError) }));
+    }
+
     return json({ deleted, notFound, stillReferenced: publicIds.length - claimedPublicIds.length });
   } catch (error) {
     const message = errorMessage(error);
