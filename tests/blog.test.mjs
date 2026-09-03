@@ -74,14 +74,17 @@ test("Blog article restores intended typography and uses scoped spacing only", a
   assert.match(articlePage, /className="rh-blog-article max-w-\[800px\]"/);
   assert.match(articlePage, /className="rh-blog-project-card w-full/);
   assert.doesNotMatch(articlePage, /aria-hidden="true" style=\{\{ height:/);
-  assert.match(articlePage, /text-\[18px\] sm:text-\[20px\]/);
-  assert.match(articlePage, /text-\[13px\] leading-6/);
-  assert.match(articlePage, /text-\[12px\] font-semibold/);
   assert.match(articlePage, /href=\{workPath\(linkedWork\)\}/);
 
+  assert.match(styles, /\.rh-blog-article \{[\s\S]*?padding-top: 0 !important/);
   assert.match(styles, /\.rh-blog-article-title \{[\s\S]*?font-size: 56px !important/);
   assert.match(styles, /\.rh-blog-article-body \{[\s\S]*?font-size: 17px !important/);
   assert.match(styles, /\.rh-blog-project-card \{[\s\S]*?margin-top: 64px !important/);
-  assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article-page \{[\s\S]*?padding-top: 32px !important/);
+  assert.match(styles, /\.rh-blog-project-eyebrow \{[\s\S]*?font-size: 11px !important/);
+  assert.match(styles, /\.rh-blog-project-title \{[\s\S]*?font-size: 22px !important/);
+  assert.match(styles, /\.rh-blog-project-description \{[\s\S]*?font-size: 14px !important/);
+  assert.match(styles, /\.rh-blog-project-link \{[\s\S]*?font-size: 13px !important/);
+  assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article-page \{[\s\S]*?padding-top: 40px !important/);
   assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article-title \{[\s\S]*?font-size: 40px !important/);
+  assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-project-title \{[\s\S]*?font-size: 20px !important/);
 });
