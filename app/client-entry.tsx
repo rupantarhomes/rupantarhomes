@@ -135,6 +135,63 @@ function ensureFacebookLinks() {
   }
 }
 
+function createReviewArrowIcon(direction: "previous" | "next") {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("focusable", "false");
+
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", "currentColor");
+  path.setAttribute("stroke-width", "2");
+  path.setAttribute("stroke-linecap", "round");
+  path.setAttribute("stroke-linejoin", "round");
+  path.setAttribute("d", direction === "previous" ? "m15 18-6-6 6-6" : "m9 18 6-6-6-6");
+  svg.appendChild(path);
+  return svg;
+}
+
+function scrollReviewTrack(section: HTMLElement, direction: -1 | 1) {
+  const grid = Array.from(section.querySelectorAll<HTMLElement>("div.grid")).find((element) => element.children.length > 0);
+  if (!grid) return;
+
+  const card = grid.querySelector<HTMLElement>(".rh-review-card") || (grid.firstElementChild instanceof HTMLElement ? grid.firstElementChild : null);
+  const styles = window.getComputedStyle(grid);
+  const gap = Number.parseFloat(styles.columnGap || styles.gap || "20") || 20;
+  const cardWidth = card?.getBoundingClientRect().width || grid.clientWidth / 3;
+  grid.scrollBy({ left: direction * (cardWidth + gap), behavior: "smooth" });
+}
+
+function ensureReviewDesktopControls(section: HTMLElement) {
+  const header = section.firstElementChild;
+  const summary = header?.lastElementChild;
+  if (!(summary instanceof HTMLElement) || summary.querySelector('[data-rh-review-controls="true"]')) return;
+
+  const controls = document.createElement("span");
+  controls.className = "rh-review-controls";
+  controls.dataset.rhReviewControls = "true";
+  controls.setAttribute("role", "group");
+  controls.setAttribute("aria-label", "Review carousel controls");
+
+  const previous = document.createElement("button");
+  previous.type = "button";
+  previous.className = "rh-review-arrow";
+  previous.setAttribute("aria-label", "Previous review");
+  previous.appendChild(createReviewArrowIcon("previous"));
+  previous.addEventListener("click", () => scrollReviewTrack(section, -1));
+
+  const next = document.createElement("button");
+  next.type = "button";
+  next.className = "rh-review-arrow";
+  next.setAttribute("aria-label", "Next review");
+  next.appendChild(createReviewArrowIcon("next"));
+  next.addEventListener("click", () => scrollReviewTrack(section, 1));
+
+  controls.append(previous, next);
+  summary.appendChild(controls);
+}
+
 function ensureReviewCardClasses() {
   const heading = Array.from(document.querySelectorAll<HTMLElement>("h3")).find(
     (element) => element.textContent?.trim() === "Real Homes, Real Reviews",
@@ -173,6 +230,8 @@ function ensureReviewCardClasses() {
       }
     }
   }
+
+  ensureReviewDesktopControls(section);
 }
 
 function normalizeVisibleCopy() {
