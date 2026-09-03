@@ -16,7 +16,7 @@
     "pnpm-workspace.yaml": "661850fd02b3863cf84ab63d4d1f01e09c1ff98a",
     "public": "1987219a82e673b5753043add2aaf26f542c942a",
     "scripts": "0d4c8b09ecef1f0190ffe5869ca802dbbcaded98",
-    "supabase": "f8d7073f76d3100d9bd404231cbbd61beec56e9a",
+    "supabase": "ac5298e164b89fda092b6a4364f72b0d88a3edf0",
     "tests": "c173c0f1d1fec97159608e8cb80419c091d31052",
     "tsconfig.json": "e7a4b1bc1895736832e2af16296bdf5c434591ad",
     "vite.config.ts": "162bb85a23130748fcb7d1a6ea233dd776c91ac8",
