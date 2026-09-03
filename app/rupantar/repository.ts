@@ -215,13 +215,13 @@ function mapImage(row: WorkImageRow): WorkImage {
   return {
     id: text(row.id),
     workId: text(row.work_id),
-    url: row.secure_url,
-    publicId: text(row.cloudinary_public_id),
+    url: requiredText(row.secure_url, "Work image URL"),
+    publicId: requiredText(row.cloudinary_public_id, "Work image public ID"),
     altText: row.alt_text,
     sortOrder: row.sort_order,
-    width: row.width,
-    height: row.height,
-    bytes: row.byte_size,
+    width: row.width ?? undefined,
+    height: row.height ?? undefined,
+    bytes: row.byte_size ?? undefined,
   };
 }
 
@@ -460,6 +460,7 @@ export async function saveWork(form: WorkForm, editingId: string | null): Promis
       byte_size: positiveInteger(image.bytes, "file size"),
     };
   });
+  const workId = editingId ? databaseId(editingId, "work ID") : undefined;
 
   const { data, error } = await supabase.rpc("save_work_with_images", {
     p_title: title,
@@ -469,9 +470,9 @@ export async function saveWork(form: WorkForm, editingId: string | null): Promis
     p_short_description: shortDesc,
     p_long_description: longDesc,
     p_featured: Boolean(form.featured),
-    p_blog_url: blogUrl,
+    p_blog_url: blogUrl ?? "",
     p_images: imagePayload,
-    p_work_id: editingId ? databaseId(editingId, "work ID") : null,
+    ...(workId === undefined ? {} : { p_work_id: workId }),
   });
   if (error || data == null) throw new Error(error?.message ?? "The work could not be saved.");
 
