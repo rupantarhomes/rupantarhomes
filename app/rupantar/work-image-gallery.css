@@ -1,0 +1,33 @@
+/* Only the native Work image slots, stack and portal. */
+.rh-admin-work-images { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(3, auto); gap: 10px; max-width: 360px; }
+.rh-admin-work-slot { min-width: 0; border: 1px solid #e4e4e7; border-radius: 12px; background: #fff; }
+.rh-admin-work-thumb { display: block; width: 100%; padding: 0; border: 0; background: transparent; cursor: zoom-in; }
+.rh-admin-work-thumb > div { border-radius: 11px 11px 0 0; }
+.rh-admin-work-remove { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; min-height: 32px; font-size: 11px; border: 0; border-radius: 0 0 11px 11px; background: #fafafa; color: #3f3f46; cursor: pointer; }
+.rh-admin-work-remove:hover { color: #ff1a3d; }
+/* Override the existing absolute Remove pill only within these native slots. */
+.rh-admin-work-slot > .rh-admin-work-remove { position: relative !important; inset: auto !important; width: 100% !important; min-width: 0 !important; border-radius: 0 0 11px 11px !important; box-shadow: none !important; }
+.rh-admin-work-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; width: 100%; aspect-ratio: 4 / 3; min-height: 100%; padding: 12px 4px; border-style: dashed; color: #71717a; background: #fcfcfc; cursor: pointer; font-size: 11px; }
+.rh-admin-work-empty:hover { border-color: #ff1a3d; }
+.rh-admin-work-images button:disabled { cursor: default; opacity: .6; }
+.rh-admin-work-images button:focus-visible, .rh-native-work-front:focus-visible { outline: 2px solid #ff1a3d; outline-offset: 3px; }
+.rh-native-work-gallery { width: 100%; }
+.rh-native-work-stack { position: relative; isolation: isolate; aspect-ratio: 1 / 1; }
+.rh-native-work-rear { position: absolute; aspect-ratio: 1 / 1; pointer-events: none; border-radius: 1.25rem; box-shadow: 0 3px 7px rgb(0 0 0 / .16); background: #f8f8f8; }
+.rh-native-work-rear > div { height: 100%; }
+.rh-native-work-front { position: relative; display: block; width: 100%; height: 100%; border: 0; padding: 0; border-radius: 1.25rem; background: #f8f8f8; cursor: zoom-in; box-shadow: 0 4px 16px rgb(0 0 0 / .08); }
+.rh-native-work-stack-photo { height: 100%; --tw-ring-color: #ffffff; }
+.rh-native-work-stack-photo img { object-fit: cover; }
+@media (min-width: 1024px) { .rh-native-work-gallery { max-width: 520px; } }
+.rh-native-work-viewer { position: fixed; inset: 0; width: 100%; height: 100dvh; z-index: 2147483647; display: flex; align-items: center; justify-content: center; background: rgb(8 8 10 / .96); color: #fff; overscroll-behavior: contain; }
+.rh-native-work-stage { width: calc(100% - 32px); height: calc(100% - 152px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); max-width: 1600px; touch-action: pan-y pinch-zoom; }
+.rh-native-work-stage .rh-native-work-viewer-photo { width: 100%; height: 100%; background: transparent; border-radius: 0; }
+.rh-native-work-viewer-photo img { object-fit: contain; }
+.rh-native-work-viewer button { position: absolute; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 1px solid rgb(255 255 255 / .25); border-radius: 999px; background: rgb(24 24 27 / .8); color: #fff; cursor: pointer; }
+.rh-native-work-viewer button:hover { background: #3f3f46; }
+.rh-native-work-viewer button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.rh-native-work-viewer button:disabled { opacity: .3; cursor: default; }
+.rh-native-work-close { top: max(16px, env(safe-area-inset-top)); right: max(16px, env(safe-area-inset-right)); }
+.rh-native-work-prev { left: max(12px, env(safe-area-inset-left)); top: calc(50% - 22px); }
+.rh-native-work-next { right: max(12px, env(safe-area-inset-right)); top: calc(50% - 22px); }
+.rh-native-work-counter { position: absolute; bottom: max(20px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); font-size: 13px; font-weight: 600; }

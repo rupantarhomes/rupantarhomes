@@ -14,7 +14,9 @@ import {
   Upload,
   Users,
 } from "lucide-react";
-import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { WorkPhoto } from "./shared";
+import { WorkImageViewer } from "./work-image-gallery";
 import { maximumWorkImages } from "./cloudinary";
 import { AdminBlogs } from "./blog-admin";
 import { resolveRupantarBlogUrl, rupantarBlogSlugFromUrl, type Blog, type BlogForm } from "./blog";
@@ -29,6 +31,7 @@ import type {
   SiteSettings,
   Work,
   WorkForm,
+  WorkImage,
 } from "./types";
 
 export function AdminLogin({
@@ -553,6 +556,8 @@ function AdminWorks({
   const projectBlogUrl = (workForm.blogUrl ?? "").trim();
   const projectBlogSlug = rupantarBlogSlugFromUrl(projectBlogUrl);
   const projectBlog = resolveRupantarBlogUrl(projectBlogUrl, blogs);
+  const workImageInputRef = useRef<HTMLInputElement>(null);
+  const [previewImage, setPreviewImage] = useState<WorkImage | null>(null);
 
   return (
     <>
@@ -608,56 +613,46 @@ function AdminWorks({
             </div>
 
             <div className="space-y-4 pt-2">
-              <label
-                className={`group relative flex flex-col items-center justify-center rounded-[1.25rem] border-2 border-dashed px-6 py-8 text-center cursor-pointer transition-all ${uploadingImages ? "border-[#FF1A3D]/30 bg-[#FFF0F2]" : "border-zinc-200 bg-[#fcfcfc] hover:border-[#FF1A3D]/40 hover:bg-white hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)]"}`}
-              >
-                <input
-                  type="file"
-                  accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                  multiple
-                  className="hidden"
-                  disabled={uploadingImages || (Array.isArray(workForm.images) ? workForm.images.length : 0) >= maximumWorkImages}
-                  onChange={(event) => {
-                    const files = Array.from(event.target.files ?? []);
-                    event.target.value = "";
-                    void onUploadImages(files);
-                  }}
-                />
-                <div className="w-12 h-12 rounded-2xl bg-white border border-zinc-100 shadow-sm flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                  <Upload className="w-5 h-5 text-zinc-700" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[13px] font-semibold text-zinc-900"><span className="text-[#FF1A3D]">Choose file</span> or drag &amp; drop</p>
-                  <p className="text-[11px] text-zinc-500 leading-[1.4]">JPG, PNG up to 10MB • Up to {maximumWorkImages} photos<br />Auto converts to WebP (1920×1080)</p>
-                </div>
-                {uploadingImages ? (
-                  <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FF1A3D] text-white text-[11px] font-medium animate-pulse">Converting and uploading...</div>
-                ) : (
-                  <div className="mt-3 text-[10px] px-2.5 py-1 rounded-full bg-zinc-900 text-white font-medium">{Array.isArray(workForm.images) ? workForm.images.length : 0} photos added</div>
-                )}
-              </label>
-
-              <div className="grid grid-cols-[1.6fr_1fr] grid-rows-2 gap-2.5">
+              <input
+                ref={workImageInputRef}
+                type="file"
+                aria-label="Upload Work images"
+                accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                multiple
+                className="hidden"
+                disabled={busy || uploadingImages || (Array.isArray(workForm.images) ? workForm.images.length : 0) >= maximumWorkImages}
+                onChange={(event) => {
+                  const files = Array.from(event.target.files ?? []);
+                  event.target.value = "";
+                  void onUploadImages(files);
+                }}
+              />
+              <div className="rh-admin-work-images">
                 {Array.from({ length: maximumWorkImages }, (_, index) => {
                   const image = Array.isArray(workForm.images) ? workForm.images[index] : undefined;
                   return image ? (
-                    <div key={image.id} className={`group relative border border-zinc-200 rounded-xl ${index === 0 ? "row-span-2" : "aspect-square"} overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow`}>
-                      <img src={image.url} alt={image.altText || workForm.title} className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        aria-label="Remove image"
-                        disabled={busy || uploadingImages}
-                        onClick={() => void onRemoveWorkImage(index)}
-                        className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/80 backdrop-blur text-white text-[14px] leading-none flex items-center justify-center hover:bg-[#FF1A3D] transition-all"
-                      >×</button>
+                    <div key={image.id} className="rh-admin-work-slot">
+                      <button type="button" className="rh-admin-work-thumb" aria-label={`Preview image ${index + 1}`} onClick={() => setPreviewImage(image)}>
+                        <WorkPhoto image={image} alt={workForm.title} aspect="aspect-[4/3]" sizes="(min-width: 1024px) 180px, 45vw" widths={[160, 320, 480]} />
+                      </button>
+                      <button type="button" aria-label="Remove image" disabled={busy || uploadingImages}
+                        onClick={() => void onRemoveWorkImage(index)} className="rh-admin-work-remove">
+                        <span aria-hidden="true">×</span> Remove
+                      </button>
                     </div>
                   ) : (
-                    <div key={`slot-${index}`} className={`border border-dashed border-zinc-200 rounded-xl ${index === 0 ? "row-span-2" : "aspect-square"} flex flex-col items-center justify-center gap-1 text-zinc-300 bg-zinc-50/50`}>
-                      <ImageIcon className="w-4 h-4" /><span className="text-[9px]">Empty</span>
-                    </div>
+                    <button key={`slot-${index}`} type="button" className="rh-admin-work-slot rh-admin-work-empty"
+                      aria-label={`Upload image ${index + 1}`} disabled={busy || uploadingImages} onClick={() => workImageInputRef.current?.click()}>
+                      <Upload className="w-5 h-5" /><span>Choose file</span>
+                    </button>
                   );
                 })}
               </div>
+              <div className="text-[11px] text-zinc-500 leading-[1.4]">
+                JPG, PNG up to 10MB • Up to {maximumWorkImages} photos<br />Auto converts to WebP (1920×1080)
+                <div className="mt-2" role="status">{uploadingImages ? "Converting and uploading..." : `${Array.isArray(workForm.images) ? workForm.images.length : 0} photos added`}</div>
+              </div>
+              {previewImage && <WorkImageViewer images={[previewImage]} title={workForm.title} onClose={() => setPreviewImage(null)} />}
             </div>
 
             <label className="flex items-center gap-2 text-[13px] mt-1">

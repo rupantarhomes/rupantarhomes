@@ -441,3 +441,41 @@ Accepted fingerprints for this scoped code-bearing update:
 - `tests`: `c173c0f1d1fec97159608e8cb80419c091d31052`
 
 The exact code-bearing head `4cd79e270a73a083fa20b63262dfa1afe8d1fc7a` passed production handover-lock enforcement, dependency installation, the frontend reliability guard self-test, strict TypeScript, the production build, and the full regression suite in GitHub Actions run `33790451990`, job `100765508074`. The documentation commit that records this baseline must also pass the same workflow before merge. PR #88 remains unmerged until explicit approval.
+
+## Native six-image Work gallery — 2026-09-04
+
+Scoped candidate based on main `2e47c90481ca07f595717022d9f3248701d1bcd2`, on `feature/work-six-image-gallery-v2`. Do not merge without explicit review approval.
+
+- Raise only the Work upload count to six; retain JPEG/PNG, 10 MB, signed WebP conversion, dimensions, draft rollback and reference-safe cleanup.
+- Replace only Manage Works image controls with compact two-column/three-row native React slots and individual full-screen previews. Keep the existing upload/remove/save handlers.
+- Replace only the dedicated Work gallery with one full image and actual rear image edges, plus a shared React portal viewer with bounded navigation, keyboard/focus handling, scroll restoration and horizontal swipe. Use existing responsive Cloudinary delivery, small lazy rear images and selected-image-only fullscreen loading.
+- The existing gallery enhancer skips this native gallery; listing-card enhancement, Project Story/Blog title resolution, Related Works, other Admin/public areas and infrastructure remain unchanged. Existing absolute Remove-pill CSS is overridden only inside native image slots.
+- Add `20260904013001_native_six_work_images.sql` after the prior rollback; preserve all earlier migration history. Its canonical RPC definition differs from live only in `> 3` becoming `> 6` and matching error wording. The newly generated unapplied migration timestamp was placed after the repository's future-dated rollback.
+- Applied to project `gmtdqeskyvdvyibccxwt` as `20260903201051_native_six_work_images`. Live function OID, signature, owner, SECURITY DEFINER, empty search_path and ACL are unchanged. Authenticated execution remains granted; anon/PUBLIC remain denied.
+- Live transaction-scoped checks with a verified nonexistent Work ID: counts 0–6 reach the missing-Work guard; seven rejects; unauthenticated call denies. Transaction rolled back; no production Work/image records or Cloudinary assets created. This is live validation-path verification, not a full production upload/save.
+- Local verification: dependency install, strict TypeScript, production build, 78 regression tests, reliability guard self-test, and whitespace diff check pass. Browser fixture suite exercises the actual React pages with intercepted local Supabase/Cloudinary responses: six uploads, save/edit/persisted removal, two columns/three rows, bounded arrows/keys, horizontal vs vertical swipe, modal close/focus/scroll restoration, one-image compatibility and exact linked Blog title. Admin/public checked at 320, 375, 390, 393, 414, 430, 1280 and 1440px in Chromium; not a physical iPhone test.
+- Security advisors were reviewed: authenticated SECURITY DEFINER notices are expected for the unchanged admin-gated RPCs; internal RLS/no-policy tables and disabled leaked-password protection are existing configuration, outside this feature. [Advisor guidance](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), [password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+
+Only these protected fingerprints change:
+
+- `app`: `ae7f4ba2011749d92c242a121ef6126797ca2d2f`
+- `supabase`: `27543b4517a14bfb6821014f5ca75356765d647b`
+- `tests`: `c50fcfdd4a8bb61b00ef710e8608345c455420d0`
+
+Application deployment/merge remains pending review. The backward-compatible database count change alone is already live.
+
+## PR #92 square Work-detail presentation correction — 2026-09-04
+
+Correction from PR head `2b7407281061d8de48e8f839ce4532c0a28fdab1`: normal Work-detail front/rear cards use 1:1 CSS geometry and cover. Rear top insets compensate for their narrower square height, preserving the existing 10px lower edges, transforms, centered widths and bottom reservation. Fullscreen viewer, Admin, media URLs, upload lifecycle and database are unchanged.
+
+TypeScript, production build, 79 regression tests, reliability guard self-test and diff whitespace check pass. Local intercepted browser fixtures pass at 320, 375, 390, 393, 414, 430, 1280 and 1440px: square front/rear cards, no overflow/Overview overlap, 520px desktop limit, landscape/portrait contain in fullscreen, six-image navigation, one-image compatibility and unchanged Admin lifecycle. Screenshots inspected; Chromium, not a physical iPhone test.
+
+Only `app` (`01b32cc07d6075027284b393fd0f3bc41e3e5306`) and `tests` (`43011b16725aeb4809a53254333de54295aee718`) fingerprints are updated for this correction. No additional Supabase change. PR #92 must remain unmerged pending explicit approval.
+
+## PR #92 stacked-image white ring — 2026-09-04
+
+From PR head `e4257bc7f3ab6e2d0165528fa9ff78fef715106f`, change only `.rh-native-work-stack-photo` ring color to `#ffffff`. Preview inspection showed the existing 1px ring computed as `rgba(59, 130, 246, 0.5)`; its width, geometry and shadow construction are unchanged. Fullscreen, Admin and every other surface remain unchanged. TypeScript, build, all 79 existing regression tests and gallery browser fixtures at all eight approved widths pass; no tests changed. Only the `app` fingerprint becomes `9c59af36e216d7d97e6daa8b1fbd602d7ed8e45b`. PR remains unmerged pending approval.
+
+## PR #92 dedicated Work metadata styling — 2026-09-04
+
+From PR head `210b97115323ec38d9d9e0ec8753047340125b55`, change only the two WorkDetailPage metadata spans: conditional Featured becomes plain uppercase semibold site-red text; existing location and MapPin use a compact site-red/white label with 8px corners, 4px/8px padding and safe text wrapping. Values, Featured condition, gallery, Project Story, Related Works and all other pages/systems are unchanged. TypeScript, production build, 80 regression tests and existing gallery/Admin browser fixtures at all eight requested widths pass. Only app (`bb76b67b828cf4fa3f81dc3184cc9a940334df6a`) and tests (`4fbcbb72263adb1c07a073b12bf5b334089e606c`) fingerprints change. PR #92 remains unmerged pending approval.

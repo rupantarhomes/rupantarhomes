@@ -93,7 +93,8 @@ function detailGalleryImages() {
   const galleryColumn = layout?.firstElementChild as HTMLElement | null;
   if (!galleryColumn) return [] as HTMLImageElement[];
 
-  return Array.from(galleryColumn.querySelectorAll<HTMLImageElement>("img"));
+  return Array.from(galleryColumn.querySelectorAll<HTMLImageElement>("img"))
+    .filter((image) => !image.closest("[data-native-work-gallery]"));
 }
 
 function lightboxImageUrl(source: string) {
