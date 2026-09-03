@@ -63,10 +63,11 @@ test("Work project stories resolve the current Blog title without duplicating ti
   assert.doesNotMatch(workBlogMigration, /blog_title/i);
 });
 
-test("Blog article restores original title and paragraph sizes while keeping scoped spacing", async () => {
-  const [pages, styles] = await Promise.all([
+test("Blog article uses original editorial title/body typography while keeping scoped spacing", async () => {
+  const [pages, styles, editorial] = await Promise.all([
     read("app/rupantar/blog-pages.tsx"),
     read("app/rupantar/blog-article.css"),
+    read("app/editorial-pages.css"),
   ]);
   const [indexPage, articlePage] = pages.split("export function BlogArticlePage");
 
@@ -77,15 +78,17 @@ test("Blog article restores original title and paragraph sizes while keeping sco
   assert.match(articlePage, /href=\{workPath\(linkedWork\)\}/);
 
   assert.match(styles, /\.rh-blog-article \{[\s\S]*?padding-top: 0 !important/);
-  assert.match(styles, /\.rh-blog-article-title \{[\s\S]*?font-size: 38px !important/);
-  assert.match(styles, /\.rh-blog-article-body \{[\s\S]*?font-size: 15px !important/);
+  assert.doesNotMatch(styles, /\.rh-blog-article-title\s*\{/);
+  assert.doesNotMatch(styles, /\.rh-blog-article-body\s*\{/);
   assert.match(styles, /\.rh-blog-project-card \{[\s\S]*?margin-top: 64px !important/);
   assert.match(styles, /\.rh-blog-project-eyebrow \{[\s\S]*?font-size: 11px !important/);
   assert.match(styles, /\.rh-blog-project-title \{[\s\S]*?font-size: 22px !important/);
   assert.match(styles, /\.rh-blog-project-description \{[\s\S]*?font-size: 14px !important/);
   assert.match(styles, /\.rh-blog-project-link \{[\s\S]*?font-size: 13px !important/);
   assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article-page \{[\s\S]*?padding-top: 40px !important/);
-  assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article-title \{[\s\S]*?font-size: 30px !important/);
-  assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article-body \{[\s\S]*?font-size: 15px !important/);
   assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-project-title \{[\s\S]*?font-size: 20px !important/);
+
+  assert.match(editorial, /main\.max-w-\\\[1280px\\\] > article\.max-w-\\\[800px\\\] > h1 \{[\s\S]*?font-size: 38px;[\s\S]*?line-height: 1\.12;[\s\S]*?letter-spacing: -0\.028em;/);
+  assert.match(editorial, /main\.max-w-\\\[1280px\\\] > article\.max-w-\\\[800px\\\] > h1 \+ div \{[\s\S]*?font-size: 15px;[\s\S]*?line-height: 1\.72;/);
+  assert.match(editorial, /@media \(max-width: 639px\) \{[\s\S]*?main\.max-w-\\\[1280px\\\] > article\.max-w-\\\[800px\\\] > h1 \{[\s\S]*?font-size: 30px;[\s\S]*?line-height: 1\.16;/);
 });

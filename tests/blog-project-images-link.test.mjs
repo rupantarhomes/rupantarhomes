@@ -27,10 +27,11 @@ test("shows the reverse project card only when a linked Work resolves", async ()
   assert.match(source, /setLinkedWork\(null\)/);
 });
 
-test("dedicated Blog article uses one scoped layout contract", async () => {
-  const [source, styles] = await Promise.all([
+test("dedicated Blog article keeps scoped layout but delegates title/body typography to original editorial CSS", async () => {
+  const [source, styles, editorial] = await Promise.all([
     read("../app/rupantar/blog-pages.tsx"),
     read("../app/rupantar/blog-article.css"),
+    read("../app/editorial-pages.css"),
   ]);
 
   assert.match(source, /import "\.\/blog-article\.css"/);
@@ -40,8 +41,8 @@ test("dedicated Blog article uses one scoped layout contract", async () => {
   assert.doesNotMatch(source, /max-w-\[640px\]/);
 
   assert.match(styles, /\.rh-blog-article \{[\s\S]*?max-width: 800px !important[\s\S]*?padding-top: 0 !important/);
-  assert.match(styles, /\.rh-blog-article-title \{[\s\S]*?font-size: 38px !important/);
-  assert.match(styles, /\.rh-blog-article-body \{[\s\S]*?font-size: 15px !important/);
+  assert.doesNotMatch(styles, /\.rh-blog-article-title\s*\{/);
+  assert.doesNotMatch(styles, /\.rh-blog-article-body\s*\{/);
   assert.match(styles, /\.rh-blog-project-card \{[\s\S]*?margin-top: 64px !important/);
   assert.match(styles, /\.rh-blog-project-eyebrow \{[\s\S]*?font-size: 11px !important/);
   assert.match(styles, /\.rh-blog-project-title \{[\s\S]*?font-size: 22px !important/);
@@ -49,10 +50,12 @@ test("dedicated Blog article uses one scoped layout contract", async () => {
   assert.match(styles, /\.rh-blog-project-link \{[\s\S]*?font-size: 13px !important/);
   assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article-page \{[\s\S]*?padding-top: 40px !important/);
   assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article \{[\s\S]*?padding-top: 0 !important/);
-  assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article-title \{[\s\S]*?font-size: 30px !important/);
-  assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article-body \{[\s\S]*?font-size: 15px !important/);
   assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-project-card \{[\s\S]*?margin-top: 56px !important/);
   assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-project-title \{[\s\S]*?font-size: 20px !important/);
+
+  assert.match(editorial, /main\.max-w-\\\[1280px\\\] > article\.max-w-\\\[800px\\\] > h1 \{[\s\S]*?font-size: 38px;[\s\S]*?line-height: 1\.12;[\s\S]*?letter-spacing: -0\.028em;/);
+  assert.match(editorial, /main\.max-w-\\\[1280px\\\] > article\.max-w-\\\[800px\\\] > h1 \+ div \{[\s\S]*?font-size: 15px;[\s\S]*?line-height: 1\.72;/);
+  assert.match(editorial, /@media \(max-width: 639px\) \{[\s\S]*?main\.max-w-\\\[1280px\\\] > article\.max-w-\\\[800px\\\] > h1 \{[\s\S]*?font-size: 30px;[\s\S]*?line-height: 1\.16;/);
 });
 
 test("does not change the existing Work-to-Blog project story contract", async () => {
