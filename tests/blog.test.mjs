@@ -63,24 +63,25 @@ test("Work project stories resolve the current Blog title without duplicating ti
   assert.doesNotMatch(workBlogMigration, /blog_title/i);
 });
 
-
-test("Blog article keeps approved card typography while adding guaranteed outer breathing room", async () => {
-  const [pages, editorial] = await Promise.all([
+test("Blog article restores intended typography and uses scoped spacing only", async () => {
+  const [pages, styles] = await Promise.all([
     read("app/rupantar/blog-pages.tsx"),
-    read("app/editorial-pages.css"),
+    read("app/rupantar/blog-article.css"),
   ]);
   const [indexPage, articlePage] = pages.split("export function BlogArticlePage");
 
-  assert.doesNotMatch(indexPage, /rh-blog-article|rh-blog-project-images/);
+  assert.doesNotMatch(indexPage, /rh-blog-article-page|rh-blog-project-card/);
   assert.match(articlePage, /className="rh-blog-article max-w-\[800px\]"/);
-  assert.match(articlePage, /linkedWork &&/);
-  assert.doesNotMatch(articlePage, /rh-blog-project-images/);
-  assert.match(articlePage, /<div aria-hidden="true" style=\{\{ height: "64px" \}\} \/>/);
-  assert.match(articlePage, /className="w-full rounded-\[1\.75rem\][\s\S]*?p-6 sm:p-7/);
+  assert.match(articlePage, /className="rh-blog-project-card w-full/);
+  assert.doesNotMatch(articlePage, /aria-hidden="true" style=\{\{ height:/);
   assert.match(articlePage, /text-\[18px\] sm:text-\[20px\]/);
   assert.match(articlePage, /text-\[13px\] leading-6/);
   assert.match(articlePage, /text-\[12px\] font-semibold/);
   assert.match(articlePage, /href=\{workPath\(linkedWork\)\}/);
 
-  assert.match(editorial, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article \{[\s\S]*?padding-top: 32px/);
+  assert.match(styles, /\.rh-blog-article-title \{[\s\S]*?font-size: 56px !important/);
+  assert.match(styles, /\.rh-blog-article-body \{[\s\S]*?font-size: 17px !important/);
+  assert.match(styles, /\.rh-blog-project-card \{[\s\S]*?margin-top: 64px !important/);
+  assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article-page \{[\s\S]*?padding-top: 32px !important/);
+  assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article-title \{[\s\S]*?font-size: 40px !important/);
 });
