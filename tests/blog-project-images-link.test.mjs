@@ -40,8 +40,8 @@ test("dedicated Blog article uses one scoped layout contract", async () => {
   assert.doesNotMatch(source, /max-w-\[640px\]/);
 
   assert.match(styles, /\.rh-blog-article \{[\s\S]*?max-width: 800px !important[\s\S]*?padding-top: 0 !important/);
-  assert.match(styles, /\.rh-blog-article-title \{[\s\S]*?font-size: 56px !important/);
-  assert.match(styles, /\.rh-blog-article-body \{[\s\S]*?font-size: 17px !important/);
+  assert.match(styles, /\.rh-blog-article-title \{[\s\S]*?font-size: 38px !important/);
+  assert.match(styles, /\.rh-blog-article-body \{[\s\S]*?font-size: 15px !important/);
   assert.match(styles, /\.rh-blog-project-card \{[\s\S]*?margin-top: 64px !important/);
   assert.match(styles, /\.rh-blog-project-eyebrow \{[\s\S]*?font-size: 11px !important/);
   assert.match(styles, /\.rh-blog-project-title \{[\s\S]*?font-size: 22px !important/);
@@ -49,7 +49,8 @@ test("dedicated Blog article uses one scoped layout contract", async () => {
   assert.match(styles, /\.rh-blog-project-link \{[\s\S]*?font-size: 13px !important/);
   assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article-page \{[\s\S]*?padding-top: 40px !important/);
   assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article \{[\s\S]*?padding-top: 0 !important/);
-  assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article-title \{[\s\S]*?font-size: 40px !important/);
+  assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article-title \{[\s\S]*?font-size: 30px !important/);
+  assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-article-body \{[\s\S]*?font-size: 15px !important/);
   assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-project-card \{[\s\S]*?margin-top: 56px !important/);
   assert.match(styles, /@media \(max-width: 639px\) \{[\s\S]*?\.rh-blog-project-title \{[\s\S]*?font-size: 20px !important/);
 });
