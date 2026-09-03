@@ -43,6 +43,131 @@ create unique index if not exists estimate_requests_submission_id_unique
   on public.estimate_requests (submission_id)
   where submission_id is not null;
 
+-- Track Admin Work assets from the moment an upload is authorized so a tab
+-- crash cannot leave an invisible permanent Cloudinary draft. This table is
+-- accessible only through the Admin-only SECURITY DEFINER functions below.
+create table if not exists public.cloudinary_draft_assets (
+  public_id text primary key,
+  created_at timestamptz not null default now(),
+  cleanup_claimed_at timestamptz,
+  constraint cloudinary_draft_assets_public_id_allowed check (
+    public_id ~ '^rupantar-homes/works/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+  )
+);
+
+alter table public.cloudinary_draft_assets enable row level security;
+revoke all on table public.cloudinary_draft_assets from public, anon, authenticated;
+
+create or replace function public.register_cloudinary_draft_image(p_public_id text)
+returns void
+language plpgsql
+security definer
+set search_path to ''
+as $function$
+begin
+  if auth.uid() is null or not exists (
+    select 1
+    from public.admin_users
+    where user_id = auth.uid() and is_active = true
+  ) then
+    raise exception 'Unauthorized';
+  end if;
+
+  if btrim(coalesce(p_public_id, '')) !~ '^rupantar-homes/works/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' then
+    raise exception 'Invalid Cloudinary draft image ID.';
+  end if;
+
+  insert into public.cloudinary_draft_assets (public_id, created_at, cleanup_claimed_at)
+  values (btrim(p_public_id), now(), null)
+  on conflict (public_id) do update
+    set created_at = excluded.created_at,
+        cleanup_claimed_at = null;
+end;
+$function$;
+
+create or replace function public.claim_expired_cloudinary_drafts(
+  p_min_age_minutes integer default 1440,
+  p_limit integer default 50
+)
+returns text[]
+language plpgsql
+security definer
+set search_path to ''
+as $function$
+declare
+  claimed_ids text[];
+  safe_min_age integer := greatest(coalesce(p_min_age_minutes, 1440), 60);
+  safe_limit integer := least(greatest(coalesce(p_limit, 50), 1), 100);
+begin
+  if auth.uid() is null or not exists (
+    select 1
+    from public.admin_users
+    where user_id = auth.uid() and is_active = true
+  ) then
+    raise exception 'Unauthorized';
+  end if;
+
+  -- Referenced images are no longer drafts. Remove only their registry rows.
+  delete from public.cloudinary_draft_assets d
+  where exists (
+    select 1 from public.work_images wi
+    where wi.cloudinary_public_id = d.public_id
+  );
+
+  with candidates as (
+    select d.public_id
+    from public.cloudinary_draft_assets d
+    where d.created_at < now() - make_interval(mins => safe_min_age)
+      and (d.cleanup_claimed_at is null or d.cleanup_claimed_at < now() - interval '15 minutes')
+      and not exists (
+        select 1 from public.work_images wi
+        where wi.cloudinary_public_id = d.public_id
+      )
+    order by d.created_at asc
+    limit safe_limit
+    for update skip locked
+  ), claimed as (
+    update public.cloudinary_draft_assets d
+    set cleanup_claimed_at = now()
+    from candidates c
+    where d.public_id = c.public_id
+    returning d.public_id
+  )
+  select coalesce(array_agg(public_id), array[]::text[])
+  into claimed_ids
+  from claimed;
+
+  return claimed_ids;
+end;
+$function$;
+
+create or replace function public.complete_cloudinary_draft_cleanup(p_public_ids text[])
+returns void
+language plpgsql
+security definer
+set search_path to ''
+as $function$
+begin
+  if auth.uid() is null or not exists (
+    select 1
+    from public.admin_users
+    where user_id = auth.uid() and is_active = true
+  ) then
+    raise exception 'Unauthorized';
+  end if;
+
+  delete from public.cloudinary_draft_assets
+  where public_id = any(coalesce(p_public_ids, array[]::text[]));
+end;
+$function$;
+
+revoke all on function public.register_cloudinary_draft_image(text) from public, anon;
+revoke all on function public.claim_expired_cloudinary_drafts(integer, integer) from public, anon;
+revoke all on function public.complete_cloudinary_draft_cleanup(text[]) from public, anon;
+grant execute on function public.register_cloudinary_draft_image(text) to authenticated;
+grant execute on function public.claim_expired_cloudinary_drafts(integer, integer) to authenticated;
+grant execute on function public.complete_cloudinary_draft_cleanup(text[]) to authenticated;
+
 -- Replace the previous ten-argument overload so PostgREST has one canonical
 -- persistence contract. The RPC remains callable only by service_role.
 drop function if exists public.submit_public_inquiry(
