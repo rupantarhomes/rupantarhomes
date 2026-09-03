@@ -396,7 +396,7 @@ export async function signInAdmin(email: string, password: string): Promise<Sess
   if (adminError || !admin) {
     await supabase.auth.signOut();
     settingsConfirmed = false;
-    throw new Error("This account is not authorized for the admin portal.");
+    throw new Error(adminError ? "Unable to verify admin access. Please try again." : "This account is not authorized for the admin portal.");
   }
 
   return data.session;
@@ -405,20 +405,22 @@ export async function signInAdmin(email: string, password: string): Promise<Sess
 export async function getCurrentAdminSession(): Promise<Session | null> {
   if (!isSupabaseConfigured) return null;
   const supabase = getSupabase();
-  const { data } = await supabase.auth.getSession();
+  const { data, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) return null;
   const session = data.session;
   if (!session) {
     settingsConfirmed = false;
     return null;
   }
 
-  const { data: admin } = await supabase
+  const { data: admin, error: adminError } = await supabase
     .from("admin_users")
     .select("user_id,is_active")
     .eq("user_id", session.user.id)
     .eq("is_active", true)
     .maybeSingle();
 
+  if (adminError) return null;
   if (!admin) {
     await supabase.auth.signOut();
     settingsConfirmed = false;
