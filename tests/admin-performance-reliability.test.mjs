@@ -16,11 +16,13 @@ test("opens Admin immediately after authorization and avoids full Admin reloads 
   const site = await read("../app/rupantar/site.tsx");
   const login = site.indexOf("const handleLogin = async");
   const dashboard = site.indexOf('setPage("admin-dashboard")', login);
-  const backgroundLoad = site.indexOf("Promise.allSettled([refreshAdminWorks(), refreshContent(), refreshAdminStats(), refreshLeads(), refreshBlogs()])", dashboard);
+  const backgroundLoad = site.indexOf("void refreshAdminData()", dashboard);
+  const refreshAdminData = site.slice(site.indexOf("const refreshAdminData = useCallback"), site.indexOf("const loadOlderLeads"));
   const navigate = site.slice(site.indexOf("const navigate = (nextPage: Page) =>"), site.indexOf("const goToEstimate"));
   assert.ok(login >= 0);
   assert.ok(dashboard > login);
   assert.ok(backgroundLoad > dashboard);
+  assert.match(refreshAdminData, /Promise\.allSettled\(\[[\s\S]*refreshAdminWorks\(\)[\s\S]*refreshContent\(\)[\s\S]*refreshAdminStats\(\)[\s\S]*refreshLeads\(\)[\s\S]*refreshBlogs\(\)/);
   assert.doesNotMatch(navigate, /refreshContent\(|refreshLeads\(/);
   assert.equal((navigate.match(/refreshBlogs\(/g) ?? []).length, 1);
   assert.match(navigate, /nextPage === "admin-dashboard"[\s\S]*refreshAdminStats/);
