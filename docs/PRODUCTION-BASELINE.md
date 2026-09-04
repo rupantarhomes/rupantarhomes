@@ -494,3 +494,62 @@ Accepted fingerprints after this scoped update:
 
 - `app`: `b0a39d9dbfe99df9722c7534031bf9e69de0bf4a`
 - `tests`: `cbee3ecfd6179a9b7a0e75443ec5d376f8d4fb5b`
+
+## Production handover reliability candidates — 2026-09-05
+
+The following reliability pull requests were each created independently from production `main` commit `098b31f1d154869b0bc3aae8b1f1859a379a5316`. They are reviewed candidate baselines, not a combined production state. `main` remains unchanged until an explicit merge instruction is given. When one candidate is merged, every later candidate must be rebased or otherwise updated onto the new `main`, its combined production-lock fingerprints recomputed, and exact-head CI rerun before merge.
+
+### PR #101 — Admin responsiveness and Work uploads
+
+- eliminate the Admin busy-state observer feedback loop while preserving existing control freeze/restore behavior;
+- upload Work images with bounded concurrency of three while preserving six-image validation, order, signed Cloudinary upload, WebP output, rollback and reference-safe cleanup;
+- no UI redesign, Supabase schema/RLS/Auth/RPC changes, Cloudinary contract changes, or deployment changes.
+
+Candidate fingerprints:
+
+- `app`: `9a1b5d201f4b87a09cb3dbb0c1b5b2d8f0e8dd5f`
+- `tests`: `7bb48d71639d5e81a3657de85facb1d49cb69c7c`
+
+Code-bearing head `6e0c4549ac88f42c346a3967e7080ab32526aefe` passed Production Baseline run `33824876459` (#306), including the handover lock, strict TypeScript, production build, and full regression suite.
+
+### PR #102 — Public enhancer/Admin isolation
+
+- keep the existing public enhancer behavior on public routes while preventing it from scanning or observing `/admin`;
+- scope observation to the React root and preserve route guards during public-to-Admin transitions;
+- no UI/layout/content, Admin component, Supabase, Cloudinary, or deployment changes.
+
+Candidate fingerprints:
+
+- `app`: `f1b4bf32cdfb55581d142da98bfab6fb0e2839a8`
+- `tests`: `e0177406b4adbda9b84023e04185df0c5b46ffa0`
+
+Code-bearing head `2e3f7c74ae6fb076fea83e05df8674547d491d8c` passed Production Baseline run `33825414467` (#310), including the handover lock, strict TypeScript, production build, and full regression suite.
+
+### PR #103 — Remove duplicate Admin startup Works read
+
+- load the complete Admin Works collection once while loading Reviews and Settings through an Admin-only content path;
+- preserve the public six-Work content loader and Settings live-confirmation safety;
+- no UI, Work/Blog persistence, Supabase, Cloudinary, or deployment changes.
+
+Candidate fingerprints:
+
+- `app`: `416b446a9e724b6e287eef72140fdcc84d913f3e`
+- `tests`: `ae4b7f0521ae37b842a19e552b29ec0d80e09f44`
+
+Code-bearing head `3aeba2f1eb5565025734b79ef453d3f7d5bf56be` passed Production Baseline run `33920032432` (#313), including the handover lock, strict TypeScript, production build, and full regression suite.
+
+### PR #104 — Admin session verification deduplication
+
+- make open-Admin access verification single-flight so focus, visibility and the five-minute interval cannot start overlapping checks;
+- preserve revocation/session-expiry handling and transient provider-failure behavior;
+- keep stale Work-draft cleanup on confirmed session restore and successful login, but remove it from routine focus/visibility verification;
+- no UI, Supabase schema/RLS/Auth configuration/RPC, Cloudinary contract, or deployment changes.
+
+Candidate fingerprints:
+
+- `app`: `26d971c66fab51e1864cc88432523326a7016e5b`
+- `tests`: `d2b9d40e99ea201fc33e24509874836af5b956aa`
+
+Code-bearing head `0efc28cf46b8bc8d8f3d687af1a59ec8fcc1f44e` passed Production Baseline run `33920522078` (#314), including the handover lock, strict TypeScript, production build, and full regression suite.
+
+For all four candidates, documentation-only commits advance the PR head and therefore must themselves pass the Production Baseline workflow before any merge. Cloudflare branch previews are not production deployment; production remains tied to `main`.
