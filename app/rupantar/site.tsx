@@ -22,6 +22,7 @@ import {
   deleteReview,
   deleteWork,
   getCurrentAdminSession,
+  loadAdminContent,
   loadAdminStats,
   loadPublicBlogBySlug,
   loadPublicBlogs,
@@ -279,6 +280,14 @@ export function RupantarSite() {
     setWorksLoading(false);
   }, []);
 
+  const refreshAdminContent = useCallback(async () => {
+    const requestId = ++contentRequestIdRef.current;
+    const content = await loadAdminContent();
+    if (requestId !== contentRequestIdRef.current) return;
+    setReviews(content.reviews);
+    setSettings(content.settings);
+  }, []);
+
   const refreshAdminWorks = useCallback(async () => {
     const requestId = ++adminWorksRequestIdRef.current;
     const result = await loadPublicWorksPage(0, adminWorksLimit, "all");
@@ -523,7 +532,7 @@ export function RupantarSite() {
     setAdminLoadError("");
     const results = await Promise.allSettled([
       refreshAdminWorks(),
-      refreshContent(),
+      refreshAdminContent(),
       refreshAdminStats(),
       refreshLeads(),
       refreshBlogs(),
@@ -531,7 +540,7 @@ export function RupantarSite() {
     if (results.some((result) => result.status === "rejected")) {
       setAdminLoadError("Some live Admin data could not be loaded.");
     }
-  }, [refreshAdminWorks, refreshContent, refreshAdminStats, refreshLeads, refreshBlogs]);
+  }, [refreshAdminWorks, refreshAdminContent, refreshAdminStats, refreshLeads, refreshBlogs]);
 
   const loadOlderLeads = async () => {
     if (!leadsHasMore || !leadsNextBefore || leadsLoadingOlder || adminMutationRef.current || uploadMutationRef.current) return;

@@ -384,6 +384,33 @@ export async function loadPublicContent(): Promise<{
   };
 }
 
+export async function loadAdminContent(): Promise<{
+  reviews: Review[];
+  settings: SiteSettings;
+}> {
+  if (!isSupabaseConfigured) {
+    settingsConfirmed = false;
+    return { reviews: initialReviews, settings: initialSettings };
+  }
+
+  settingsConfirmed = false;
+  const supabase = getSupabase();
+  const [reviewsResult, settingsResult] = await Promise.all([
+    supabase.from("reviews").select(reviewColumns).order("created_at", { ascending: false }),
+    supabase.from("site_settings").select(settingsColumns).eq("id", 1).maybeSingle(),
+  ]);
+
+  const error = reviewsResult.error ?? settingsResult.error;
+  if (error) throw new Error(error.message);
+  if (!settingsResult.data) throw new Error("The production Settings row could not be confirmed.");
+
+  settingsConfirmed = true;
+  return {
+    reviews: ((reviewsResult.data ?? []) as ReviewRow[]).map(mapReview),
+    settings: mapSettings(settingsResult.data as SettingsRow),
+  };
+}
+
 export async function signInAdmin(email: string, password: string): Promise<Session> {
   const supabase = getSupabase();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
