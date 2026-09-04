@@ -10,8 +10,8 @@ export function BrandIntro({ enabled }: { enabled: boolean }) {
     if (!enabled) return;
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const revealDelay = reduceMotion ? 60 : 180;
-    const removeDelay = reduceMotion ? 120 : 720;
+    const revealDelay = reduceMotion ? 180 : 1500;
+    const removeDelay = reduceMotion ? 320 : 2500;
 
     const revealTimer = window.setTimeout(() => setLeaving(true), revealDelay);
     const removeTimer = window.setTimeout(() => setVisible(false), removeDelay);
@@ -28,6 +28,7 @@ export function BrandIntro({ enabled }: { enabled: boolean }) {
     <div
       className={`brand-intro${leaving ? " brand-intro--leaving" : ""}`}
       aria-hidden="true"
+      style={{ pointerEvents: "none" }}
     >
       <div className="brand-intro__glow" />
       <div className="brand-intro__content">
