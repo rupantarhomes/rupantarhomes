@@ -1,0 +1,22 @@
+/* Narrow public Work display contract.
+ * Featured data/ordering remains unchanged; this file only controls visibility and equal landing-card geometry.
+ */
+
+/* Dedicated Work detail only: keep category + location, but do not display the Featured label. */
+.min-h-screen.bg-white.text-zinc-950
+  main > div.grid > div:first-child:has([data-native-work-gallery])
+  > div.flex.flex-wrap.items-center.gap-2.mb-3
+  > span:nth-child(3) {
+  display: none !important;
+}
+
+/* Homepage Recent Works only: all six cards use equal grid tracks and equal card height. */
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child > div.grid {
+  grid-auto-rows: 1fr !important;
+  align-items: stretch !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child > div.grid > article {
+  height: 100% !important;
+  min-height: 100% !important;
+}
