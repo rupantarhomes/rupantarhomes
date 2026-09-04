@@ -106,8 +106,10 @@ test("keeps the strict Admin Work Cloudinary contract and secrets server-side", 
   assert.match(clientUpload, /body\.set\("transformation", signed\.transformation\)/);
   assert.doesNotMatch(clientUpload, /body\.set\("upload_preset"/);
   assert.doesNotMatch(clientUpload, /Promise\.all\(\s*files\.map/);
-  assert.match(clientUpload, /for \(const \[index, file\] of files\.entries\(\)\)/);
-  assert.match(clientUpload, /deleteCloudinaryImages\(uploaded\.map/);
+  assert.match(clientUpload, /const uploadConcurrency = 3/);
+  assert.match(clientUpload, /const workerCount = Math\.min\(uploadConcurrency, files\.length\)/);
+  assert.match(clientUpload, /uploaded\[index\] = await uploadOne\(files\[index\], index\)/);
+  assert.match(clientUpload, /deleteCloudinaryImages\(completed\.map/);
 
   assert.match(signature, /requireAdmin/);
   assert.match(signature, /CLOUDINARY_API_SECRET/);

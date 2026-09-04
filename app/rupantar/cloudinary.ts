@@ -25,6 +25,7 @@ type UploadResponse = {
 const allowedTypes = new Set(["image/jpeg", "image/png"]);
 const maximumBytes = 10 * 1024 * 1024;
 export const maximumWorkImages = 6;
+const uploadConcurrency = 3;
 const deleteBatchSize = 20;
 const cloudinaryApiBase = (import.meta.env.VITE_CLOUDINARY_API_BASE || "https://api.cloudinary.com").replace(/\/$/, "");
 const workDraftIdPattern = /^rupantar-homes\/works\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -192,21 +193,39 @@ export async function uploadWorkImages(files: File[]): Promise<WorkImage[]> {
     if (file.size > maximumBytes) throw new Error(`${file.name} is larger than Cloudinary's 10MB image limit.`);
   }
 
-  const uploaded: WorkImage[] = [];
-  try {
-    for (const [index, file] of files.entries()) {
-      uploaded.push(await uploadOne(file, index));
+  const uploaded: Array<WorkImage | undefined> = new Array(files.length);
+  let nextIndex = 0;
+  let uploadError: unknown = null;
+
+  const worker = async () => {
+    while (uploadError === null) {
+      const index = nextIndex;
+      nextIndex += 1;
+      if (index >= files.length) return;
+      try {
+        uploaded[index] = await uploadOne(files[index], index);
+      } catch (error) {
+        if (uploadError === null) uploadError = error;
+        return;
+      }
     }
-    return uploaded;
-  } catch (uploadError) {
+  };
+
+  const workerCount = Math.min(uploadConcurrency, files.length);
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+
+  const completed = uploaded.filter((image): image is WorkImage => image !== undefined);
+  if (uploadError !== null) {
     try {
-      await deleteCloudinaryImages(uploaded.map((image) => image.publicId));
+      await deleteCloudinaryImages(completed.map((image) => image.publicId));
     } catch (cleanupError) {
       console.error("Unable to roll back a partially completed Cloudinary upload", cleanupError);
       throw new Error(`${uploadError instanceof Error ? uploadError.message : "Image upload failed."} Some uploaded images may need automatic cleanup on the next Admin session.`);
     }
     throw uploadError;
   }
+
+  return completed;
 }
 
 export async function deleteCloudinaryImages(publicIds: string[]): Promise<void> {

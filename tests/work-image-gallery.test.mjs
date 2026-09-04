@@ -93,15 +93,18 @@ test("Admin renders six compact slots using the existing upload/remove lifecycle
 test("one through six validated uploads preserve order; seven rejects before any request", async () => {
   let calls = 0;
   let serial = 0;
-  let currentId;
   const fakeFetch = async (url, init) => {
     calls++;
     if (url === "/api/cloudinary-signature") {
-      currentId = `rupantar-homes/works/00000000-0000-4000-8000-${String(++serial).padStart(12, "0")}`;
-      return Response.json({ signature: "signature", timestamp: 123, apiKey: "key", cloudName: "test", assetFolder: "rupantar-homes/works", publicId: currentId, format: "webp", transformation: "c_limit,h_1080,w_1920/q_auto:good" });
+      const publicId = `rupantar-homes/works/00000000-0000-4000-8000-${String(++serial).padStart(12, "0")}`;
+      return Response.json({ signature: "signature", timestamp: 123, apiKey: "key", cloudName: "test", assetFolder: "rupantar-homes/works", publicId, format: "webp", transformation: "c_limit,h_1080,w_1920/q_auto:good" });
     }
+    if (url === "/api/cloudinary-delete") return Response.json({ ok: true });
+    assert.ok(init.body instanceof FormData);
     assert.equal(init.body.get("format"), "webp");
-    return Response.json({ secure_url: `https://res.cloudinary.com/test/image/upload/v1/${currentId}.webp`, public_id: currentId, width: 1920, height: 1080, bytes: 1000, format: "webp" });
+    const publicId = init.body.get("public_id");
+    assert.equal(typeof publicId, "string");
+    return Response.json({ secure_url: `https://res.cloudinary.com/test/image/upload/v1/${publicId}.webp`, public_id: publicId, width: 1920, height: 1080, bytes: 1000, format: "webp" });
   };
   const { maximumWorkImages, uploadWorkImages } = load("app/rupantar/cloudinary.ts", { "./supabase": { getAccessToken: async () => "local-test-token" } }, { fetch: fakeFetch, window: { setTimeout, clearTimeout } });
   assert.equal(maximumWorkImages, 6);
@@ -110,6 +113,7 @@ test("one through six validated uploads preserve order; seven rejects before any
     const result = await uploadWorkImages(files.slice(0, count));
     assert.equal(result.length, count);
     assert.deepEqual(result.map((image) => image.sortOrder), Array.from({ length: count }, (_, i) => i));
+    assert.equal(new Set(result.map((image) => image.publicId)).size, count);
   }
   const before = calls;
   await assert.rejects(uploadWorkImages(files), /up to 6 images/);

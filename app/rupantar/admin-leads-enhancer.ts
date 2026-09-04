@@ -71,12 +71,15 @@ function enhanceAdminLeads() {
   leadSectionTitles.forEach(enhanceLeadSection);
 }
 
-function adminIsBusy() {
-  if (window.location.pathname !== "/admin") return false;
-  const logout = Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find(
+function findLogoutButton() {
+  if (window.location.pathname !== "/admin") return null;
+  return Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find(
     (button) => button.textContent?.includes("Logout"),
-  );
-  return Boolean(logout?.disabled);
+  ) ?? null;
+}
+
+function adminIsBusy() {
+  return Boolean(findLogoutButton()?.disabled);
 }
 
 function syncAdminBusyControls() {
@@ -162,22 +165,48 @@ function enhanceViewSiteButton() {
 }
 
 export function initAdminLeadsEnhancements() {
-  let scheduled = false;
+  let enhancementScheduled = false;
+  let busySyncScheduled = false;
+  let watchedLogout: HTMLButtonElement | null = null;
+  let busyObserver: MutationObserver | null = null;
 
-  const schedule = () => {
-    if (scheduled) return;
-    scheduled = true;
+  const scheduleBusySync = () => {
+    if (busySyncScheduled) return;
+    busySyncScheduled = true;
     window.requestAnimationFrame(() => {
-      scheduled = false;
+      busySyncScheduled = false;
+      syncAdminBusyControls();
+    });
+  };
+
+  const watchBusySignal = () => {
+    const logout = findLogoutButton();
+    if (logout === watchedLogout) return;
+
+    busyObserver?.disconnect();
+    busyObserver = null;
+    watchedLogout = logout;
+
+    if (!logout) return;
+    busyObserver = new MutationObserver(scheduleBusySync);
+    busyObserver.observe(logout, { attributes: true, attributeFilter: ["disabled"] });
+  };
+
+  const scheduleEnhancements = () => {
+    if (enhancementScheduled) return;
+    enhancementScheduled = true;
+    window.requestAnimationFrame(() => {
+      enhancementScheduled = false;
       syncAdminBusyControls();
       enhanceAdminLeads();
       enhanceWorkImageSlots();
       enhanceViewSiteButton();
+      watchBusySignal();
     });
   };
 
-  schedule();
+  scheduleEnhancements();
 
-  const observer = new MutationObserver(schedule);
-  observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["disabled"] });
+  const observer = new MutationObserver(scheduleEnhancements);
+  observer.observe(document.body, { childList: true, subtree: true });
 }
