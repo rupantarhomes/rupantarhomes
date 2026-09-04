@@ -235,6 +235,11 @@ function ensureReviewCardClasses() {
 }
 
 function normalizeVisibleCopy() {
+  const publicEnhancerEnabled = () => !window.location.pathname.startsWith("/admin");
+  if (!publicEnhancerEnabled()) return;
+  const publicRoot = document.getElementById("root");
+  if (!publicRoot) return;
+
   const replacements: Array<[RegExp, string]> = [
     [/\b8 core services\b/gi, "3 core services"],
     [/\b9 core services\b/gi, "3 core services"],
@@ -262,7 +267,7 @@ function normalizeVisibleCopy() {
       return;
     }
 
-    if (node.nodeType !== Node.ELEMENT_NODE && node !== document.body) return;
+    if (node.nodeType !== Node.ELEMENT_NODE && node !== publicRoot) return;
     const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
     let current = walker.nextNode();
     while (current) {
@@ -286,12 +291,13 @@ function normalizeVisibleCopy() {
     }
   };
 
-  normalizeNode(document.body);
+  normalizeNode(publicRoot);
   normalizeFooter();
   ensureFacebookLinks();
   ensureReviewCardClasses();
 
   const observer = new MutationObserver((mutations) => {
+    if (!publicEnhancerEnabled()) return;
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) normalizeNode(node);
     }
@@ -300,7 +306,7 @@ function normalizeVisibleCopy() {
     ensureReviewCardClasses();
   });
 
-  observer.observe(document.body, { childList: true, subtree: true });
+  observer.observe(publicRoot, { childList: true, subtree: true });
 }
 
 if (document.readyState === "loading") {
