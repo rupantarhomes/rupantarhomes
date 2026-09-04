@@ -74,6 +74,7 @@ test("Blog article uses original editorial title/body typography while keeping s
   assert.doesNotMatch(indexPage, /rh-blog-article-page|rh-blog-project-card/);
   assert.match(articlePage, /className="rh-blog-article max-w-\[800px\]"/);
   assert.match(articlePage, /className="rh-blog-project-card w-full/);
+  assert.doesNotMatch(articlePage, /rh-blog-project-card[^\n]*border border-zinc-100/);
   assert.doesNotMatch(articlePage, /aria-hidden="true" style=\{\{ height:/);
   assert.match(articlePage, /href=\{workPath\(linkedWork\)\}/);
 
