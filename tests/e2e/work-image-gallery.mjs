@@ -22,7 +22,6 @@ const makeImage = (i, publicId = `rupantar-homes/works/fixture-${i}`) => ({ id: 
 let images = Array.from({ length: 6 }, (_, i) => makeImage(i + 1));
 const deleted = [];
 let savedPayload;
-let signedId;
 let uploads = 0;
 let imageBytes = await readFile(new URL("../../public/hero-real-1-v2.webp", import.meta.url));
 await context.addInitScript(() => sessionStorage.setItem("rupantar-brand-intro-seen", "1"));
@@ -36,10 +35,18 @@ await context.route("**/*", async (route) => {
   if (url.pathname === "/auth/v1/token") return json({ access_token: "fixture-token", refresh_token: "fixture-refresh", expires_in: 3600, token_type: "bearer", user });
   if (url.pathname === "/auth/v1/user") return json(user);
   if (url.pathname === "/api/cloudinary-signature") {
-    signedId = `rupantar-homes/works/${randomUUID()}`;
+    const signedId = `rupantar-homes/works/${randomUUID()}`;
     return json({ signature: "fixture-signature", apiKey: "fixture-key", cloudName: "gallery-test", assetFolder: "rupantar-homes/works", publicId: signedId, timestamp: 123, format: "webp", transformation: "c_limit,h_1080,w_1920/q_auto:good" });
   }
-  if (url.pathname.includes("/image/upload")) { uploads++; return json({ public_id: signedId, secure_url: makeImage(1, signedId).secure_url, width: 1672, height: 941, bytes: 30000, format: "webp" }); }
+  if (url.pathname.includes("/image/upload")) {
+    uploads++;
+    // Each concurrent upload must return its own signed ID, not the most recent
+    // signature issued to a different upload in the batch.
+    const form = await new Request(request.url(), { method: "POST", headers: request.headers(), body: request.postDataBuffer() }).formData();
+    const publicId = form.get("public_id");
+    assert.equal(typeof publicId, "string");
+    return json({ public_id: publicId, secure_url: makeImage(1, publicId).secure_url, width: 1672, height: 941, bytes: 30000, format: "webp" });
+  }
   if (url.pathname === "/api/cloudinary-delete") { deleted.push(...request.postDataJSON().publicIds); return json({ deleted }); }
   if (url.pathname === "/rest/v1/rpc/save_work_with_images") {
     savedPayload = request.postDataJSON();

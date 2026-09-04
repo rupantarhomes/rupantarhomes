@@ -17,6 +17,7 @@ import {
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { WorkPhoto } from "./shared";
 import { WorkImageViewer } from "./work-image-gallery";
+import { SiteErrorBoundary } from "./error-boundary";
 import { maximumWorkImages } from "./cloudinary";
 import { AdminBlogs } from "./blog-admin";
 import { resolveRupantarBlogUrl, rupantarBlogSlugFromUrl, type Blog, type BlogForm } from "./blog";
@@ -232,12 +233,14 @@ export function AdminPortal(props: AdminPortalProps) {
       </div>
 
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <SiteErrorBoundary resetKey={page}>
         {page === "admin-dashboard" && <AdminDashboard {...props} />}
         {page === "admin-works" && <AdminWorks {...props} />}
         {page === "admin-blogs" && <AdminBlogs {...props} />}
         {page === "admin-leads" && <AdminLeads {...props} />}
         {page === "admin-reviews" && <AdminReviews {...props} />}
         {page === "admin-settings" && <AdminSettings {...props} />}
+        </SiteErrorBoundary>
       </div>
     </div>
   );
