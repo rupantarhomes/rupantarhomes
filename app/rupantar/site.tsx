@@ -217,6 +217,7 @@ export function RupantarSite() {
   const queryMutationRef = useRef(false);
   const isAdminRef = useRef(false);
   const explicitLogoutRef = useRef(false);
+  const adminVerificationPromiseRef = useRef<Promise<void> | null>(null);
 
   useEffect(() => { worksRef.current = works; }, [works]);
   useEffect(() => { blogsRef.current = blogs; }, [blogs]);
@@ -408,32 +409,45 @@ export function RupantarSite() {
 
   const verifyOpenAdminAccess = useCallback(async () => {
     if (!isSupabaseConfigured || !isAdminRef.current || explicitLogoutRef.current) return;
-    const supabase = getSupabase();
-    try {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) throw sessionError;
-      const session = sessionData.session;
-      if (!session) {
-        expireAdminSession();
-        return;
-      }
-      const { data: admin, error: adminError } = await supabase
-        .from("admin_users")
-        .select("user_id,is_active")
-        .eq("user_id", session.user.id)
-        .eq("is_active", true)
-        .maybeSingle();
-      if (adminError) throw adminError;
-      if (!admin) {
-        await supabase.auth.signOut();
-        expireAdminSession();
-        return;
-      }
-      void cleanupExpiredWorkDrafts();
-    } catch (error) {
-      console.error("Unable to verify the open Admin session", error);
+    if (adminVerificationPromiseRef.current) {
+      await adminVerificationPromiseRef.current;
+      return;
     }
-  }, [cleanupExpiredWorkDrafts, expireAdminSession]);
+
+    const verification = (async () => {
+      const supabase = getSupabase();
+      try {
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        const session = sessionData.session;
+        if (!session) {
+          expireAdminSession();
+          return;
+        }
+        const { data: admin, error: adminError } = await supabase
+          .from("admin_users")
+          .select("user_id,is_active")
+          .eq("user_id", session.user.id)
+          .eq("is_active", true)
+          .maybeSingle();
+        if (adminError) throw adminError;
+        if (!admin) {
+          await supabase.auth.signOut();
+          expireAdminSession();
+          return;
+        }
+      } catch (error) {
+        console.error("Unable to verify the open Admin session", error);
+      }
+    })();
+
+    adminVerificationPromiseRef.current = verification;
+    try {
+      await verification;
+    } finally {
+      if (adminVerificationPromiseRef.current === verification) adminVerificationPromiseRef.current = null;
+    }
+  }, [expireAdminSession]);
 
   const applyBrowserRoute = useCallback(async () => {
     const routeRequestId = ++routeRequestIdRef.current;
