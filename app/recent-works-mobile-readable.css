@@ -186,3 +186,32 @@
     ) !important;
   }
 }
+
+/* Dedicated Work detail only: featured status still works in data/ordering, but its label is not shown on the detail page. */
+.min-h-screen.bg-white.text-zinc-950
+  main.max-w-\[1280px\] > div.grid > div:first-child:has([data-native-work-gallery])
+  > div.flex.flex-wrap.items-center.gap-2.mb-3 > span:nth-child(3) {
+  display: none !important;
+}
+
+/* Homepage Recent Works only: all six cards and their media boxes are exactly the same size within the grid. */
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child > div.grid {
+  grid-auto-rows: 1fr !important;
+  align-items: stretch !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child > div.grid > .rh-work-card {
+  height: 100% !important;
+  min-height: 100% !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card .rh-work-media-slot {
+  width: 100% !important;
+  aspect-ratio: 4 / 3 !important;
+}
+
+.min-h-screen.bg-white.text-zinc-950 main > section:first-child .rh-work-card .rh-work-media-slot > img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
