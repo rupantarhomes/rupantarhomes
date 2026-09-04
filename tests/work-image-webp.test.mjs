@@ -52,11 +52,13 @@ test("preserves rejected-upload cleanup and transactional batch rollback", async
   const client = await read("../app/rupantar/cloudinary.ts");
   const validation = client.indexOf("return validateUploadedImage(uploaded, signed, file, sortOrder)");
   const rejectedCleanup = client.indexOf("await deleteCloudinaryImages([signed.publicId])", validation);
-  const batchRollback = client.indexOf("await deleteCloudinaryImages(uploaded.map((image) => image.publicId))");
+  const completedBatch = client.indexOf("const completed = uploaded.filter((image): image is WorkImage => image !== undefined)");
+  const batchRollback = client.indexOf("await deleteCloudinaryImages(completed.map((image) => image.publicId))", completedBatch);
 
   assert.ok(validation >= 0);
   assert.ok(rejectedCleanup > validation);
-  assert.ok(batchRollback >= 0);
+  assert.ok(completedBatch >= 0);
+  assert.ok(batchRollback > completedBatch);
   assert.match(client, /automatic cleanup on the next Admin session/);
 });
 
