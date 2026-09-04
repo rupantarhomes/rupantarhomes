@@ -45,6 +45,7 @@ The following is the failure map at the starting SHA. Protection describes the e
 - `app/rupantar/admin.tsx`: one DOM-transparent boundary around the existing tab body. Navigation/logout and parent-owned drafts stay mounted when a tab throws.
 - `app/public-performance.ts`: handle the two existing warm-import rejections. Same schedule, modules and image warming.
 - `scripts/verify-production-lock.mjs`: reject omitted protection/schema/fingerprint corruption before the existing HEAD comparisons. New protected paths can still be added; existing ones cannot silently disappear.
+- `.github/workflows/production-baseline.yml`: run the behavior guard for every PR branch name; the guard already exits cleanly when no protected frontend file changed. The stricter UI-only file boundary remains prefix-scoped by design.
 - New Node tests cover the above plus built local references and direct entries. New optional browser test injects page/tab/intro/chunk failures through local request interception. The existing gallery fixture now models concurrent IDs correctly.
 
 All implementation changes are one small frontend containment/gate risk class; no separate backend, database, media contract or deployment architecture change is bundled into the candidate.
@@ -52,8 +53,8 @@ All implementation changes are one small frontend containment/gate risk class; n
 ## Verification record
 
 - Six new assertions failed against vulnerable baseline behavior before implementation; all pass after the fix. Existing tests were not deleted or relaxed.
-- `npm run verify`: TypeScript PASS, production build PASS, **105/105 Node tests PASS**.
-- `node scripts/check-frontend-behavior-diff.mjs --self-test`: PASS. Exact committed-head comparison and lock must also pass before PR publication.
+- `npm run verify`: TypeScript PASS, production build PASS, **106/106 Node tests PASS**.
+- `node scripts/check-frontend-behavior-diff.mjs --self-test`: PASS. Exact committed-head comparison against the base: PASS. CI now runs that comparison for every PR branch name.
 - Built SPA deep visits/refresh: `/`, `/about`, `/contact`, `/privacy`, `/works`, `/works/interior-design`, `/works/interior`, `/works/interior/fixture-project`, `/blog`, `/blog/fixture-story`, `/admin`. These confirm local serving/parser contracts, not live fixture records or external Cloudflare routing rules.
 - Browser `tests/e2e/runtime-resilience.mjs`: PASS at 390/1440 public failure/back/forward; optional intro failure; rejected chunk failure with no unhandled rejection; Admin tab navigation and unsaved sibling draft preserved.
 - Browser `tests/e2e/work-image-gallery.mjs`: PASS at 320, 375, 390, 393, 414, 430, 1280 and 1440 widths. Square stack, contained viewer, controls/scroll/focus and six Admin slots preserved. Synthetic six-image upload/save/edit/remove lifecycle passes. No production request or asset created.

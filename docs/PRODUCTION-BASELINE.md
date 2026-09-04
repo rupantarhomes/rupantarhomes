@@ -562,6 +562,7 @@ Accepted candidate fingerprints after local verification:
 
 - `app`: `3ca7530bdf5561045b065cf2548283c41e717a86`
 - `scripts`: `e475a6e8af4686279f6a47cc7e25c6a42f6e2627`
-- `tests`: `d1211242aee881ce7d5eefec5d41bfdda9ae6e83`
+- `.github/workflows/production-baseline.yml`: `066f8bead26c66e84841a714d02fcf4f16478031`
+- `tests`: `2bb3193b7658a85c33d0d56eb1e02c22f2efe882`
 
-Local validation: strict TypeScript, production build, 105 Node regression tests, production-lock integrity tests, local direct-route/build-asset checks, browser fault injection, and the existing six-image gallery/Admin lifecycle fixture pass. The candidate is not production and remains unmerged pending explicit approval and exact-head CI/preview verification.
+Local validation: strict TypeScript, production build, 106 Node regression tests, production-lock integrity tests, local direct-route/build-asset checks, browser fault injection, and the existing six-image gallery/Admin lifecycle fixture pass. The candidate is not production and remains unmerged pending explicit approval and exact-head CI/preview verification.

@@ -53,14 +53,7 @@ jobs:
         run: node scripts/check-frontend-behavior-diff.mjs --self-test
 
       - name: Enforce frontend reliability behavior
-        if: >-
-          ${{ github.event_name == 'pull_request' && (
-            startsWith(github.head_ref, 'frontend/') ||
-            startsWith(github.head_ref, 'ui/') ||
-            startsWith(github.head_ref, 'design/') ||
-            startsWith(github.head_ref, 'style/') ||
-            startsWith(github.head_ref, 'enhancement/')
-          ) }}
+        if: github.event_name == 'pull_request'
         run: node scripts/check-frontend-behavior-diff.mjs "${{ github.event.pull_request.base.sha }}"
 
       - name: TypeScript

@@ -29,3 +29,11 @@ test("production lock fails closed for missing protection, malformed fingerprint
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test("frontend behavior guard runs for every pull request branch name", async () => {
+  const workflow = await readFile(new URL("../.github/workflows/production-baseline.yml", import.meta.url), "utf8");
+  const step = workflow.split("- name: Enforce frontend reliability behavior")[1]?.split("- name: TypeScript")[0] ?? "";
+  assert.match(step, /if: github\.event_name == 'pull_request'/);
+  assert.match(step, /check-frontend-behavior-diff\.mjs/);
+  assert.doesNotMatch(step, /github\.head_ref|startsWith/);
+});
