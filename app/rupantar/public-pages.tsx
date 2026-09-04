@@ -225,11 +225,6 @@ export function WorkDetailPage({
             <span className="text-[12px] flex items-center gap-1" style={{ backgroundColor: "#FF1A3D", color: "#fff", borderRadius: 8, padding: "4px 8px", maxWidth: "100%", overflowWrap: "anywhere" }}>
               <MapPin className="w-3.5 h-3.5" /> {work.location}
             </span>
-            {work.featured && (
-              <span className="text-[11px] text-[#FF1A3D] font-semibold uppercase tracking-wide">
-                Featured
-              </span>
-            )}
           </div>
           <h1 className="font-heading text-[26px] sm:text-[34px] font-bold leading-[1.05] tracking-[-0.02em]">
             {work.title}
