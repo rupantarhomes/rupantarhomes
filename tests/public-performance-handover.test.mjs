@@ -13,11 +13,11 @@ test("critical public origins and first hero asset are warmed from the entry doc
   assert.ok(html.indexOf("/app/public-performance.ts") < html.indexOf("/app/client-entry.tsx"));
 });
 
-test("first-visit brand intro never hides the site for multiple seconds", async () => {
+test("first-visit brand intro keeps the original timing but cannot block interaction", async () => {
   const intro = await read("../app/rupantar/brand-intro.tsx");
-  assert.match(intro, /const revealDelay = reduceMotion \? 60 : 180/);
-  assert.match(intro, /const removeDelay = reduceMotion \? 120 : 720/);
-  assert.doesNotMatch(intro, /1500|2500/);
+  assert.match(intro, /const revealDelay = reduceMotion \? 180 : 1500/);
+  assert.match(intro, /const removeDelay = reduceMotion \? 320 : 2500/);
+  assert.match(intro, /style=\{\{ pointerEvents: "none" \}\}/);
 });
 
 test("public runtime warms route chunks, first Work covers and keeps detail cross-links inside the SPA", async () => {
