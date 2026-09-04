@@ -22,7 +22,7 @@ test("opens Admin immediately after authorization and avoids full Admin reloads 
   assert.ok(login >= 0);
   assert.ok(dashboard > login);
   assert.ok(backgroundLoad > dashboard);
-  assert.match(refreshAdminData, /Promise\.allSettled\(\[[\s\S]*refreshAdminWorks\(\)[\s\S]*refreshContent\(\)[\s\S]*refreshAdminStats\(\)[\s\S]*refreshLeads\(\)[\s\S]*refreshBlogs\(\)/);
+  assert.match(refreshAdminData, /Promise\.allSettled\(\[[\s\S]*refreshAdminWorks\(\)[\s\S]*refreshAdminContent\(\)[\s\S]*refreshAdminStats\(\)[\s\S]*refreshLeads\(\)[\s\S]*refreshBlogs\(\)/);
   assert.doesNotMatch(navigate, /refreshContent\(|refreshLeads\(/);
   assert.equal((navigate.match(/refreshBlogs\(/g) ?? []).length, 1);
   assert.match(navigate, /nextPage === "admin-dashboard"[\s\S]*refreshAdminStats/);
