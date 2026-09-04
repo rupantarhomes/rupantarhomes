@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
-type Props = { children: ReactNode };
+type Props = { children: ReactNode; resetKey?: string; fallback?: ReactNode };
 type State = { failed: boolean };
 
 export class SiteErrorBoundary extends Component<Props, State> {
@@ -14,8 +14,15 @@ export class SiteErrorBoundary extends Component<Props, State> {
     console.error("Rupantar Homes render failure", error, info.componentStack);
   }
 
+  componentDidUpdate(previousProps: Props) {
+    if (this.state.failed && previousProps.resetKey !== this.props.resetKey) {
+      this.setState({ failed: false });
+    }
+  }
+
   render() {
     if (!this.state.failed) return this.props.children;
+    if (this.props.fallback !== undefined) return this.props.fallback;
 
     return (
       <main className="min-h-screen bg-white text-zinc-950 flex items-center justify-center px-4 py-12">

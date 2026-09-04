@@ -15,6 +15,7 @@ import {
   initialWorks,
 } from "./data";
 import { HomePage } from "./home-page";
+import { SiteErrorBoundary } from "./error-boundary";
 import {
   claimExpiredCloudinaryDrafts,
   deleteBlog,
@@ -118,13 +119,13 @@ const adminVerificationIntervalMs = 5 * 60 * 1000;
 type BrowserRoute = ReturnType<typeof parseRoute>;
 
 function prefetchPublicPageModules() {
-  void loadPublicPages();
-  void loadBlogPages();
+  void loadPublicPages().catch((error) => console.error("Unable to prefetch public pages", error));
+  void loadBlogPages().catch((error) => console.error("Unable to prefetch blog pages", error));
 }
 
 function prefetchPublicRoute(page: Page) {
-  if (page === "blog" || page === "blog-detail") void loadBlogPages();
-  else if (publicPages.includes(page) && page !== "home") void loadPublicPages();
+  if (page === "blog" || page === "blog-detail") void loadBlogPages().catch((error) => console.error("Unable to prefetch blog pages", error));
+  else if (publicPages.includes(page) && page !== "home") void loadPublicPages().catch((error) => console.error("Unable to prefetch public pages", error));
 }
 
 function pageForRoute(route: BrowserRoute): Page {
@@ -604,7 +605,7 @@ export function RupantarSite() {
       if (parseRoute(window.location.pathname).kind === "admin") setPage("admin-dashboard");
       void refreshAdminData();
       void cleanupExpiredWorkDrafts();
-    });
+    }).catch((error) => { if (active) console.error("Unable to discover Admin session", error); });
 
     const onPopState = () => void applyBrowserRoute().catch((error) => console.error("Unable to apply browser route", error));
     window.addEventListener("popstate", onPopState);
@@ -1130,6 +1131,7 @@ export function RupantarSite() {
     return (
       <>
         {adminLoadError && <AdminLoadWarning onRetry={() => void refreshAdminData()} />}
+        <SiteErrorBoundary resetKey={page}>
         <Suspense fallback={<PageLoader />}><AdminPortal
           page={page}
           navigate={navigate}
@@ -1170,6 +1172,7 @@ export function RupantarSite() {
           adminStats={adminStats}
           busy={adminInteractionBusy}
         /></Suspense>
+        </SiteErrorBoundary>
       </>
     );
   }
@@ -1179,6 +1182,7 @@ export function RupantarSite() {
       {publicPage && <TopBar settings={settings} />}
       {publicPage && <PublicHeader page={page} navigate={navigate} onCategory={openCategory} onEstimate={goToEstimate} onPublicNavigationIntent={prefetchPublicRoute} />}
 
+      <SiteErrorBoundary resetKey={typeof window === "undefined" ? page : window.location.pathname}>
       {page === "home" && (
         <HomePage
           works={works}
@@ -1217,6 +1221,7 @@ export function RupantarSite() {
       {page === "contact" && <Suspense fallback={<PageLoader />}><ContactPage navigate={navigate} /></Suspense>}
       {page === "privacy" && <Suspense fallback={<PageLoader />}><PrivacyPage navigate={navigate} /></Suspense>}
       {page === "interior-design" && <Suspense fallback={<PageLoader />}><InteriorDesignPage navigate={navigate} onCategory={openCategory} /></Suspense>}
+      </SiteErrorBoundary>
 
       {publicPage && <PublicFooter navigate={navigate} onCategory={openCategory} onEstimate={goToEstimate} settings={settings} onPublicNavigationIntent={prefetchPublicRoute} />}
 

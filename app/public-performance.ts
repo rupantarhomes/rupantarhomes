@@ -26,8 +26,8 @@ function internalDetailPath(anchor: HTMLAnchorElement): string | null {
 }
 
 function warmPublicChunks() {
-  void import("./rupantar/public-pages");
-  void import("./rupantar/blog-pages");
+  void import("./rupantar/public-pages").catch((error) => console.error("Unable to prefetch public pages", error));
+  void import("./rupantar/blog-pages").catch((error) => console.error("Unable to prefetch blog pages", error));
 }
 
 function prioritizeFirstWorkRow(root: HTMLElement): boolean {

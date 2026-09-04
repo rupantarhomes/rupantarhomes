@@ -553,3 +553,15 @@ Candidate fingerprints:
 Code-bearing head `0efc28cf46b8bc8d8f3d687af1a59ec8fcc1f44e` passed Production Baseline run `33920522078` (#314), including the handover lock, strict TypeScript, production build, and full regression suite.
 
 For all four candidates, documentation-only commits advance the PR head and therefore must themselves pass the Production Baseline workflow before any merge. Cloudflare branch previews are not production deployment; production remains tied to `main`.
+
+## Production resilience hardening candidate — 2026-09-05
+
+From production `main` commit `fb79c3347228e956943ff8cecba9c52653733792`, this unmerged candidate contains public/Admin render failures within the existing application shell, handles rejected speculative chunk loading and Admin-session discovery, validates the production-lock manifest fail-closed, and adds deterministic route/build/runtime regression coverage. It does not change UI/content/layout, Supabase schema/RLS/RPC/Auth, Cloudinary semantics, Work/Blog persistence, Admin mutation/save/upload behavior, dependencies, or deployment configuration.
+
+Accepted candidate fingerprints after local verification:
+
+- `app`: `3ca7530bdf5561045b065cf2548283c41e717a86`
+- `scripts`: `e475a6e8af4686279f6a47cc7e25c6a42f6e2627`
+- `tests`: `d1211242aee881ce7d5eefec5d41bfdda9ae6e83`
+
+Local validation: strict TypeScript, production build, 105 Node regression tests, production-lock integrity tests, local direct-route/build-asset checks, browser fault injection, and the existing six-image gallery/Admin lifecycle fixture pass. The candidate is not production and remains unmerged pending explicit approval and exact-head CI/preview verification.
