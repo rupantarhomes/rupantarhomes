@@ -87,7 +87,7 @@ export function BlogArticlePage({ blog, navigate }: { blog: Blog; navigate: (pag
         <h1 className="rh-blog-article-title mt-3 font-heading text-[40px] sm:text-[56px] leading-[1.04] font-bold tracking-[-0.045em]">{blog.title}</h1>
         <div className="rh-blog-article-body mt-9 space-y-6 text-[16px] leading-7 sm:leading-8 text-zinc-700">{paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
         {linkedWork && (
-          <aside className="rh-blog-project-card w-full rounded-[1.75rem] border border-zinc-100 bg-[#fffdfa] p-6 sm:p-7 shadow-[0_10px_30px_rgba(0,0,0,0.04)]" aria-label="Linked project images">
+          <aside className="rh-blog-project-card w-full rounded-[1.75rem] bg-[#fffdfa] p-6 sm:p-7 shadow-[0_10px_30px_rgba(0,0,0,0.04)]" aria-label="Linked project images">
             <div className="rh-blog-project-eyebrow text-[10px] font-semibold uppercase tracking-[0.16em] text-[#FF1A3D]">Project Images</div>
             <h2 className="rh-blog-project-title mt-2 font-heading text-[18px] sm:text-[20px] font-bold leading-tight text-zinc-950">{linkedWork.title}</h2>
             <p className="rh-blog-project-description mt-2 text-[13px] leading-6 text-zinc-600">See the completed project and its full image gallery.</p>

@@ -287,7 +287,7 @@ export function HomePage({
             View All <ArrowRight className="w-4 h-4" />
           </button>
         </div>
-        <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-5 sm:gap-6">
+        <div className="rh-recent-works-grid grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-5 sm:gap-6">
           {featured.map((work) => (
             <article
               key={work.id}
@@ -300,7 +300,7 @@ export function HomePage({
                 event.preventDefault();
                 onWork(work.id);
               }}
-              className="group cursor-pointer bg-white border border-zinc-100/90 rounded-[1.5rem] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-[border-color,box-shadow,transform] duration-300 ease-out hover:border-zinc-200 hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(0,0,0,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF1A3D]/30"
+              className="rh-recent-work-card group h-full cursor-pointer bg-white border border-zinc-100/90 rounded-[1.5rem] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-[border-color,box-shadow,transform] duration-300 ease-out hover:border-zinc-200 hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(0,0,0,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF1A3D]/30"
             >
               <div className="p-3">
                 <WorkPhoto image={work.images[0]} alt={work.title} />
