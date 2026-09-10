@@ -106,7 +106,7 @@ export function WorkImageGallery({ images, title }: { images: WorkImage[]; title
   const current = images[currentPageIndex];
   const movePage = (direction: number) => setPageIndex((active) => Math.max(0, Math.min(active + direction, lastIndex)));
   return (
-    <div data-native-work-gallery className="rh-native-work-gallery" style={{ paddingBottom: (images.length - 1) * 10 }}>
+    <div data-native-work-gallery className="rh-native-work-gallery">
       <div className="rh-native-work-stack"
         onTouchStart={(event) => {
           pageTouchStart.current = event.touches.length === 1 ? { x: event.touches[0].clientX, y: event.touches[0].clientY } : null;
@@ -123,12 +123,6 @@ export function WorkImageGallery({ images, title }: { images: WorkImage[]; title
             movePage(dx < 0 ? 1 : -1);
           }
         }}>
-        {images.slice(1).map((image, index) => (
-          <div key={image.id} className="rh-native-work-rear" aria-hidden="true"
-            style={{ inset: `${(index + 1) * 10}px ${(index + 1) * 5}px auto`, transform: `translateY(${(index + 1) * 10}px)`, zIndex: images.length - index - 1 }}>
-            <WorkPhoto image={image} alt={title} aspect="rh-native-work-stack-photo" sizes="160px" widths={[96, 160, 240]} />
-          </div>
-        ))}
         <button type="button" className="rh-native-work-front" style={{ zIndex: images.length }} aria-label={`Open ${title} image gallery`} onClick={() => {
           if (Date.now() < suppressOpenUntil.current) return;
           setSelectedIndex(currentPageIndex);
