@@ -87,8 +87,8 @@ export function WorkImageViewer({ images, title, initialIndex = 0, onClose }: {
         <WorkPhoto key={images[selectedIndex].id} image={images[selectedIndex]} alt={title} aspect="rh-native-work-viewer-photo" eager sizes="100vw" widths={[480, 768, 1200, 1920]} />
       </div>
       {images.length > 1 && <>
-        <button type="button" className="rh-native-work-prev" aria-label="Previous image" disabled={selectedIndex === 0} onClick={() => move(-1)}><ArrowLeft size={22} /></button>
-        <button type="button" className="rh-native-work-next" aria-label="Next image" disabled={selectedIndex === lastIndex} onClick={() => move(1)}><ArrowRight size={22} /></button>
+        <button type="button" className="rh-native-work-prev" aria-label="Previous image" disabled={selectedIndex === 0} onClick={() => move(-1)}><ArrowLeft size={18} /></button>
+        <button type="button" className="rh-native-work-next" aria-label="Next image" disabled={selectedIndex === lastIndex} onClick={() => move(1)}><ArrowRight size={18} /></button>
       </>}
       <div className="rh-native-work-counter" aria-live="polite" aria-atomic="true">{selectedIndex + 1} / {images.length}</div>
     </div>, document.body,
@@ -97,20 +97,48 @@ export function WorkImageViewer({ images, title, initialIndex = 0, onClose }: {
 
 export function WorkImageGallery({ images, title }: { images: WorkImage[]; title: string }) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [pageIndex, setPageIndex] = useState(0);
+  const pageTouchStart = useRef<{ x: number; y: number } | null>(null);
+  const suppressOpenUntil = useRef(0);
   if (!images.length) return <WorkPhoto alt={title} aspect="aspect-square" label="Main Gallery Photo Coming Soon" />;
-  const first = images[0];
+  const lastIndex = images.length - 1;
+  const currentPageIndex = Math.max(0, Math.min(pageIndex, lastIndex));
+  const current = images[currentPageIndex];
+  const movePage = (direction: number) => setPageIndex((active) => Math.max(0, Math.min(active + direction, lastIndex)));
   return (
     <div data-native-work-gallery className="rh-native-work-gallery" style={{ paddingBottom: (images.length - 1) * 10 }}>
-      <div className="rh-native-work-stack">
+      <div className="rh-native-work-stack"
+        onTouchStart={(event) => {
+          pageTouchStart.current = event.touches.length === 1 ? { x: event.touches[0].clientX, y: event.touches[0].clientY } : null;
+        }}
+        onTouchCancel={() => { pageTouchStart.current = null; }}
+        onTouchEnd={(event) => {
+          const start = pageTouchStart.current;
+          pageTouchStart.current = null;
+          if (!start || event.touches.length || !event.changedTouches[0]) return;
+          const dx = event.changedTouches[0].clientX - start.x;
+          const dy = event.changedTouches[0].clientY - start.y;
+          if (Math.abs(dx) >= 48 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+            suppressOpenUntil.current = Date.now() + 350;
+            movePage(dx < 0 ? 1 : -1);
+          }
+        }}>
         {images.slice(1).map((image, index) => (
           <div key={image.id} className="rh-native-work-rear" aria-hidden="true"
             style={{ inset: `${(index + 1) * 10}px ${(index + 1) * 5}px auto`, transform: `translateY(${(index + 1) * 10}px)`, zIndex: images.length - index - 1 }}>
             <WorkPhoto image={image} alt={title} aspect="rh-native-work-stack-photo" sizes="160px" widths={[96, 160, 240]} />
           </div>
         ))}
-        <button type="button" className="rh-native-work-front" style={{ zIndex: images.length }} aria-label={`Open ${title} image gallery`} onClick={() => setSelectedIndex(0)}>
-          <WorkPhoto key={first.id} image={first} alt={title} aspect="rh-native-work-stack-photo" eager sizes="(min-width: 1024px) 520px, 100vw" widths={[480, 768, 1200, 1600]} />
+        <button type="button" className="rh-native-work-front" style={{ zIndex: images.length }} aria-label={`Open ${title} image gallery`} onClick={() => {
+          if (Date.now() < suppressOpenUntil.current) return;
+          setSelectedIndex(currentPageIndex);
+        }}>
+          <WorkPhoto key={current.id} image={current} alt={title} aspect="rh-native-work-stack-photo" eager sizes="(min-width: 1024px) 520px, 100vw" widths={[480, 768, 1200, 1600]} />
         </button>
+        {images.length > 1 && <>
+          <button type="button" className="rh-native-work-page-prev" aria-label="Previous gallery image" disabled={currentPageIndex === 0} onClick={() => movePage(-1)}><ArrowLeft size={18} /></button>
+          <button type="button" className="rh-native-work-page-next" aria-label="Next gallery image" disabled={currentPageIndex === lastIndex} onClick={() => movePage(1)}><ArrowRight size={18} /></button>
+        </>}
       </div>
       {selectedIndex !== null && <WorkImageViewer images={images} title={title} initialIndex={selectedIndex} onClose={() => setSelectedIndex(null)} />}
     </div>
