@@ -28,7 +28,7 @@ function load(path, mocks = {}, globals = {}) {
 }
 const images = Array.from({ length: 6 }, (_, i) => ({ id: String(i), publicId: `work/${i}`, url: `https://res.cloudinary.com/test/image/upload/v1/${i}.webp`, altText: `Image ${i + 1}`, sortOrder: i }));
 
-test("native gallery renders one swipeable front image without stacked rear layers", () => {
+test("native gallery renders one front image with dots and a swipe hint instead of arrows", () => {
   const { WorkImageGallery } = load("app/rupantar/work-image-gallery.tsx");
   for (const count of [1, 2, 3, 6]) {
     const html = renderToStaticMarkup(React.createElement(WorkImageGallery, { images: images.slice(0, count), title: "Kitchen" }));
@@ -37,17 +37,20 @@ test("native gallery renders one swipeable front image without stacked rear laye
     assert.doesNotMatch(html, /padding-bottom:/);
     assert.equal((html.match(/loading="eager"/g) ?? []).length, 1);
     assert.equal((html.match(/loading="lazy"/g) ?? []).length, 0);
+    assert.doesNotMatch(html, /Previous gallery image|Next gallery image/);
     if (count === 1) {
-      assert.doesNotMatch(html, /Previous gallery image|Next gallery image/);
+      assert.doesNotMatch(html, /rh-native-work-page-dots|Swipe to view more images/);
     } else {
-      assert.match(html, /aria-label="Previous gallery image"/);
-      assert.match(html, /aria-label="Next gallery image"/);
+      assert.match(html, /class="rh-native-work-dots rh-native-work-page-dots"/);
+      assert.equal((html.match(/class="rh-native-work-dot/g) ?? []).length, count);
+      assert.equal((html.match(/aria-current="true"/g) ?? []).length, 1);
+      assert.match(html, />Swipe to view more images<\/div>/);
     }
     assert.doesNotMatch(html, /rh-native-work-viewer-photo/);
   }
 });
 
-test("the page gallery is square and cropped; fullscreen remains contained", () => {
+test("the page gallery stays square and cropped; fullscreen remains contained", () => {
   const css = read("app/rupantar/work-image-gallery.css");
   const rule = (selector) => css.slice(css.indexOf(selector + " {"), css.indexOf("}", css.indexOf(selector + " {")) + 1);
   assert.match(rule(".rh-native-work-stack"), /aspect-ratio: 1 \/ 1/);
@@ -138,7 +141,7 @@ test("forward migration changes ONLY the canonical count and matching error word
   for (let count = 0; count <= 7; count++) assert.equal(count > max, count === 7);
 });
 
-test("viewer has portal isolation, contained delivery, safe close, keyboard and directional swipe", () => {
+test("viewer keeps safe portal behavior while arrows are replaced by dots and swipe/drag navigation", () => {
   const source = read("app/rupantar/work-image-gallery.tsx");
   assert.match(source, /createPortal\(/);
   assert.match(source, /document\.body/);
@@ -149,18 +152,24 @@ test("viewer has portal isolation, contained delivery, safe close, keyboard and 
   assert.match(source, /previousFocus\.focus/);
   assert.match(source, /Math\.abs\(dx\) >= 48 && Math\.abs\(dx\) > Math\.abs\(dy\) \* 1\.5/);
   assert.match(source, /onTouchCancel/);
+  assert.match(source, /onPointerDown/);
   assert.match(source, /pageTouchStart/);
+  assert.match(source, /pagePointerStart/);
   assert.match(source, /movePage/);
-  assert.match(source, /aria-label="Previous gallery image"/);
-  assert.match(source, /aria-label="Next gallery image"/);
-  assert.doesNotMatch(source, /rh-native-work-rear/);
+  assert.match(source, /rh-native-work-page-dots/);
+  assert.match(source, /rh-native-work-viewer-dots/);
+  assert.match(source, /Swipe to view more images/);
+  assert.doesNotMatch(source, /Previous gallery image|Next gallery image|rh-native-work-prev|rh-native-work-next|rh-native-work-rear/);
   assert.match(source, /selectedIndex \+ 1\} \/ \{images\.length/);
   assert.doesNotMatch(source, /MutationObserver|document\.createElement|appendChild/);
   const css = read("app/rupantar/work-image-gallery.css");
   assert.match(css, /position: fixed; inset: 0/);
   assert.match(css, /z-index: 2147483647/);
   assert.match(css, /object-fit: contain/);
-  assert.match(css, /\.rh-native-work-viewer \.rh-native-work-prev, \.rh-native-work-viewer \.rh-native-work-next \{[^\n]*width: 38px; height: 38px;[^\n]*backdrop-filter: blur\(16px\) saturate\(165%\)/);
+  assert.match(css, /\.rh-native-work-dot\.is-active::before/);
+  assert.match(css, /\.rh-native-work-swipe-hint \{ margin-top: 11px;/);
+  assert.match(css, /\.rh-native-work-viewer-dots \{ bottom:/);
   assert.match(css, /\.rh-native-work-stage \.rh-native-work-viewer-photo \{[^\n]*box-shadow: none !important;[^\n]*--tw-ring-color: transparent/);
+  assert.doesNotMatch(css, /rh-native-work-page-prev|rh-native-work-page-next|rh-native-work-prev|rh-native-work-next/);
   assert.match(read("app/rupantar/work-media-enhancer.ts"), /!image\.closest\("\[data-native-work-gallery\]"\)/);
 });
