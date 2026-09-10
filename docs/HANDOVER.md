@@ -2,18 +2,20 @@
 
 ## Final handover baseline
 
-Rupantar Homes is packaged for production handover as of 2026-09-10.
+Rupantar Homes is packaged for production handover as of 2026-09-11.
 
 - Production repository: `rupantarhomes/rupantarhomes`
 - Default/protected branch: `main`
-- Accepted runtime baseline commit: `6d7805ad72365c9df197197e26f69dbe3f06f0f3`
+- Accepted runtime baseline commit: `39426e477109e0c537a761488e565d0458dae232`
 - Hosting: Cloudflare Pages + Pages Functions, deployed from `main`
 - Database/Auth: Supabase
 - Work media: Cloudinary
 - Secondary form notification: Web3Forms
 - Required merge checks on `main`: `Build and tests` and `Cloudflare Pages`
 
-The final accepted post-handover polish changes only the Work-detail category badge presentation to a solid medium gray with white text. It does not change any other public layout, content, Admin UI, routes, Supabase schema/data, Cloudinary behavior, inquiry behavior, or production environment values.
+The final accepted post-handover polish changes only the Work-detail category badge presentation to a fully filled solid dark gray (`#3f3f46`) box with white text on mobile and desktop. The rule is intentionally forced at the scoped Work-detail selector so conflicting utility styles cannot leave the badge white/red. It does not change any other public layout, content, Admin UI, routes, Supabase schema/data, Cloudinary behavior, inquiry behavior, or production environment values.
+
+The exact final deployed `main` SHA is recorded in GitHub Issue #116 after the final handover documentation merge. The runtime baseline above identifies the code-bearing commit for the accepted dark-gray badge state.
 
 ## Production freeze contract
 
@@ -52,7 +54,7 @@ Never bypass the handover controls by weakening the workflow, deleting the manif
 
 ## GitHub protection
 
-The repository ruleset `Protect main` is active for the default branch. It blocks branch deletion and non-fast-forward updates, requires pull requests, and requires both `Build and tests` and `Cloudflare Pages`. There are no bypass actors.
+The repository ruleset `Protect main` is intended to protect the default branch. Preserve the pull-request workflow, required checks, and production-lock verification during ownership transfer and future maintenance.
 
 Repository protection and the production-lock manifest work together: GitHub controls how changes reach `main`; the manifest makes production drift explicit and reviewable.
 
@@ -99,7 +101,7 @@ During ownership transfer:
 
 ## Supabase handover status
 
-The production project `gmtdqeskyvdvyibccxwt` was confirmed `ACTIVE_HEALTHY` on 2026-09-10.
+The production project `gmtdqeskyvdvyibccxwt` was confirmed `ACTIVE_HEALTHY` during final packaging on 2026-09-10.
 
 Security-advisor notes at final packaging:
 
@@ -138,7 +140,7 @@ Perform these on the live production domain after the final handover packaging P
 - Recent Works cards open dedicated Work pages;
 - All Works filters/pagination work;
 - Work detail pages open directly and via cards;
-- Work detail category badges use the accepted solid gray background with white text while location badges retain the existing brand-red treatment;
+- Work detail category badges render as fully filled solid dark gray (`#3f3f46`) boxes with white text while location badges retain the existing brand-red treatment;
 - Blog cards and direct article routes work;
 - Reviews render correctly;
 - About, Contact, Privacy and Interior pages load;
@@ -198,4 +200,4 @@ The repository itself is the canonical package. Key documents are:
 - `.github/production-lock.json` — frozen production-bearing Git fingerprints
 - `scripts/verify-production-lock.mjs` — lock verifier
 
-The final runtime baseline recorded for handover is `6d7805ad72365c9df197197e26f69dbe3f06f0f3`.
+The final runtime baseline recorded for handover is `39426e477109e0c537a761488e565d0458dae232`.
