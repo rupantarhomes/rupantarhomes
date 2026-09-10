@@ -157,7 +157,8 @@ export function RupantarSite() {
   const initialRoute = initialBrowserRoute();
   const initialRouteUsesWorks = initialRoute.kind === "works" || initialRoute.kind === "work-detail";
   const initialRouteIsAdmin = initialRoute.kind === "admin";
-  const initialWorksState = initialRouteUsesWorks || initialRouteIsAdmin ? [] : initialWorks;
+  const initialHomeWorks = isSupabaseConfigured ? [] : initialWorks;
+  const initialWorksState = initialRouteUsesWorks || initialRouteIsAdmin ? [] : initialHomeWorks;
   const [page, setPage] = useState<Page>(() => pageForRoute(initialRoute));
   const [filter, setFilter] = useState(() => initialRoute.kind === "works" || initialRoute.kind === "work-detail" ? initialRoute.category : "all");
   const [selectedWork, setSelectedWork] = useState<Work | null>(null);
@@ -168,8 +169,8 @@ export function RupantarSite() {
   const [adminLoadError, setAdminLoadError] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [works, setWorks] = useState<Work[]>(initialWorksState);
-  const [worksTotal, setWorksTotal] = useState(initialRouteUsesWorks || initialRouteIsAdmin ? 0 : initialWorks.length);
-  const [worksLoading, setWorksLoading] = useState(initialRoute.kind === "works");
+  const [worksTotal, setWorksTotal] = useState(initialRouteUsesWorks || initialRouteIsAdmin ? 0 : initialHomeWorks.length);
+  const [worksLoading, setWorksLoading] = useState(initialRoute.kind === "works" || (initialRoute.kind === "home" && isSupabaseConfigured));
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [blogsLoading, setBlogsLoading] = useState(false);
@@ -195,7 +196,8 @@ export function RupantarSite() {
   const [queryBusy, setQueryBusy] = useState(false);
   const [estimateSaved, setEstimateSaved] = useState(false);
 
-  const homeWorksRef = useRef<Work[]>(initialWorks);
+  const homeWorksRef = useRef<Work[]>(initialHomeWorks);
+  const homeWorksConfirmedRef = useRef(!isSupabaseConfigured);
   const worksRef = useRef(works);
   const worksLoadedRef = useRef(false);
   const adminWorksLoadedRef = useRef(false);
@@ -254,6 +256,14 @@ export function RupantarSite() {
   const restoreHomeWorks = () => {
     worksRequestIdRef.current += 1;
     setWorksLoadError("");
+    if (!homeWorksConfirmedRef.current) {
+      worksRef.current = [];
+      worksLoadedRef.current = false;
+      setWorks([]);
+      setWorksTotal(0);
+      setWorksLoading(isSupabaseConfigured);
+      return;
+    }
     const homeWorks = homeWorksRef.current;
     worksRef.current = homeWorks;
     worksLoadedRef.current = true;
@@ -272,6 +282,7 @@ export function RupantarSite() {
     setReviews(content.reviews);
     setSettings(content.settings);
     homeWorksRef.current = content.works;
+    homeWorksConfirmedRef.current = true;
     const route = parseRoute(window.location.pathname);
     if (route.kind !== "home") return;
     worksRequestIdRef.current += 1;
@@ -461,6 +472,7 @@ export function RupantarSite() {
       setSelectedBlog(null);
       restoreHomeWorks();
       setPage("home");
+      void refreshContent().catch((error) => console.error("Unable to revalidate home content", error));
       return;
     }
     if (route.kind === "about") { setPage("about"); return; }
@@ -533,7 +545,7 @@ export function RupantarSite() {
       setSelectedWork(null);
       setDetailLoadError("project");
     }
-  }, [loadWorks, refreshBlogs]);
+  }, [loadWorks, refreshBlogs, refreshContent]);
 
   const refreshAdminStats = useCallback(async () => {
     try { setAdminStats(await loadAdminStats()); }
@@ -579,14 +591,13 @@ export function RupantarSite() {
     const startupRoute = parseRoute(window.location.pathname);
     void applyBrowserRoute().catch((error) => { if (active) console.error("Unable to apply website route", error); });
 
-    if (startupRoute.kind === "home") {
-      void refreshContent().catch((error) => { if (active) console.error("Unable to load website content", error); });
-    } else if (startupRoute.kind !== "admin") {
+    if (startupRoute.kind !== "home" && startupRoute.kind !== "admin") {
       void loadPublicContent().then((content) => {
         if (!active) return;
         setReviews(content.reviews);
         setSettings(content.settings);
         homeWorksRef.current = content.works;
+        homeWorksConfirmedRef.current = true;
         if (parseRoute(window.location.pathname).kind === "home") {
           worksRequestIdRef.current += 1;
           worksRef.current = content.works;
@@ -613,7 +624,7 @@ export function RupantarSite() {
       active = false;
       window.removeEventListener("popstate", onPopState);
     };
-  }, [applyBrowserRoute, cleanupExpiredWorkDrafts, refreshAdminData, refreshContent]);
+  }, [applyBrowserRoute, cleanupExpiredWorkDrafts, refreshAdminData]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -654,6 +665,7 @@ export function RupantarSite() {
         setSelectedWork(null);
         setSelectedBlog(null);
         restoreHomeWorks();
+        void refreshContent().catch((error) => console.error("Unable to revalidate home content", error));
       }
       setPage(nextPage);
       if (nextPage === "blog") {
@@ -680,6 +692,7 @@ export function RupantarSite() {
       setSelectedBlog(null);
       restoreHomeWorks();
       setPage("home");
+      void refreshContent().catch((error) => console.error("Unable to revalidate home content", error));
       window.setTimeout(() => document.getElementById("estimate")?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
       return;
     }
