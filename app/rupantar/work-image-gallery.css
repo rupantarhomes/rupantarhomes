@@ -97,6 +97,12 @@ main:has([data-native-work-gallery]) > .grid > div:first-child > h1 + div {
   margin-top: 30px;
 }
 
+/* Work-detail overview body copy only; headings and all other page text stay unchanged. */
+main:has([data-native-work-gallery]) > .grid > div:last-child > div:first-child > p,
+main:has([data-native-work-gallery]) > .grid > div:last-child > div:first-child > div:first-of-type > p {
+  color: #FF1A3D !important;
+}
+
 @media (min-width: 640px) {
   main:has([data-native-work-gallery]) > button:first-child { margin-bottom: 32px; }
   main:has([data-native-work-gallery]) > .grid > div:first-child > h1 { font-size: 36px; line-height: 1; }
