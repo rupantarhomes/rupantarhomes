@@ -8,7 +8,7 @@
     ".cloudflare-deploy-trigger": "b941e05a0ecdaa9c6620b70f73aa28424ccff6b4",
     ".env.example": "c943e3d73a9cf8cde378dfdd76074a52fe3133b0",
     ".github/workflows/production-baseline.yml": "066f8bead26c66e84841a714d02fcf4f16478031",
-    "app": "17e23e15fa4a6ed9fc187c18f8a2b4da6a07ea06",
+    "app": "cbd66b8bbd32b77e15d7a3ba14ea7b48894fc1d7",
     "eslint.config.mjs": "d05a345e02fbe57675a0c568a95275c98ad66d9c",
     "functions": "475f088510f369c3e527f64972e2e6a5e9d5ff93",
     "index.html": "2700cf1bb951532f2423b5c875818ddf6d7b92bc",
