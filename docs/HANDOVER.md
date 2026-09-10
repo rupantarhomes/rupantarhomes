@@ -6,14 +6,14 @@ Rupantar Homes is packaged for production handover as of 2026-09-10.
 
 - Production repository: `rupantarhomes/rupantarhomes`
 - Default/protected branch: `main`
-- Accepted runtime baseline commit: `1f1b2a29d051ed1aa9074b1c7049df3e7d179424`
+- Accepted runtime baseline commit: `d7515fd896e8a5111cf3bd0a2891ab4b941b2959`
 - Hosting: Cloudflare Pages + Pages Functions, deployed from `main`
 - Database/Auth: Supabase
 - Work media: Cloudinary
 - Secondary form notification: Web3Forms
 - Required merge checks on `main`: `Build and tests` and `Cloudflare Pages`
 
-The final packaging change is documentation/lock metadata only. It must not change public layout, styling, content, Admin UI, routes, Supabase schema/data, Cloudinary behavior, inquiry behavior, or production environment values.
+The final accepted post-handover polish changes only the Work-detail category badge presentation to charcoal with white text. It does not change any other public layout, content, Admin UI, routes, Supabase schema/data, Cloudinary behavior, inquiry behavior, or production environment values.
 
 ## Production freeze contract
 
@@ -138,6 +138,7 @@ Perform these on the live production domain after the final handover packaging P
 - Recent Works cards open dedicated Work pages;
 - All Works filters/pagination work;
 - Work detail pages open directly and via cards;
+- Work detail category badges use the accepted charcoal background with white text while location badges retain the existing brand-red treatment;
 - Blog cards and direct article routes work;
 - Reviews render correctly;
 - About, Contact, Privacy and Interior pages load;
@@ -197,4 +198,4 @@ The repository itself is the canonical package. Key documents are:
 - `.github/production-lock.json` — frozen production-bearing Git fingerprints
 - `scripts/verify-production-lock.mjs` — lock verifier
 
-The final runtime baseline recorded for handover is `1f1b2a29d051ed1aa9074b1c7049df3e7d179424`.
+The final runtime baseline recorded for handover is `d7515fd896e8a5111cf3bd0a2891ab4b941b2959`.
