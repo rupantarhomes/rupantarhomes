@@ -23,16 +23,18 @@ test("opens Admin immediately after authorization and avoids full Admin reloads 
   assert.ok(dashboard > login);
   assert.ok(backgroundLoad > dashboard);
   assert.match(refreshAdminData, /Promise\.allSettled\(\[[\s\S]*refreshAdminWorks\(\)[\s\S]*refreshAdminContent\(\)[\s\S]*refreshAdminStats\(\)[\s\S]*refreshLeads\(\)[\s\S]*refreshBlogs\(\)/);
-  assert.doesNotMatch(navigate, /refreshContent\(|refreshLeads\(/);
+  assert.doesNotMatch(navigate, /refreshAdminData\(|refreshLeads\(/);
+  assert.match(navigate, /nextPage === "home"[\s\S]*refreshContent\(\)/);
   assert.equal((navigate.match(/refreshBlogs\(/g) ?? []).length, 1);
   assert.match(navigate, /nextPage === "admin-dashboard"[\s\S]*refreshAdminStats/);
 });
 
-test("does not seed Admin dashboard with fake public works while live Admin data is loading", async () => {
+test("does not seed Admin dashboard or production Home with fake public works while live data is loading", async () => {
   const site = await read("../app/rupantar/site.tsx");
   assert.match(site, /const initialRouteIsAdmin = initialRoute\.kind === "admin";/);
-  assert.match(site, /initialRouteUsesWorks \|\| initialRouteIsAdmin \? \[\] : initialWorks/);
-  assert.match(site, /initialRouteUsesWorks \|\| initialRouteIsAdmin \? 0 : initialWorks\.length/);
+  assert.match(site, /const initialHomeWorks = isSupabaseConfigured \? \[\] : initialWorks;/);
+  assert.match(site, /const initialWorksState = initialRouteUsesWorks \|\| initialRouteIsAdmin \? \[\] : initialHomeWorks;/);
+  assert.match(site, /useState\(initialRouteUsesWorks \|\| initialRouteIsAdmin \? 0 : initialHomeWorks\.length\)/);
 });
 
 test("guards public, Admin Works, Leads and Blog reads against stale in-flight responses", async () => {
