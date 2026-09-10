@@ -51,3 +51,58 @@
 @media (min-width: 1024px) {
   .rh-native-work-viewer-hint { font-size: 14px; }
 }
+
+/* Work-detail hero finishing. Scoped to the page that owns the native gallery. */
+main:has([data-native-work-gallery]) > button:first-child {
+  margin-bottom: 30px;
+}
+
+main:has([data-native-work-gallery]) > .grid > div:first-child > div:first-child {
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+main:has([data-native-work-gallery]) > .grid > div:first-child > div:first-child > span {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  padding: 0 13px !important;
+  border-radius: 10px !important;
+  line-height: 1.15;
+}
+
+main:has([data-native-work-gallery]) > .grid > div:first-child > div:first-child > span:first-child {
+  border: 1px solid rgb(255 26 61 / .07);
+  background: #fff3f5;
+  letter-spacing: .075em;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .82);
+}
+
+main:has([data-native-work-gallery]) > .grid > div:first-child > div:first-child > span:last-child {
+  gap: 6px;
+  box-shadow: 0 5px 14px rgb(255 26 61 / .15), inset 0 1px 0 rgb(255 255 255 / .18);
+}
+
+main:has([data-native-work-gallery]) > .grid > div:first-child > h1 {
+  font-size: 28px;
+  line-height: 1.01;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+
+main:has([data-native-work-gallery]) > .grid > div:first-child > h1 + div {
+  margin-top: 30px;
+}
+
+@media (min-width: 640px) {
+  main:has([data-native-work-gallery]) > button:first-child { margin-bottom: 32px; }
+  main:has([data-native-work-gallery]) > .grid > div:first-child > h1 { font-size: 36px; line-height: 1; }
+  main:has([data-native-work-gallery]) > .grid > div:first-child > h1 + div { margin-top: 32px; }
+}
+
+@media (min-width: 1024px) {
+  main:has([data-native-work-gallery]) > button:first-child { margin-bottom: 34px; }
+  main:has([data-native-work-gallery]) > .grid > div:first-child > div:first-child { margin-bottom: 16px; }
+  main:has([data-native-work-gallery]) > .grid > div:first-child > h1 { font-size: 42px; line-height: .99; letter-spacing: -.04em; }
+  main:has([data-native-work-gallery]) > .grid > div:first-child > h1 + div { margin-top: 36px; }
+}
