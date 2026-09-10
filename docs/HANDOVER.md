@@ -1,20 +1,19 @@
 # Rupantar Homes Production Handover
 
-## Handover status
+## Final handover baseline
 
-Rupantar Homes is production-frozen for handover.
+Rupantar Homes is packaged for production handover as of 2026-09-10.
 
-Accepted live-code baseline before handover controls:
-
-- GitHub repository: `rupantarhomes/rupantarhomes`
-- Protected branch: `main`
-- Frozen production commit: `1995e4dc2d17ef243f92e4487d8ad8cce6ac04a1`
+- Production repository: `rupantarhomes/rupantarhomes`
+- Default/protected branch: `main`
+- Accepted runtime baseline commit: `1f1b2a29d051ed1aa9074b1c7049df3e7d179424`
 - Hosting: Cloudflare Pages + Pages Functions, deployed from `main`
 - Database/Auth: Supabase
 - Work media: Cloudinary
-- Required GitHub check: `Build and tests`
+- Secondary form notification: Web3Forms
+- Required merge checks on `main`: `Build and tests` and `Cloudflare Pages`
 
-The handover controls themselves do not change the public site, Admin UI, database schema/data, Cloudinary behavior, routes, styling, or production environment values.
+The final packaging change is documentation/lock metadata only. It must not change public layout, styling, content, Admin UI, routes, Supabase schema/data, Cloudinary behavior, inquiry behavior, or production environment values.
 
 ## Production freeze contract
 
@@ -30,91 +29,172 @@ Locked surfaces include:
 - production/build configuration files at repository root
 - `.env.example`
 - `.cloudflare-deploy-trigger`
+- `.github/workflows/production-baseline.yml`
 
-If any locked object changes without updating the handover manifest, CI fails.
+If any locked object changes without updating the accepted fingerprints, CI fails.
 
 ## Required change process after handover
 
 1. Re-fetch GitHub `main` and record its current SHA.
-2. Branch from that exact SHA. Never work directly on `main`.
+2. Branch from that exact SHA. Never develop directly on `main`.
 3. State the requested scope and protected/unrelated areas before editing.
 4. Make the smallest possible change.
 5. Run `npm run verify`.
 6. Run `node scripts/verify-production-lock.mjs`.
-7. If a production-bearing object changed intentionally, update only its corresponding fingerprint in `.github/production-lock.json` after all targeted verification passes.
-8. Update `docs/PRODUCTION-BASELINE.md` with the new accepted baseline/change where appropriate.
+7. If a production-bearing object changed intentionally, update only its corresponding fingerprint in `.github/production-lock.json` after targeted verification passes.
+8. Update `docs/PRODUCTION-BASELINE.md` with the new accepted behavior/baseline where appropriate.
 9. Review the complete diff for unrelated changes and secrets.
-10. Open a PR into `main`.
-11. Merge only after the required `Build and tests` check passes.
+10. Open a pull request into `main`.
+11. Merge only after both required checks pass.
 12. Confirm the merged `main` SHA and perform the appropriate production smoke/regression test.
 
-Never bypass the production lock by weakening the workflow, deleting the manifest/checker, or changing fingerprints merely to make CI green. A fingerprint update is approval of a new production baseline and must correspond to an intentional, verified production change.
+Never bypass the handover controls by weakening the workflow, deleting the manifest/checker, force-pushing `main`, or changing fingerprints merely to make CI green.
 
 ## GitHub protection
 
-At handover, the repository ruleset `Protect main` is active for the default branch and blocks branch deletion and non-fast-forward pushes, requires pull requests, and requires the `Build and tests` status check. There are no bypass actors.
+The repository ruleset `Protect main` is active for the default branch. It blocks branch deletion and non-fast-forward updates, requires pull requests, and requires both `Build and tests` and `Cloudflare Pages`. There are no bypass actors.
 
-Repository-side protection and the handover manifest work together: GitHub controls how changes reach `main`; the manifest makes production drift explicit and reviewable.
+Repository protection and the production-lock manifest work together: GitHub controls how changes reach `main`; the manifest makes production drift explicit and reviewable.
+
+## Architecture ownership map
+
+### GitHub
+
+Source of deployable truth. The receiving owner should have repository administration access, understand the pull-request workflow, and preserve the `Protect main` ruleset and production-lock verification.
+
+### Cloudflare
+
+Owns the public deployment boundary: Pages project, Pages Functions, custom domain/DNS if managed there, production environment values/secrets, deployment history, and runtime logs. Production is expected to deploy from `main`.
+
+### Supabase
+
+Owns Auth, PostgreSQL data, RLS/policies, RPCs, Edge Functions, Admin membership, logs, and backups/export responsibilities. Production project reference: `gmtdqeskyvdvyibccxwt`.
+
+### Cloudinary
+
+Owns Work media plus newer estimate attachments. Preserve the signed upload/deletion contract and reference-safe cleanup rules documented in `README.md`, `docs/PRODUCTION-BASELINE.md`, and `docs/PRODUCTION-OPERATIONS.md`.
+
+### Web3Forms
+
+Secondary notification path only. The database remains the source of truth for inquiries/leads.
 
 ## Secrets and environment
 
-- Never commit production secrets.
-- `.env*` is ignored except `.env.example`.
-- `.env.example` contains placeholders only.
-- Browser-safe Supabase publishable configuration must remain separate from server-only secrets.
-- Cloudinary signing/deletion secrets, Web3Forms secrets, and privileged Supabase credentials stay server-side in the deployment environment.
-- During ownership transfer, rotate credentials only through the relevant provider dashboards and only after the receiving owner has confirmed access. Do not rotate credentials through source-code commits.
+Never put real credentials in source control or in this handover document.
 
-## Supabase handover notes
+Browser-safe build variables:
 
-The production Supabase project is `gmtdqeskyvdvyibccxwt` and was `ACTIVE_HEALTHY` during the 2026-08-29 handover audit.
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
 
-Security-advisor notes at handover:
+Server/runtime variables and secrets are documented by name in `README.md`; their real values remain only in the appropriate provider dashboards/runtime environment.
 
-- `cloudinary_cleanup_claims` and `server_secret_hashes` have RLS enabled with no public policies. This is intentional for internal-only tables.
-- The warned `SECURITY DEFINER` Work/cleanup RPCs explicitly require a signed-in user whose `auth.uid()` exists as an active member of `public.admin_users` before privileged behavior executes.
-- `server_secret_hashes` is not granted to `anon` or `authenticated`; its observed application grant is service-role only.
-- Supabase Leaked Password Protection remains unavailable/disabled under the current project plan and is an acknowledged platform limitation documented in `docs/PRODUCTION-BASELINE.md`.
+During ownership transfer:
 
-Do not alter these production authorization paths merely to silence an advisor. Any future Auth/RLS/RPC change requires the targeted security regression defined in `docs/PRODUCTION-BASELINE.md`.
+- transfer provider access first;
+- confirm the receiving owner can log in independently;
+- then rotate credentials one integration at a time if ownership/security policy requires it;
+- smoke-test after each rotation;
+- never rotate credentials through a source-code commit.
 
-## Operational ownership checklist
+## Supabase handover status
+
+The production project `gmtdqeskyvdvyibccxwt` was confirmed `ACTIVE_HEALTHY` on 2026-09-10.
+
+Security-advisor notes at final packaging:
+
+- internal cleanup/secret tables have RLS enabled with no public policies by design;
+- several `SECURITY DEFINER` Work/media RPCs are callable by `authenticated` and must retain their explicit active-admin authorization checks;
+- Leaked Password Protection is currently disabled/unavailable under the present project configuration and remains an acknowledged limitation;
+- do not alter authorization paths merely to silence an advisor without running the documented security regression.
+
+Performance-advisor notes at final packaging:
+
+- `idx_leads_status` and `works_featured_recent_idx` were reported as unused indexes; this is informational and is not a reason to remove them during handover.
+
+## Final ownership checklist
 
 The receiving owner should independently possess and test access to:
 
 - GitHub repository administration and PR workflow
-- Cloudflare Pages project, domain/DNS, production environment variables, and deployment history
-- Supabase project, Auth settings, database, RLS/policies/functions, logs, and backups available under the current plan
-- Cloudinary account/cloud, Work asset folder, API credentials, and usage/billing controls
-- Web3Forms or any notification/inquiry provider credentials used by production
-- Domain registrar/DNS ownership if separate from Cloudflare
+- Cloudflare Pages project, production environment values/secrets, deployment history, custom domain and DNS where applicable
+- Supabase project, Auth, database, RLS/policies/functions, logs, and backup/export workflow
+- Cloudinary account/cloud, Work asset folders, API credentials, usage/billing controls
+- Web3Forms account/key used by production
+- domain registrar ownership if the registrar is separate from Cloudflare
+- the production Admin account and a tested recovery path for that account
 
-Access transfer is not complete until the receiving owner can log in directly to each provider without relying on the outgoing operator's session.
+Access transfer is not complete until the receiving owner can log in directly to each required provider without relying on the outgoing operator's existing browser session.
 
-## Production smoke test for final transfer
+## Production smoke test for transfer
 
-Perform these from the live production domain after the handover PR is deployed:
+Perform these on the live production domain after the final handover packaging PR is deployed:
 
-- Homepage loads without console-breaking errors.
-- Desktop and mobile navigation work.
-- Homepage Recent Works display correctly and each card opens its dedicated Work page.
-- Blog cards open their dedicated Blog pages.
-- Featured/Recent Works, Reviews, and Blog sections render expected content.
-- Public inquiry form reaches its expected success path without exposing server secrets.
-- Admin login works for an active admin and remains inaccessible to non-admin users.
-- Work create/update and image lifecycle behavior remains unchanged unless intentionally tested with disposable media.
+### Public
 
-For destructive Cloudinary lifecycle tests, follow `docs/PRODUCTION-BASELINE.md` exactly.
+- homepage loads without console-breaking errors;
+- desktop and mobile navigation work;
+- Recent Works display live saved projects and do not fall back to demo/placeholder cards when Supabase is configured;
+- Recent Works cards open dedicated Work pages;
+- All Works filters/pagination work;
+- Work detail pages open directly and via cards;
+- Blog cards and direct article routes work;
+- Reviews render correctly;
+- About, Contact, Privacy and Interior pages load;
+- browser back/forward and refresh preserve valid routes;
+- `/api/health` returns HTTP 200.
 
-## Recovery
+### Forms
 
-If a bad change reaches production:
+- submit one disposable Query and confirm exactly one saved record/Lead;
+- submit one disposable Estimate with an allowed image and confirm exactly one saved record/Lead;
+- verify notification behavior separately from database persistence;
+- remove disposable test data only after confirming persistence state.
 
-1. Revert the offending PR with a new PR.
-2. Do not force-push `main`.
-3. Allow the protected CI workflow to pass.
-4. Merge the revert and let Cloudflare redeploy `main`.
-5. Re-run the affected production regression.
-6. Reconfirm the final `main` SHA.
+### Admin
 
-The frozen commit `1995e4dc2d17ef243f92e4487d8ad8cce6ac04a1` is the reference for the public/runtime state immediately before the handover-control files were introduced.
+- active Admin login works;
+- unauthorized/non-admin access remains denied;
+- Dashboard totals and Leads load;
+- Work create/update/delete and image lifecycle work with disposable test content;
+- Blog create/update/delete works with disposable test content;
+- Review create/delete works with disposable test content;
+- Settings save only after live settings are confirmed loaded;
+- Lead status update/delete behaves correctly;
+- View Site/Logout return to a fresh public load.
+
+For destructive media tests, follow `docs/PRODUCTION-BASELINE.md` and `docs/PRODUCTION-OPERATIONS.md` exactly.
+
+## Backup and recovery responsibilities
+
+- Maintain off-platform database exports according to `docs/PRODUCTION-OPERATIONS.md`.
+- Keep at least two recent dated exports until managed retention/restore guarantees meet business needs.
+- Periodically verify Cloudinary media integrity and reverse orphans before deleting anything.
+- Record the exact deployed Git SHA for incidents.
+- Prefer a reviewed revert PR over hot-editing or force-pushing production.
+
+If a bad code change reaches production:
+
+1. identify the offending PR/commit;
+2. create a revert on a new branch;
+3. run verification and required checks;
+4. merge the revert through the normal protected PR path;
+5. allow Cloudflare to redeploy `main`;
+6. re-run the affected smoke/regression test;
+7. record the final known-good `main` SHA.
+
+## Handover package contents
+
+The repository itself is the canonical package. Key documents are:
+
+- `README.md` — architecture, image contract, environment variable names, local commands
+- `docs/HANDOVER.md` — this transfer guide
+- `docs/HANDOVER-CHECKLIST.md` — compact receiving-owner checklist
+- `docs/PRODUCTION-BASELINE.md` — protected behavior and accepted production-change history
+- `docs/PRODUCTION-OPERATIONS.md` — monitoring, backups, restore, migration, deployment and incident runbook
+- `docs/FRONTEND-RELIABILITY-GUARD.md` — frontend reliability constraints
+- `docs/PRODUCTION-RESILIENCE-AUDIT.md` — resilience/security audit record
+- `.github/production-lock.json` — frozen production-bearing Git fingerprints
+- `scripts/verify-production-lock.mjs` — lock verifier
+
+The final runtime baseline recorded for handover is `1f1b2a29d051ed1aa9074b1c7049df3e7d179424`.
