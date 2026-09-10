@@ -42,7 +42,7 @@ test("native gallery renders one front image with dots and a swipe hint instead 
       assert.doesNotMatch(html, /rh-native-work-page-dots|Swipe to view more images/);
     } else {
       assert.match(html, /class="rh-native-work-dots rh-native-work-page-dots"/);
-      assert.equal((html.match(/class="rh-native-work-dot/g) ?? []).length, count);
+      assert.equal((html.match(/class="rh-native-work-dot(?: is-active)?"/g) ?? []).length, count);
       assert.equal((html.match(/aria-current="true"/g) ?? []).length, 1);
       assert.match(html, />Swipe to view more images<\/div>/);
     }
