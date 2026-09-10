@@ -6,16 +6,16 @@ Rupantar Homes is packaged for production handover as of 2026-09-11.
 
 - Production repository: `rupantarhomes/rupantarhomes`
 - Default/protected branch: `main`
-- Accepted runtime baseline commit: `19324c3a8171adece67c6ece7363a266564a212a`
+- Accepted runtime baseline commit: `e9c01094e341e1fdaf366905bfaa074c8848489d`
 - Hosting: Cloudflare Pages + Pages Functions, deployed from `main`
 - Database/Auth: Supabase
 - Work media: Cloudinary
 - Secondary form notification: Web3Forms
 - Required merge checks on `main`: `Build and tests` and `Cloudflare Pages`
 
-The final accepted post-handover polish preserves the fully filled solid dark gray (`#3f3f46`) Work-detail category box with white text and changes only the two Work-detail body-copy paragraphs under `Project Overview` and `Details` to the Rupantar brand red (`#FF1A3D`) on mobile and desktop. The `Project Overview` and `Details` headings remain unchanged, as do the location badge, title, gallery, page structure, public content, Admin UI, routes, Supabase schema/data, Cloudinary behavior, inquiry behavior, and production environment values.
+The final accepted post-handover polish preserves the fully filled solid dark gray (`#3f3f46`) Work-detail category box with white text. On every Work detail page, only the `Project Overview` and `Details` headings use the Rupantar brand red (`#FF1A3D`), while both body-copy paragraphs remain black (`#18181b`). The location badge, title, gallery, page structure, public content, Admin UI, routes, Supabase schema/data, Cloudinary behavior, inquiry behavior, and production environment values remain unchanged.
 
-The exact final deployed `main` SHA is recorded separately after the final handover merge. The runtime baseline above identifies the code-bearing commit for the accepted dark-gray category badge and red overview/details body-copy state.
+The exact final deployed `main` SHA is recorded separately after the final handover merge. The runtime baseline above identifies the code-bearing commit for the accepted dark-gray category badge plus red overview/details headings and black body-copy state.
 
 ## Production freeze contract
 
@@ -141,7 +141,7 @@ Perform these on the live production domain after the final handover packaging P
 - All Works filters/pagination work;
 - Work detail pages open directly and via cards;
 - Work detail category badges render as fully filled solid dark gray (`#3f3f46`) boxes with white text while location badges retain the existing brand-red treatment;
-- Work detail `Project Overview` and `Details` body-copy paragraphs render in brand red (`#FF1A3D`), while their headings remain unchanged;
+- Work detail `Project Overview` and `Details` headings render in brand red (`#FF1A3D`) and their body-copy paragraphs render black (`#18181b`);
 - Blog cards and direct article routes work;
 - Reviews render correctly;
 - About, Contact, Privacy and Interior pages load;
@@ -201,4 +201,4 @@ The repository itself is the canonical package. Key documents are:
 - `.github/production-lock.json` — frozen production-bearing Git fingerprints
 - `scripts/verify-production-lock.mjs` — lock verifier
 
-The final runtime baseline recorded for handover is `19324c3a8171adece67c6ece7363a266564a212a`.
+The final runtime baseline recorded for handover is `e9c01094e341e1fdaf366905bfaa074c8848489d`.

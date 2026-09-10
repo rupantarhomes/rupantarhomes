@@ -97,10 +97,15 @@ main:has([data-native-work-gallery]) > .grid > div:first-child > h1 + div {
   margin-top: 30px;
 }
 
-/* Work-detail overview body copy only; headings and all other page text stay unchanged. */
+/* Work-detail overview: headings red, paragraphs black. */
+main:has([data-native-work-gallery]) > .grid > div:last-child > div:first-child > h3,
+main:has([data-native-work-gallery]) > .grid > div:last-child > div:first-child > div:first-of-type > h4 {
+  color: #FF1A3D !important;
+}
+
 main:has([data-native-work-gallery]) > .grid > div:last-child > div:first-child > p,
 main:has([data-native-work-gallery]) > .grid > div:last-child > div:first-child > div:first-of-type > p {
-  color: #FF1A3D !important;
+  color: #18181b !important;
 }
 
 @media (min-width: 640px) {
