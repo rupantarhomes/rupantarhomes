@@ -173,3 +173,20 @@ test("viewer keeps safe portal behavior while arrows are replaced by dots and sw
   assert.doesNotMatch(css, /rh-native-work-page-prev|rh-native-work-page-next|rh-native-work-prev|rh-native-work-next/);
   assert.match(read("app/rupantar/work-media-enhancer.ts"), /!image\.closest\("\[data-native-work-gallery\]"\)/);
 });
+
+test("gallery preloads exact Cloudinary variants without delaying the first image", () => {
+  const source = read("app/rupantar/work-image-gallery.tsx");
+  assert.match(source, /function useGalleryPreload/);
+  assert.match(source, /fetchPriority = "low"/);
+  assert.match(source, /preload\.decode\(\)/);
+  assert.match(source, /requestIdleCallback/);
+  assert.match(source, /setTimeout\(\(\) => \{/);
+  assert.match(source, /activeIndex \+ 1, activeIndex - 1, activeIndex \+ 2/);
+  assert.match(source, /saveData === true/);
+  assert.match(source, /effectiveType === "slow-2g"/);
+  assert.match(source, /effectiveType === "2g"/);
+  assert.match(source, /c_limit,w_\$\{width\}\/f_auto\/q_auto:good/);
+  assert.match(source, /useGalleryPreload\(images, currentPageIndex, "\(min-width: 1024px\) 520px, 100vw", pageGalleryWidths\)/);
+  assert.match(source, /useGalleryPreload\(images, selectedIndex, "100vw", viewerGalleryWidths\)/);
+  assert.doesNotMatch(source, /fetchPriority = "high"/);
+});
