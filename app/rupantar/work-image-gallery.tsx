@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { WorkPhoto } from "./shared";
@@ -15,6 +15,7 @@ export function WorkImageViewer({ images, title, initialIndex = 0, onClose }: {
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const pointerStart = useRef<{ x: number; y: number; id: number } | null>(null);
   const close = useRef(onClose);
   close.current = onClose;
   const lastIndex = images.length - 1;
@@ -33,7 +34,6 @@ export function WorkImageViewer({ images, title, initialIndex = 0, onClose }: {
     body.style.top = `-${scrollY}px`;
     body.style.width = "100%";
     body.style.overflow = "hidden";
-    // Keep the rest of the application out of the modal's keyboard/accessibility tree.
     const siblings = Array.from(body.children).filter((element): element is HTMLElement =>
       element instanceof HTMLElement && element !== dialogRef.current);
     const inertStates = siblings.map((element) => element.inert);
@@ -83,12 +83,35 @@ export function WorkImageViewer({ images, title, initialIndex = 0, onClose }: {
           const dx = event.changedTouches[0].clientX - start.x;
           const dy = event.changedTouches[0].clientY - start.y;
           if (Math.abs(dx) >= 48 && Math.abs(dx) > Math.abs(dy) * 1.5) move(dx < 0 ? 1 : -1);
+        }}
+        onPointerDown={(event) => {
+          if (event.pointerType === "touch") return;
+          pointerStart.current = { x: event.clientX, y: event.clientY, id: event.pointerId };
+          event.currentTarget.setPointerCapture(event.pointerId);
+        }}
+        onPointerCancel={(event) => {
+          if (pointerStart.current?.id === event.pointerId) pointerStart.current = null;
+        }}
+        onPointerUp={(event) => {
+          if (event.pointerType === "touch") return;
+          const start = pointerStart.current;
+          pointerStart.current = null;
+          if (!start || start.id !== event.pointerId) return;
+          const dx = event.clientX - start.x;
+          const dy = event.clientY - start.y;
+          if (Math.abs(dx) >= 48 && Math.abs(dx) > Math.abs(dy) * 1.5) move(dx < 0 ? 1 : -1);
         }}>
         <WorkPhoto key={images[selectedIndex].id} image={images[selectedIndex]} alt={title} aspect="rh-native-work-viewer-photo" eager sizes="100vw" widths={[480, 768, 1200, 1920]} />
       </div>
       {images.length > 1 && <>
-        <button type="button" className="rh-native-work-prev" aria-label="Previous image" disabled={selectedIndex === 0} onClick={() => move(-1)}><ArrowLeft size={18} /></button>
-        <button type="button" className="rh-native-work-next" aria-label="Next image" disabled={selectedIndex === lastIndex} onClick={() => move(1)}><ArrowRight size={18} /></button>
+        <div className="rh-native-work-dots rh-native-work-viewer-dots" role="group" aria-label="Choose gallery image">
+          {images.map((image, dotIndex) => (
+            <button key={image.id} type="button" className={`rh-native-work-dot${dotIndex === selectedIndex ? " is-active" : ""}`}
+              aria-label={`View image ${dotIndex + 1} of ${images.length}`} aria-current={dotIndex === selectedIndex ? "true" : undefined}
+              onClick={() => setIndex(dotIndex)} />
+          ))}
+        </div>
+        <div className="rh-native-work-viewer-hint">Swipe to view more images</div>
       </>}
       <div className="rh-native-work-counter" aria-live="polite" aria-atomic="true">{selectedIndex + 1} / {images.length}</div>
     </div>, document.body,
@@ -99,12 +122,20 @@ export function WorkImageGallery({ images, title }: { images: WorkImage[]; title
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
   const pageTouchStart = useRef<{ x: number; y: number } | null>(null);
+  const pagePointerStart = useRef<{ x: number; y: number; id: number } | null>(null);
   const suppressOpenUntil = useRef(0);
   if (!images.length) return <WorkPhoto alt={title} aspect="aspect-square" label="Main Gallery Photo Coming Soon" />;
   const lastIndex = images.length - 1;
   const currentPageIndex = Math.max(0, Math.min(pageIndex, lastIndex));
   const current = images[currentPageIndex];
   const movePage = (direction: number) => setPageIndex((active) => Math.max(0, Math.min(active + direction, lastIndex)));
+  const finishPageSwipe = (dx: number, dy: number) => {
+    if (Math.abs(dx) >= 48 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      suppressOpenUntil.current = Date.now() + 350;
+      movePage(dx < 0 ? 1 : -1);
+    }
+  };
+
   return (
     <div data-native-work-gallery className="rh-native-work-gallery">
       <div className="rh-native-work-stack"
@@ -116,12 +147,22 @@ export function WorkImageGallery({ images, title }: { images: WorkImage[]; title
           const start = pageTouchStart.current;
           pageTouchStart.current = null;
           if (!start || event.touches.length || !event.changedTouches[0]) return;
-          const dx = event.changedTouches[0].clientX - start.x;
-          const dy = event.changedTouches[0].clientY - start.y;
-          if (Math.abs(dx) >= 48 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-            suppressOpenUntil.current = Date.now() + 350;
-            movePage(dx < 0 ? 1 : -1);
-          }
+          finishPageSwipe(event.changedTouches[0].clientX - start.x, event.changedTouches[0].clientY - start.y);
+        }}
+        onPointerDown={(event) => {
+          if (event.pointerType === "touch") return;
+          pagePointerStart.current = { x: event.clientX, y: event.clientY, id: event.pointerId };
+          event.currentTarget.setPointerCapture(event.pointerId);
+        }}
+        onPointerCancel={(event) => {
+          if (pagePointerStart.current?.id === event.pointerId) pagePointerStart.current = null;
+        }}
+        onPointerUp={(event) => {
+          if (event.pointerType === "touch") return;
+          const start = pagePointerStart.current;
+          pagePointerStart.current = null;
+          if (!start || start.id !== event.pointerId) return;
+          finishPageSwipe(event.clientX - start.x, event.clientY - start.y);
         }}>
         <button type="button" className="rh-native-work-front" style={{ zIndex: images.length }} aria-label={`Open ${title} image gallery`} onClick={() => {
           if (Date.now() < suppressOpenUntil.current) return;
@@ -129,11 +170,15 @@ export function WorkImageGallery({ images, title }: { images: WorkImage[]; title
         }}>
           <WorkPhoto key={current.id} image={current} alt={title} aspect="rh-native-work-stack-photo" eager sizes="(min-width: 1024px) 520px, 100vw" widths={[480, 768, 1200, 1600]} />
         </button>
-        {images.length > 1 && <>
-          <button type="button" className="rh-native-work-page-prev" aria-label="Previous gallery image" disabled={currentPageIndex === 0} onClick={() => movePage(-1)}><ArrowLeft size={18} /></button>
-          <button type="button" className="rh-native-work-page-next" aria-label="Next gallery image" disabled={currentPageIndex === lastIndex} onClick={() => movePage(1)}><ArrowRight size={18} /></button>
-        </>}
+        {images.length > 1 && <div className="rh-native-work-dots rh-native-work-page-dots" role="group" aria-label="Choose gallery image">
+          {images.map((image, dotIndex) => (
+            <button key={image.id} type="button" className={`rh-native-work-dot${dotIndex === currentPageIndex ? " is-active" : ""}`}
+              aria-label={`View image ${dotIndex + 1} of ${images.length}`} aria-current={dotIndex === currentPageIndex ? "true" : undefined}
+              onClick={() => setPageIndex(dotIndex)} />
+          ))}
+        </div>}
       </div>
+      {images.length > 1 && <div className="rh-native-work-swipe-hint">Swipe to view more images</div>}
       {selectedIndex !== null && <WorkImageViewer images={images} title={title} initialIndex={selectedIndex} onClose={() => setSelectedIndex(null)} />}
     </div>
   );
