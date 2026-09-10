@@ -7,8 +7,8 @@ Use this checklist at the actual ownership-transfer meeting. Do not paste passwo
 - [ ] Confirm live domain: `rupantarhomes.com`
 - [ ] Confirm GitHub repository: `rupantarhomes/rupantarhomes`
 - [ ] Confirm default branch: `main`
-- [ ] Confirm accepted runtime baseline: `39426e477109e0c537a761488e565d0458dae232`
-- [ ] Confirm exact final deployed `main` SHA from GitHub Issue #116
+- [ ] Confirm accepted runtime baseline: `19324c3a8171adece67c6ece7363a266564a212a`
+- [ ] Confirm exact final deployed `main` SHA from the final handover transfer record
 - [ ] Confirm `Protect main` ruleset remains active
 - [ ] Confirm required checks remain `Build and tests` and `Cloudflare Pages`
 
@@ -76,6 +76,9 @@ Use this checklist at the actual ownership-transfer meeting. Do not paste passwo
 - [ ] Work card -> detail navigation works
 - [ ] Work detail category badge is a fully filled solid dark gray (`#3f3f46`) box with white text on mobile and desktop
 - [ ] Work detail location badge remains unchanged
+- [ ] Work detail `Project Overview` body text is brand red (`#FF1A3D`)
+- [ ] Work detail `Details` body text is brand red (`#FF1A3D`)
+- [ ] `Project Overview` and `Details` headings remain unchanged
 - [ ] All Works filters/pagination work
 - [ ] Blog listing/detail navigation works
 - [ ] Reviews render correctly

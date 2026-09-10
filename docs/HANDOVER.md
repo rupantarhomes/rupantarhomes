@@ -6,16 +6,16 @@ Rupantar Homes is packaged for production handover as of 2026-09-11.
 
 - Production repository: `rupantarhomes/rupantarhomes`
 - Default/protected branch: `main`
-- Accepted runtime baseline commit: `39426e477109e0c537a761488e565d0458dae232`
+- Accepted runtime baseline commit: `19324c3a8171adece67c6ece7363a266564a212a`
 - Hosting: Cloudflare Pages + Pages Functions, deployed from `main`
 - Database/Auth: Supabase
 - Work media: Cloudinary
 - Secondary form notification: Web3Forms
 - Required merge checks on `main`: `Build and tests` and `Cloudflare Pages`
 
-The final accepted post-handover polish changes only the Work-detail category badge presentation to a fully filled solid dark gray (`#3f3f46`) box with white text on mobile and desktop. The rule is intentionally forced at the scoped Work-detail selector so conflicting utility styles cannot leave the badge white/red. It does not change any other public layout, content, Admin UI, routes, Supabase schema/data, Cloudinary behavior, inquiry behavior, or production environment values.
+The final accepted post-handover polish preserves the fully filled solid dark gray (`#3f3f46`) Work-detail category box with white text and changes only the two Work-detail body-copy paragraphs under `Project Overview` and `Details` to the Rupantar brand red (`#FF1A3D`) on mobile and desktop. The `Project Overview` and `Details` headings remain unchanged, as do the location badge, title, gallery, page structure, public content, Admin UI, routes, Supabase schema/data, Cloudinary behavior, inquiry behavior, and production environment values.
 
-The exact final deployed `main` SHA is recorded in GitHub Issue #116 after the final handover documentation merge. The runtime baseline above identifies the code-bearing commit for the accepted dark-gray badge state.
+The exact final deployed `main` SHA is recorded separately after the final handover merge. The runtime baseline above identifies the code-bearing commit for the accepted dark-gray category badge and red overview/details body-copy state.
 
 ## Production freeze contract
 
@@ -39,7 +39,7 @@ If any locked object changes without updating the accepted fingerprints, CI fail
 
 1. Re-fetch GitHub `main` and record its current SHA.
 2. Branch from that exact SHA. Never develop directly on `main`.
-3. State the requested scope and protected/unrelated areas before editing.
+3. State the requested scope and what must be preserved before editing.
 4. Make the smallest possible change.
 5. Run `npm run verify`.
 6. Run `node scripts/verify-production-lock.mjs`.
@@ -141,6 +141,7 @@ Perform these on the live production domain after the final handover packaging P
 - All Works filters/pagination work;
 - Work detail pages open directly and via cards;
 - Work detail category badges render as fully filled solid dark gray (`#3f3f46`) boxes with white text while location badges retain the existing brand-red treatment;
+- Work detail `Project Overview` and `Details` body-copy paragraphs render in brand red (`#FF1A3D`), while their headings remain unchanged;
 - Blog cards and direct article routes work;
 - Reviews render correctly;
 - About, Contact, Privacy and Interior pages load;
@@ -200,4 +201,4 @@ The repository itself is the canonical package. Key documents are:
 - `.github/production-lock.json` — frozen production-bearing Git fingerprints
 - `scripts/verify-production-lock.mjs` — lock verifier
 
-The final runtime baseline recorded for handover is `39426e477109e0c537a761488e565d0458dae232`.
+The final runtime baseline recorded for handover is `19324c3a8171adece67c6ece7363a266564a212a`.
