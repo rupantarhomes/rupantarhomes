@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { WorkPhoto } from "./shared";
@@ -205,7 +205,6 @@ export function WorkImageGallery({ images, title }: { images: WorkImage[]; title
   const [pageIndex, setPageIndex] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [hasSwiped, setHasSwiped] = useState(false);
   const pageTouchStart = useRef<{ x: number; y: number } | null>(null);
   const pagePointerStart = useRef<{ x: number; y: number; id: number } | null>(null);
   const lastIndex = images.length - 1;
@@ -220,7 +219,6 @@ export function WorkImageGallery({ images, title }: { images: WorkImage[]; title
     const atEndEdge = currentPageIndex === lastIndex && dx < 0;
     setIsDragging(true);
     setDragOffset(atStartEdge || atEndEdge ? dx * 0.24 : dx);
-    if (currentPageIndex === 0 && !hasSwiped) setHasSwiped(true);
   };
 
   const finishPageSwipe = (dx: number, dy: number) => {
@@ -234,6 +232,11 @@ export function WorkImageGallery({ images, title }: { images: WorkImage[]; title
   const cancelDrag = () => {
     setIsDragging(false);
     setDragOffset(0);
+  };
+
+  const moveTo = (nextIndex: number) => {
+    setPageIndex(Math.max(0, Math.min(nextIndex, lastIndex)));
+    cancelDrag();
   };
 
   const trackTransform = `translate3d(calc(-${currentPageIndex * 100}% + ${dragOffset}px), 0, 0)`;
@@ -297,18 +300,20 @@ export function WorkImageGallery({ images, title }: { images: WorkImage[]; title
             </div>
           ))}
         </div>
-        {images.length > 1 && !hasSwiped && currentPageIndex === 0 && <div className="rh-native-work-gesture-cue" aria-hidden="true"><span /></div>}
+        {images.length > 1 && currentPageIndex < lastIndex && <div className="rh-native-work-gesture-cue" aria-hidden="true"><span /></div>}
         {images.length > 1 && <div className="rh-native-work-dots rh-native-work-page-dots" role="group" aria-label="Choose gallery image">
           {images.map((image, dotIndex) => (
             <button key={image.id} type="button" className={`rh-native-work-dot${dotIndex === currentPageIndex ? " is-active" : ""}`}
               aria-label={`View image ${dotIndex + 1} of ${images.length}`} aria-current={dotIndex === currentPageIndex ? "true" : undefined}
-              onClick={() => {
-                setPageIndex(dotIndex);
-                cancelDrag();
-              }} />
+              onClick={() => moveTo(dotIndex)} />
           ))}
         </div>}
       </div>
+      {images.length > 1 && <div className="rh-native-work-desktop-nav" role="group" aria-label="Work gallery navigation">
+        <button type="button" aria-label="Previous Work photo" disabled={currentPageIndex === 0} onClick={() => moveTo(currentPageIndex - 1)}><ChevronLeft size={18} /></button>
+        <span aria-hidden="true" />
+        <button type="button" aria-label="Next Work photo" disabled={currentPageIndex === lastIndex} onClick={() => moveTo(currentPageIndex + 1)}><ChevronRight size={18} /></button>
+      </div>}
       {images.length > 1 && <div className="rh-native-work-swipe-hint">Swipe to view more images</div>}
     </div>
   );
