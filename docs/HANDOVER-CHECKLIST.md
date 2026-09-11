@@ -7,7 +7,7 @@ Use this checklist at the actual ownership-transfer meeting. Do not paste passwo
 - [ ] Confirm live domain: `rupantarhomes.com`
 - [ ] Confirm GitHub repository: `rupantarhomes/rupantarhomes`
 - [ ] Confirm default branch: `main`
-- [ ] Confirm accepted runtime baseline: `e9c01094e341e1fdaf366905bfaa074c8848489d`
+- [ ] Confirm accepted runtime baseline: `054180452701184e824f3fa71ec53228bc2624cd`
 - [ ] Confirm exact final deployed `main` SHA from the final handover transfer record
 - [ ] Confirm `Protect main` ruleset remains active
 - [ ] Confirm required checks remain `Build and tests` and `Cloudflare Pages`
@@ -74,6 +74,11 @@ Use this checklist at the actual ownership-transfer meeting. Do not paste passwo
 - [ ] Recent Works shows live saved projects
 - [ ] Returning from a Work detail page keeps confirmed live Recent Works
 - [ ] Work card -> detail navigation works
+- [ ] Work detail page does not show the dedicated `Back to Works` control
+- [ ] Work detail front gallery is a true `9:16` portrait frame on mobile
+- [ ] Work detail front gallery is a true `9:16` portrait frame with controlled existing gallery width on desktop
+- [ ] Work detail swipe gestures, dots, image order, preload behavior and swipe hint remain unchanged
+- [ ] Work detail fullscreen viewer still opens and shows the full image contained/uncropped
 - [ ] Work detail category badge is a fully filled solid dark gray (`#3f3f46`) box with white text on mobile and desktop
 - [ ] Work detail location badge remains unchanged
 - [ ] Work detail `Project Overview` heading is brand red (`#FF1A3D`) and its body paragraph is black (`#18181b`)
