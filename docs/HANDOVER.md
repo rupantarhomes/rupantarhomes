@@ -6,16 +6,16 @@ Rupantar Homes is packaged for production handover as of 2026-09-11.
 
 - Production repository: `rupantarhomes/rupantarhomes`
 - Default/protected branch: `main`
-- Accepted runtime baseline commit: `e9c01094e341e1fdaf366905bfaa074c8848489d`
+- Accepted runtime baseline commit: `054180452701184e824f3fa71ec53228bc2624cd`
 - Hosting: Cloudflare Pages + Pages Functions, deployed from `main`
 - Database/Auth: Supabase
 - Work media: Cloudinary
 - Secondary form notification: Web3Forms
 - Required merge checks on `main`: `Build and tests` and `Cloudflare Pages`
 
-The final accepted post-handover polish preserves the fully filled solid dark gray (`#3f3f46`) Work-detail category box with white text. On every Work detail page, only the `Project Overview` and `Details` headings use the Rupantar brand red (`#FF1A3D`), while both body-copy paragraphs remain black (`#18181b`). The location badge, title, gallery, page structure, public content, Admin UI, routes, Supabase schema/data, Cloudinary behavior, inquiry behavior, and production environment values remain unchanged.
+The final accepted post-handover polish preserves the fully filled solid dark gray (`#3f3f46`) Work-detail category box with white text. On every Work detail page, the dedicated `Back to Works` control is removed from view and the front gallery frame uses a true `9:16` portrait aspect ratio. Existing swipe gestures, pagination dots, image order, image preloading, fullscreen viewer behavior, gallery copy, category/location treatment, project title, `Project Overview`/`Details` styling, public content, Admin UI, routes, Supabase schema/data, Cloudinary behavior, inquiry behavior, and production environment values remain unchanged.
 
-The exact final deployed `main` SHA is recorded separately after the final handover merge. The runtime baseline above identifies the code-bearing commit for the accepted dark-gray category badge plus red overview/details headings and black body-copy state.
+The exact final deployed `main` SHA is recorded separately after the final handover merge. The runtime baseline above identifies the code-bearing commit for the accepted portrait Work-detail gallery state.
 
 ## Production freeze contract
 
@@ -140,6 +140,10 @@ Perform these on the live production domain after the final handover packaging P
 - Recent Works cards open dedicated Work pages;
 - All Works filters/pagination work;
 - Work detail pages open directly and via cards;
+- Work detail pages do not show the dedicated `Back to Works` control;
+- Work detail front galleries render in a true `9:16` portrait frame on mobile and desktop;
+- Work detail swipe gestures, dots, image order, preload behavior, and fullscreen viewer remain functional;
+- fullscreen Work images remain uncropped/contained while the front portrait frame continues to use the existing cover treatment;
 - Work detail category badges render as fully filled solid dark gray (`#3f3f46`) boxes with white text while location badges retain the existing brand-red treatment;
 - Work detail `Project Overview` and `Details` headings render in brand red (`#FF1A3D`) and their body-copy paragraphs render black (`#18181b`);
 - Blog cards and direct article routes work;
@@ -201,4 +205,4 @@ The repository itself is the canonical package. Key documents are:
 - `.github/production-lock.json` — frozen production-bearing Git fingerprints
 - `scripts/verify-production-lock.mjs` — lock verifier
 
-The final runtime baseline recorded for handover is `e9c01094e341e1fdaf366905bfaa074c8848489d`.
+The final runtime baseline recorded for handover is `054180452701184e824f3fa71ec53228bc2624cd`.
