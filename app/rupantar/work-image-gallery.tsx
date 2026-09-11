@@ -9,7 +9,6 @@ const pageGalleryWidths = [480, 768, 1200, 1600] as const;
 const viewerGalleryWidths = [480, 768, 1200, 1920] as const;
 const galleryPreloadCache = new Set<string>();
 const galleryPreloaders = new Map<string, HTMLImageElement>();
-const galleryAutoplayDelayMs = 2000;
 
 type IdleWindow = Window & typeof globalThis & {
   requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
@@ -204,81 +203,93 @@ export function WorkImageViewer({ images, title, initialIndex = 0, onClose }: {
 
 export function WorkImageGallery({ images, title }: { images: WorkImage[]; title: string }) {
   const [pageIndex, setPageIndex] = useState(0);
-  const [interactionVersion, setInteractionVersion] = useState(0);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [hasSwiped, setHasSwiped] = useState(false);
   const pageTouchStart = useRef<{ x: number; y: number } | null>(null);
   const pagePointerStart = useRef<{ x: number; y: number; id: number } | null>(null);
   const lastIndex = images.length - 1;
   const currentPageIndex = images.length ? Math.max(0, Math.min(pageIndex, lastIndex)) : 0;
   useGalleryPreload(images, currentPageIndex, "(min-width: 1024px) 520px, 100vw", pageGalleryWidths);
 
-  useEffect(() => {
-    if (typeof window === "undefined" || images.length < 2 || currentPageIndex >= lastIndex) return;
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-
-    let timer: number | undefined;
-    const schedule = () => {
-      if (document.hidden) return;
-      timer = window.setTimeout(() => setPageIndex((active) => Math.min(active + 1, lastIndex)), galleryAutoplayDelayMs);
-    };
-    const onVisibilityChange = () => {
-      if (timer !== undefined) window.clearTimeout(timer);
-      timer = undefined;
-      if (!document.hidden) schedule();
-    };
-
-    schedule();
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    return () => {
-      if (timer !== undefined) window.clearTimeout(timer);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-    };
-  }, [currentPageIndex, images.length, interactionVersion, lastIndex]);
-
   if (!images.length) return <WorkPhoto alt={title} aspect="aspect-square" label="Main Gallery Photo Coming Soon" />;
 
-  const resetAutoplay = () => setInteractionVersion((version) => version + 1);
-  const movePage = (direction: number) => {
-    setPageIndex((active) => Math.max(0, Math.min(active + direction, lastIndex)));
-    resetAutoplay();
+  const updateDrag = (dx: number, dy: number) => {
+    if (Math.abs(dx) < 4 || Math.abs(dx) <= Math.abs(dy)) return;
+    const atStartEdge = currentPageIndex === 0 && dx > 0;
+    const atEndEdge = currentPageIndex === lastIndex && dx < 0;
+    setIsDragging(true);
+    setDragOffset(atStartEdge || atEndEdge ? dx * 0.24 : dx);
+    if (currentPageIndex === 0 && !hasSwiped) setHasSwiped(true);
   };
+
   const finishPageSwipe = (dx: number, dy: number) => {
-    if (Math.abs(dx) >= 48 && Math.abs(dx) > Math.abs(dy) * 1.5) movePage(dx < 0 ? 1 : -1);
-    else resetAutoplay();
+    setIsDragging(false);
+    setDragOffset(0);
+    if (Math.abs(dx) < 42 || Math.abs(dx) <= Math.abs(dy) * 1.2) return;
+    const nextIndex = Math.max(0, Math.min(currentPageIndex + (dx < 0 ? 1 : -1), lastIndex));
+    if (nextIndex !== currentPageIndex) setPageIndex(nextIndex);
   };
+
+  const cancelDrag = () => {
+    setIsDragging(false);
+    setDragOffset(0);
+  };
+
+  const trackTransform = `translate3d(calc(-${currentPageIndex * 100}% + ${dragOffset}px), 0, 0)`;
 
   return (
     <div data-native-work-gallery className="rh-native-work-gallery">
       <div className="rh-native-work-stack"
         onTouchStart={(event) => {
           pageTouchStart.current = event.touches.length === 1 ? { x: event.touches[0].clientX, y: event.touches[0].clientY } : null;
+          cancelDrag();
+        }}
+        onTouchMove={(event) => {
+          const start = pageTouchStart.current;
+          if (!start || event.touches.length !== 1) return;
+          updateDrag(event.touches[0].clientX - start.x, event.touches[0].clientY - start.y);
         }}
         onTouchCancel={() => {
           pageTouchStart.current = null;
-          resetAutoplay();
+          cancelDrag();
         }}
         onTouchEnd={(event) => {
           const start = pageTouchStart.current;
           pageTouchStart.current = null;
-          if (!start || event.touches.length || !event.changedTouches[0]) return;
+          if (!start || event.touches.length || !event.changedTouches[0]) {
+            cancelDrag();
+            return;
+          }
           finishPageSwipe(event.changedTouches[0].clientX - start.x, event.changedTouches[0].clientY - start.y);
         }}
         onPointerDown={(event) => {
           if (event.pointerType === "touch") return;
           pagePointerStart.current = { x: event.clientX, y: event.clientY, id: event.pointerId };
+          cancelDrag();
           event.currentTarget.setPointerCapture(event.pointerId);
+        }}
+        onPointerMove={(event) => {
+          if (event.pointerType === "touch") return;
+          const start = pagePointerStart.current;
+          if (!start || start.id !== event.pointerId) return;
+          updateDrag(event.clientX - start.x, event.clientY - start.y);
         }}
         onPointerCancel={(event) => {
           if (pagePointerStart.current?.id === event.pointerId) pagePointerStart.current = null;
-          resetAutoplay();
+          cancelDrag();
         }}
         onPointerUp={(event) => {
           if (event.pointerType === "touch") return;
           const start = pagePointerStart.current;
           pagePointerStart.current = null;
-          if (!start || start.id !== event.pointerId) return;
+          if (!start || start.id !== event.pointerId) {
+            cancelDrag();
+            return;
+          }
           finishPageSwipe(event.clientX - start.x, event.clientY - start.y);
         }}>
-        <div className="rh-native-work-track" style={{ transform: `translate3d(-${currentPageIndex * 100}%, 0, 0)` }} aria-live="polite">
+        <div className={`rh-native-work-track${isDragging ? " is-dragging" : ""}`} style={{ transform: trackTransform }} aria-live="polite">
           {images.map((image, imageIndex) => (
             <div key={image.id} className="rh-native-work-slide" aria-hidden={imageIndex === currentPageIndex ? undefined : "true"}>
               <WorkPhoto image={image} alt={title} aspect="rh-native-work-stack-photo" eager={imageIndex === 0}
@@ -286,13 +297,14 @@ export function WorkImageGallery({ images, title }: { images: WorkImage[]; title
             </div>
           ))}
         </div>
+        {images.length > 1 && !hasSwiped && currentPageIndex === 0 && <div className="rh-native-work-gesture-cue" aria-hidden="true"><span /></div>}
         {images.length > 1 && <div className="rh-native-work-dots rh-native-work-page-dots" role="group" aria-label="Choose gallery image">
           {images.map((image, dotIndex) => (
             <button key={image.id} type="button" className={`rh-native-work-dot${dotIndex === currentPageIndex ? " is-active" : ""}`}
               aria-label={`View image ${dotIndex + 1} of ${images.length}`} aria-current={dotIndex === currentPageIndex ? "true" : undefined}
               onClick={() => {
                 setPageIndex(dotIndex);
-                resetAutoplay();
+                cancelDrag();
               }} />
           ))}
         </div>}
