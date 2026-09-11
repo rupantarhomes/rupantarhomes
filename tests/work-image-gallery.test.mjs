@@ -50,13 +50,14 @@ test("native gallery renders one front image with dots and a swipe hint instead 
   }
 });
 
-test("the page gallery stays square and cropped; fullscreen remains contained", () => {
+test("the page gallery uses a 9:16 portrait crop while fullscreen remains contained", () => {
   const css = read("app/rupantar/work-image-gallery.css");
   const rule = (selector) => css.slice(css.indexOf(selector + " {"), css.indexOf("}", css.indexOf(selector + " {")) + 1);
-  assert.match(rule(".rh-native-work-stack"), /aspect-ratio: 1 \/ 1/);
+  assert.match(rule(".rh-native-work-stack"), /aspect-ratio: 9 \/ 16/);
   assert.match(rule(".rh-native-work-stack-photo img"), /object-fit: cover/);
   assert.match(rule(".rh-native-work-viewer-photo img"), /object-fit: contain/);
   assert.doesNotMatch(css.split("\n").filter((line) => /viewer|stage/.test(line)).join("\n"), /aspect-ratio/);
+  assert.match(rule("main:has([data-native-work-gallery]) > button:first-child"), /display: none/);
   const { WorkImageGallery } = load("app/rupantar/work-image-gallery.tsx");
   for (const [width, height] of [[1920, 1080], [608, 1080]]) {
     const html = renderToStaticMarkup(React.createElement(WorkImageGallery, { images: [{ ...images[0], width, height }], title: "Work" }));
