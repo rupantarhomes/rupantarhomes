@@ -66,16 +66,35 @@ Four focused handler tests were also run against the original main's actual `sit
 
 | Scenario | Controlled handler/data tests | Browser preview |
 | --- | --- | --- |
-| Home → Recent Work → Home | Confirmed content and immediate route selection tested | Pending |
-| Home → All Works → Work → Back | Fresh lists/detail reuse and history tested | Pending |
-| Home → Category → Work → Home | List request ordering and Home protection tested | Pending |
-| Blog → Post → Blog/Home | Reuse, loading completion and history tested | Pending |
-| Work → linked Blog / Blog → linked Work | Article/resource sharing and reverse-link invalidation tested | Pending |
-| Work → related Work | Same `openWork` path; browser case still required | Pending |
-| Back/Forward through routes | Handler state and URL sequence tested | Pending |
-| Rapid repeated navigation | Shared in-flight requests and obsolete response protection tested | Pending |
+| Home → Recent Work → Home | Confirmed content and immediate route selection tested | Passed at desktop viewport |
+| Home → All Works → Work → Back | Fresh lists/detail reuse and history tested | Passed at desktop viewport |
+| Home → Category → Work → Home | List request ordering and Home protection tested | Passed at desktop viewport |
+| Blog → Post → Blog/Home | Reuse, loading completion and history tested | Passed at desktop viewport |
+| Work → linked Blog / Blog → linked Work | Article/resource sharing and reverse-link invalidation tested | Passed at desktop viewport |
+| Work → related Work | Same `openWork` path; related construction Work clicked | Passed at desktop viewport |
+| Back/Forward through routes | Handler state and URL sequence tested | Passed at desktop viewport |
+| Rapid repeated navigation | Shared in-flight requests and obsolete response protection tested | Passed at desktop viewport |
 | Slow/unresolved requests | Controlled unresolved/rejected promises; no network throttling claim | Unavailable in browser API |
-| Cached/expired data | Immediate snapshots, clock-controlled expiry, failure retention, no double pagination append | Pending |
+| Cached/expired data | Immediate snapshots, clock-controlled expiry, failure retention, no double pagination append | Cached routes passed; expiry tested in controlled tests only |
 | Mobile viewport | Logic is viewport-independent; no device rendering claim | Unavailable in browser API |
 
-Local final verification: TypeScript, production build and 125 tests pass. Preview/deployment results must be recorded after actual verification. The under-100-ms target is not established by these tests.
+Local final verification: TypeScript, production build and 125 tests pass. The under-100-ms target is not established by these tests.
+
+## PR and desktop preview verification
+
+PR #137, implementation head `751e7aaf6c10424ce9a83f8c8fc1bb4e8a513596`: GitHub Build and tests **SUCCESS**; Cloudflare Pages **SUCCESS**. Preview tested: https://99958839.rupantarhomes.pages.dev/ at **1348 × 936**.
+
+Passed by actual browser interaction and destination DOM/URL checks:
+
+- Home → Recent Work (22 × 14 ft living room) → Home, with all six confirmed Home cards restored.
+- Home → All Works → construction Work → related Kapan Work → Back to Works → Home.
+- Home → Home Construction category (four projects) → Ramkot Work outside Home's six → Home.
+- Browser Back to the Ramkot Work and category, then Forward to the Ramkot Work and Home; each restored the expected destination.
+- Home → Blog → living-room Post → Back to Blog; revisit Post → Home.
+- Post → View Project Images → Work → Read More → Post. Both anchor directions stayed on the preview origin despite the stored production URL on Read More.
+- Repeated Home/Blog switches ended on the requested route with confirmed data.
+- A new tab opened a cold direct Ramkot Work URL: navigation shell appeared with the existing localized loader before the detail loaded; returning Home restored six confirmed cards.
+
+The captured error log returned no non-extension errors (200-entry query). Browser extension metadata errors and a browser-session disconnect/timeout occurred; these were not classified as website errors. Checks resumed with shorter calls after reconnecting. A timed-out batch was not counted as a successful matrix run; history was checked again explicitly.
+
+Rapid request races and expired-cache behavior are proven in controlled tests. The browser repetition check is a functional interaction check, not sub-100-ms stress testing. No mobile emulation or network throttling was available. No source code or protected object changed after this preview verification; this follow-up records evidence only. Final main build/deployment verification remains a post-merge gate.
