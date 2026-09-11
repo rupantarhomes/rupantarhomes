@@ -28,15 +28,15 @@ function load(path, mocks = {}, globals = {}) {
 }
 const images = Array.from({ length: 6 }, (_, i) => ({ id: String(i), publicId: `work/${i}`, url: `https://res.cloudinary.com/test/image/upload/v1/${i}.webp`, altText: `Image ${i + 1}`, sortOrder: i }));
 
-test("native gallery renders one front image with dots and a swipe hint instead of arrows", () => {
+test("native Work gallery renders a swipe-only image track with dots and no fullscreen trigger", () => {
   const { WorkImageGallery } = load("app/rupantar/work-image-gallery.tsx");
   for (const count of [1, 2, 3, 6]) {
     const html = renderToStaticMarkup(React.createElement(WorkImageGallery, { images: images.slice(0, count), title: "Kitchen" }));
-    assert.equal((html.match(/class="rh-native-work-rear"/g) ?? []).length, 0);
-    assert.match(html, /class="rh-native-work-front"[^>]*>[\s\S]*alt="Image 1"/);
-    assert.doesNotMatch(html, /padding-bottom:/);
+    assert.match(html, /class="rh-native-work-track"/);
+    assert.equal((html.match(/class="rh-native-work-slide"/g) ?? []).length, count);
     assert.equal((html.match(/loading="eager"/g) ?? []).length, 1);
-    assert.equal((html.match(/loading="lazy"/g) ?? []).length, 0);
+    assert.equal((html.match(/loading="lazy"/g) ?? []).length, Math.max(0, count - 1));
+    assert.doesNotMatch(html, /rh-native-work-front|Open Kitchen image gallery|rh-native-work-viewer-photo/);
     assert.doesNotMatch(html, /Previous gallery image|Next gallery image/);
     if (count === 1) {
       assert.doesNotMatch(html, /rh-native-work-page-dots|Swipe to view more images/);
@@ -46,24 +46,24 @@ test("native gallery renders one front image with dots and a swipe hint instead 
       assert.equal((html.match(/aria-current="true"/g) ?? []).length, 1);
       assert.match(html, />Swipe to view more images<\/div>/);
     }
-    assert.doesNotMatch(html, /rh-native-work-viewer-photo/);
   }
 });
 
-test("the page gallery uses a 9:16 portrait crop while fullscreen remains contained", () => {
+test("the page gallery keeps 9:16 framing, premium slide motion and no tap feedback", () => {
   const css = read("app/rupantar/work-image-gallery.css");
   const rule = (selector) => css.slice(css.indexOf(selector + " {"), css.indexOf("}", css.indexOf(selector + " {")) + 1);
   assert.match(rule(".rh-native-work-stack"), /aspect-ratio: 9 \/ 16/);
+  assert.match(rule(".rh-native-work-stack"), /overflow: hidden/);
+  assert.match(rule(".rh-native-work-stack"), /-webkit-tap-highlight-color: transparent/);
+  assert.match(rule(".rh-native-work-track"), /transition: transform 720ms cubic-bezier\(\.22,\.61,\.36,1\)/);
   assert.match(rule(".rh-native-work-stack-photo img"), /object-fit: cover/);
+  assert.match(rule(".rh-native-work-slide"), /pointer-events: none/);
   assert.match(rule(".rh-native-work-viewer-photo img"), /object-fit: contain/);
-  assert.doesNotMatch(css.split("\n").filter((line) => /viewer|stage/.test(line)).join("\n"), /aspect-ratio/);
   assert.match(rule("main:has([data-native-work-gallery]) > button:first-child"), /display: none/);
   const { WorkImageGallery } = load("app/rupantar/work-image-gallery.tsx");
-  for (const [width, height] of [[1920, 1080], [608, 1080]]) {
-    const html = renderToStaticMarkup(React.createElement(WorkImageGallery, { images: [{ ...images[0], width, height }], title: "Work" }));
-    assert.match(html, /class="rh-native-work-stack">/);
-    assert.doesNotMatch(html, /aspect-ratio:/);
-  }
+  const html = renderToStaticMarkup(React.createElement(WorkImageGallery, { images: images.slice(0, 2), title: "Work" }));
+  assert.match(html, /transform:translate3d\(-0%, 0, 0\)/);
+  assert.doesNotMatch(html, /type="button" class="rh-native-work-front"/);
 });
 
 test("Work detail metadata preserves values without displaying Featured", () => {
@@ -142,7 +142,7 @@ test("forward migration changes ONLY the canonical count and matching error word
   for (let count = 0; count <= 7; count++) assert.equal(count > max, count === 7);
 });
 
-test("viewer keeps safe portal behavior while arrows are replaced by dots and swipe/drag navigation", () => {
+test("Admin viewer keeps safe portal behavior while public Work gallery stays inline", () => {
   const source = read("app/rupantar/work-image-gallery.tsx");
   assert.match(source, /createPortal\(/);
   assert.match(source, /document\.body/);
@@ -157,12 +157,15 @@ test("viewer keeps safe portal behavior while arrows are replaced by dots and sw
   assert.match(source, /pageTouchStart/);
   assert.match(source, /pagePointerStart/);
   assert.match(source, /movePage/);
+  assert.match(source, /rh-native-work-track/);
   assert.match(source, /rh-native-work-page-dots/);
   assert.match(source, /rh-native-work-viewer-dots/);
   assert.match(source, /Swipe to view more images/);
   assert.doesNotMatch(source, /Previous gallery image|Next gallery image|rh-native-work-prev|rh-native-work-next|rh-native-work-rear/);
   assert.match(source, /selectedIndex \+ 1\} \/ \{images\.length/);
   assert.doesNotMatch(source, /MutationObserver|document\.createElement|appendChild/);
+  const publicGallery = source.slice(source.indexOf("export function WorkImageGallery"));
+  assert.doesNotMatch(publicGallery, /WorkImageViewer|setSelectedIndex|createPortal/);
   const css = read("app/rupantar/work-image-gallery.css");
   assert.match(css, /position: fixed; inset: 0/);
   assert.match(css, /z-index: 2147483647/);
@@ -173,6 +176,17 @@ test("viewer keeps safe portal behavior while arrows are replaced by dots and sw
   assert.match(css, /\.rh-native-work-stage \.rh-native-work-viewer-photo \{[^\n]*box-shadow: none !important;[^\n]*--tw-ring-color: transparent/);
   assert.doesNotMatch(css, /rh-native-work-page-prev|rh-native-work-page-next|rh-native-work-prev|rh-native-work-next/);
   assert.match(read("app/rupantar/work-media-enhancer.ts"), /!image\.closest\("\[data-native-work-gallery\]"\)/);
+});
+
+test("public gallery autoplays every two seconds, yields to manual swipe and respects reduced motion", () => {
+  const source = read("app/rupantar/work-image-gallery.tsx");
+  assert.match(source, /const galleryAutoplayDelayMs = 2000/);
+  assert.match(source, /prefers-reduced-motion: reduce/);
+  assert.match(source, /document\.hidden/);
+  assert.match(source, /visibilitychange/);
+  assert.match(source, /Math\.min\(active \+ 1, lastIndex\)/);
+  assert.match(source, /resetAutoplay\(\)/);
+  assert.match(source, /translate3d\(-\$\{currentPageIndex \* 100\}%, 0, 0\)/);
 });
 
 test("gallery preloads exact Cloudinary variants without delaying the first image", () => {

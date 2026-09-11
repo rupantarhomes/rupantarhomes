@@ -7,7 +7,7 @@ Use this checklist at the actual ownership-transfer meeting. Do not paste passwo
 - [ ] Confirm live domain: `rupantarhomes.com`
 - [ ] Confirm GitHub repository: `rupantarhomes/rupantarhomes`
 - [ ] Confirm default branch: `main`
-- [ ] Confirm accepted runtime baseline: `054180452701184e824f3fa71ec53228bc2624cd`
+- [ ] Confirm accepted runtime baseline: `1bcb53271caefa8227a6839078015d826423bbd4`
 - [ ] Confirm exact final deployed `main` SHA from the final handover transfer record
 - [ ] Confirm `Protect main` ruleset remains active
 - [ ] Confirm required checks remain `Build and tests` and `Cloudflare Pages`
@@ -65,6 +65,7 @@ Use this checklist at the actual ownership-transfer meeting. Do not paste passwo
 - [ ] Recovery path is tested and documented outside the repository
 - [ ] Unauthorized/non-admin access remains denied
 - [ ] Admin Works, Blogs, Leads, Reviews and Settings load correctly
+- [ ] Admin Work image preview/viewer still works where explicitly used
 
 ## 8. Live smoke test
 
@@ -77,8 +78,18 @@ Use this checklist at the actual ownership-transfer meeting. Do not paste passwo
 - [ ] Work detail page does not show the dedicated `Back to Works` control
 - [ ] Work detail front gallery is a true `9:16` portrait frame on mobile
 - [ ] Work detail front gallery is a true `9:16` portrait frame with controlled existing gallery width on desktop
-- [ ] Work detail swipe gestures, dots, image order, preload behavior and swipe hint remain unchanged
-- [ ] Work detail fullscreen viewer still opens and shows the full image contained/uncropped
+- [ ] Tapping/clicking the Work detail front image does not open a fullscreen/black-background viewer
+- [ ] Tapping the front image does not create a pressed, scale, zoom or pop response
+- [ ] Manual mobile swipe works normally
+- [ ] Manual desktop pointer drag works normally
+- [ ] Multi-image Work galleries hold each image for 2 seconds before advancing forward automatically
+- [ ] Automatic transitions use the smooth premium horizontal slide and advance one image at a time
+- [ ] Manual interaction resets the autoplay timer instead of fighting the user
+- [ ] Pagination dots follow the active image and remain manually selectable
+- [ ] Swipe hint remains visible for multi-image galleries
+- [ ] Autoplay pauses while the browser tab is hidden
+- [ ] Reduced-motion preference disables automatic motion
+- [ ] Work image order and smart preload/decode behavior remain intact
 - [ ] Work detail category badge is a fully filled solid dark gray (`#3f3f46`) box with white text on mobile and desktop
 - [ ] Work detail location badge remains unchanged
 - [ ] Work detail `Project Overview` heading is brand red (`#FF1A3D`) and its body paragraph is black (`#18181b`)
