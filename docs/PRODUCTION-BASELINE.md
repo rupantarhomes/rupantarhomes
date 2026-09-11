@@ -566,3 +566,14 @@ Accepted candidate fingerprints after local verification:
 - `tests`: `2bb3193b7658a85c33d0d56eb1e02c22f2efe882`
 
 Local validation: strict TypeScript, production build, 106 Node regression tests, production-lock integrity tests, local direct-route/build-asset checks, browser fault injection, and the existing six-image gallery/Admin lifecycle fixture pass. The candidate is not production and remains unmerged pending explicit approval and exact-head CI/preview verification.
+
+## 2026-09-11 — public navigation data reliability
+
+Starting main: `3426a984b15292995340b8a843fdc7380788ab04`.
+Branch: `reliability/public-navigation-cache`.
+
+The public navigation audit in `docs/PUBLIC-NAVIGATION-AUDIT.md` records the reproduced failures, source evidence, controlled request counts, unchanged surfaces and browser measurement limits. This deliberately changes the public read/cache ownership and stale-route handling only. Home retains confirmed Works, Works pages survive Home visits, public reads deduplicate, and cached Work/Blog data is reusable across history and project links. Freshness is 30 seconds with mutation-specific invalidation. Admin complete reads, backend behavior and all CSS/markup remain unchanged.
+
+The `app` and `tests` fingerprints are the only production-lock objects updated for this change. Existing 110 tests remain intact; 15 new deterministic cache/handler tests cover the root causes. TypeScript and production build pass. Browser preview and production acceptance are separate gates; do not infer their success from this local verification entry.
+
+PR #137 implementation head `751e7aaf6c10424ce9a83f8c8fc1bb4e8a513596` passed GitHub Build and tests and Cloudflare Pages preview deployment. Desktop navigation at https://99958839.rupantarhomes.pages.dev/ was verified across Home, Works, categories, related Works, Blog, posts, project cross-links and Back/Forward. The audit records exact cases and explicitly excludes unmeasured mobile/throttled-network/timing claims. This evidence-only follow-up does not change protected production objects.
