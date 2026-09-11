@@ -10,6 +10,11 @@ body:has([data-native-work-gallery]) {
   scroll-margin-top: 0 !important;
 }
 
+/* Restore the existing Work-detail Back to Works control without changing its native styling. */
+main:has([data-native-work-gallery]) > button:first-child {
+  display: inline-flex !important;
+}
+
 .rh-native-work-gesture-cue {
   border-color: rgb(255 255 255 / .24) !important;
   background: linear-gradient(180deg, rgb(20 20 22 / .64), rgb(20 20 22 / .46)) !important;
