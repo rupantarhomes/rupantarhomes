@@ -1,0 +1,22 @@
+/* Final Work-detail gallery polish: keep page scrolling fully natural and preserve the dark liquid-glass cue shell. */
+html:has([data-native-work-gallery]),
+body:has([data-native-work-gallery]) {
+  scroll-snap-type: none !important;
+  scroll-behavior: auto !important;
+}
+
+[data-native-work-gallery] {
+  scroll-snap-align: none !important;
+  scroll-margin-top: 0 !important;
+}
+
+.rh-native-work-gesture-cue {
+  border-color: rgb(255 255 255 / .24) !important;
+  background: linear-gradient(180deg, rgb(20 20 22 / .64), rgb(20 20 22 / .46)) !important;
+  box-shadow: 0 5px 18px rgb(0 0 0 / .18), inset 0 1px 0 rgb(255 255 255 / .20) !important;
+}
+
+.rh-native-work-gesture-cue > span {
+  background: #ff1a3d !important;
+  box-shadow: 0 0 8px rgb(255 26 61 / .42), 0 1px 4px rgb(0 0 0 / .24) !important;
+}
