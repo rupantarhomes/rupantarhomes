@@ -25,13 +25,8 @@ import {
   getCurrentAdminSession,
   loadAdminContent,
   loadAdminStats,
-  loadPublicBlogBySlug,
-  loadPublicBlogs,
+  loadPublicBlogs as loadAdminBlogs,
   loadLeads,
-  loadPublicContent,
-  loadPublicWorksPage,
-  loadPublicWorkBySlug,
-  type PublicWorksPage,
   saveBlog,
   saveReview,
   saveSettings,
@@ -42,6 +37,12 @@ import {
   submitQuery,
   updateLeadStatus,
 } from "./repository";
+import {
+  loadPublicBlogBySlug, loadPublicBlogs, loadPublicContent, loadPublicWorksPage, loadPublicWorkBySlug,
+  peekPublicWork, peekPublicBlog, peekPublicWorksPage,
+  publicContentIsFresh, publicBlogsAreFresh, publicWorksAreFresh, publicWorkIsFresh, publicBlogIsFresh,
+  invalidatePublicWorks, invalidatePublicBlogs, invalidatePublicContent,
+} from "./public-data";
 import { PublicFooter, PublicHeader, TopBar } from "./shared";
 import { blogArticlePath, categoryPath, pagePath, parseRoute, workPath } from "./routes";
 import { getSupabase, isSupabaseConfigured } from "./supabase";
@@ -202,9 +203,6 @@ export function RupantarSite() {
   const worksLoadedRef = useRef(false);
   const adminWorksLoadedRef = useRef(false);
   const worksRequestIdRef = useRef(0);
-  const worksPageCacheRef = useRef(new Map<string, PublicWorksPage>());
-  const worksPageRequestsRef = useRef(new Map<string, Promise<PublicWorksPage>>());
-  const worksCacheVersionRef = useRef(0);
   const adminWorksRequestIdRef = useRef(0);
   const contentRequestIdRef = useRef(0);
   const leadsRequestIdRef = useRef(0);
@@ -247,9 +245,7 @@ export function RupantarSite() {
   }, []);
 
   const invalidateWorksCaches = () => {
-    worksCacheVersionRef.current += 1;
-    worksPageCacheRef.current.clear();
-    worksPageRequestsRef.current.clear();
+    invalidatePublicWorks();
     worksRequestIdRef.current += 1;
   };
 
@@ -273,10 +269,8 @@ export function RupantarSite() {
   };
 
   const refreshContent = useCallback(async () => {
+    if (homeWorksConfirmedRef.current && publicContentIsFresh()) return;
     const requestId = ++contentRequestIdRef.current;
-    worksCacheVersionRef.current += 1;
-    worksPageCacheRef.current.clear();
-    worksPageRequestsRef.current.clear();
     const content = await loadPublicContent();
     if (requestId !== contentRequestIdRef.current) return;
     setReviews(content.reviews);
@@ -313,11 +307,13 @@ export function RupantarSite() {
   }, []);
 
   const refreshBlogs = useCallback(async () => {
+    const adminRead = parseRoute(window.location.pathname).kind === "admin";
+    if (!adminRead && blogsLoadedRef.current && publicBlogsAreFresh()) return;
     const requestId = ++blogsRequestIdRef.current;
     setBlogsLoading(true);
     setBlogsLoadError("");
     try {
-      const nextBlogs = await loadPublicBlogs();
+      const nextBlogs = await (adminRead ? loadAdminBlogs() : loadPublicBlogs());
       if (requestId !== blogsRequestIdRef.current) return;
       blogsRef.current = nextBlogs;
       blogsLoadedRef.current = true;
@@ -349,44 +345,37 @@ export function RupantarSite() {
 
   const loadWorks = useCallback(async (category: string, offset: number, clearCurrent = false) => {
     const requestId = ++worksRequestIdRef.current;
-    const cacheKey = `${category}:${offset}`;
     setWorksLoadError("");
-    const cached = worksPageCacheRef.current.get(cacheKey);
-    if (cached) {
-      const nextWorks = offset === 0 ? cached.works : [...worksRef.current, ...cached.works];
-      worksRef.current = nextWorks;
-      worksLoadedRef.current = true;
-      setWorksTotal(cached.total);
-      setWorks(nextWorks);
-      setWorksLoading(false);
-      return;
-    }
-    if (clearCurrent) {
-      worksRef.current = [];
-      setWorks([]);
-      setWorksTotal(0);
-    }
-    setWorksLoading(true);
-    const cacheVersion = worksCacheVersionRef.current;
-    let request = worksPageRequestsRef.current.get(cacheKey);
-    if (!request) {
-      request = loadPublicWorksPage(offset, 12, category);
-      worksPageRequestsRef.current.set(cacheKey, request);
-    }
-    try {
-      const result = await request;
-      if (cacheVersion === worksCacheVersionRef.current) worksPageCacheRef.current.set(cacheKey, result);
-      if (requestId !== worksRequestIdRef.current) return;
-      const nextWorks = offset === 0 ? result.works : [...worksRef.current, ...result.works];
+    const cached = peekPublicWorksPage(offset, category);
+    // Capture the existing prefix once: revalidation must replace, not append twice.
+    const prefix = offset === 0 ? [] : worksRef.current.slice(0, offset);
+    const display = (result: { works: Work[]; total: number }) => {
+      const nextWorks = [...prefix, ...result.works];
       worksRef.current = nextWorks;
       worksLoadedRef.current = true;
       setWorksTotal(result.total);
       setWorks(nextWorks);
+    };
+    if (cached) {
+      display(cached);
+      setWorksLoading(false);
+      if (publicWorksAreFresh(offset, category)) return;
+    } else {
+      if (clearCurrent) {
+        worksRef.current = [];
+        setWorks([]);
+        setWorksTotal(0);
+      }
+      setWorksLoading(true);
+    }
+    try {
+      const result = await loadPublicWorksPage(offset, 12, category);
+      if (requestId !== worksRequestIdRef.current) return;
+      display(result);
     } catch (error) {
       if (requestId === worksRequestIdRef.current) setWorksLoadError(messageFrom(error));
       throw error;
     } finally {
-      if (worksPageRequestsRef.current.get(cacheKey) === request) worksPageRequestsRef.current.delete(cacheKey);
       if (requestId === worksRequestIdRef.current) setWorksLoading(false);
     }
   }, []);
@@ -463,6 +452,7 @@ export function RupantarSite() {
 
   const applyBrowserRoute = useCallback(async () => {
     const routeRequestId = ++routeRequestIdRef.current;
+    worksRequestIdRef.current += 1;
     const isCurrentRoute = () => routeRequestId === routeRequestIdRef.current;
     const route = parseRoute(window.location.pathname);
     setDetailLoadError("");
@@ -481,20 +471,21 @@ export function RupantarSite() {
     if (route.kind === "blog") {
       setPage("blog");
       setSelectedBlog(null);
-      if (!blogsLoadedRef.current) await refreshBlogs();
+      await refreshBlogs();
       return;
     }
     if (route.kind === "blog-detail") {
       setPage("blog-detail");
-      const cachedBlog = blogsRef.current.find((item) => item.slug === route.slug);
-      if (cachedBlog) { setSelectedBlog(cachedBlog); return; }
+      const cachedBlog = peekPublicBlog(route.slug);
+      setSelectedBlog(cachedBlog ?? null);
+      if (cachedBlog && publicBlogIsFresh(route.slug)) return;
       try {
         const blog = await loadPublicBlogBySlug(route.slug);
         if (!isCurrentRoute()) return;
         if (!blog) {
           setSelectedBlog(null);
           setPage("blog");
-          if (!blogsLoadedRef.current) await refreshBlogs();
+          await refreshBlogs();
           return;
         }
         const nextBlogs = [blog, ...blogsRef.current.filter((item) => item.id !== blog.id)];
@@ -504,8 +495,10 @@ export function RupantarSite() {
       } catch (error) {
         if (!isCurrentRoute()) return;
         console.error("Unable to load blog detail", error);
-        setSelectedBlog(null);
-        setDetailLoadError("article");
+        if (!cachedBlog) {
+          setSelectedBlog(null);
+          setDetailLoadError("article");
+        }
       }
       return;
     }
@@ -521,10 +514,9 @@ export function RupantarSite() {
 
     setFilter(route.category);
     setPage("work-detail");
-    const cachedWork = worksLoadedRef.current
-      ? worksRef.current.find((item) => item.category === route.category && item.slug === route.slug)
-      : undefined;
-    if (cachedWork) { setSelectedWork(cachedWork); return; }
+    const cachedWork = peekPublicWork(route.category, route.slug);
+    setSelectedWork(cachedWork ?? null);
+    if (cachedWork && publicWorkIsFresh(route.category, route.slug)) return;
     try {
       const work = await loadPublicWorkBySlug(route.category, route.slug);
       if (!isCurrentRoute()) return;
@@ -542,8 +534,10 @@ export function RupantarSite() {
     } catch (error) {
       if (!isCurrentRoute()) return;
       console.error("Unable to load work detail", error);
-      setSelectedWork(null);
-      setDetailLoadError("project");
+      if (!cachedWork) {
+        setSelectedWork(null);
+        setDetailLoadError("project");
+      }
     }
   }, [loadWorks, refreshBlogs, refreshContent]);
 
@@ -592,21 +586,7 @@ export function RupantarSite() {
     void applyBrowserRoute().catch((error) => { if (active) console.error("Unable to apply website route", error); });
 
     if (startupRoute.kind !== "home" && startupRoute.kind !== "admin") {
-      void loadPublicContent().then((content) => {
-        if (!active) return;
-        setReviews(content.reviews);
-        setSettings(content.settings);
-        homeWorksRef.current = content.works;
-        homeWorksConfirmedRef.current = true;
-        if (parseRoute(window.location.pathname).kind === "home") {
-          worksRequestIdRef.current += 1;
-          worksRef.current = content.works;
-          worksLoadedRef.current = true;
-          setWorks(content.works);
-          setWorksTotal(content.works.length);
-          setWorksLoading(false);
-        }
-      }).catch((error) => { if (active) console.error("Unable to load website shell content", error); });
+      void refreshContent().catch((error) => { if (active) console.error("Unable to load website shell content", error); });
     }
 
     void getCurrentAdminSession().then((session) => {
@@ -624,7 +604,7 @@ export function RupantarSite() {
       active = false;
       window.removeEventListener("popstate", onPopState);
     };
-  }, [applyBrowserRoute, cleanupExpiredWorkDrafts, refreshAdminData]);
+  }, [applyBrowserRoute, cleanupExpiredWorkDrafts, refreshAdminData, refreshContent]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -654,6 +634,7 @@ export function RupantarSite() {
   const navigate = (nextPage: Page) => {
     if (page.startsWith("admin-") && (adminMutationRef.current || uploadMutationRef.current) && nextPage !== page) return;
     routeRequestIdRef.current += 1;
+    worksRequestIdRef.current += 1;
     setDetailLoadError("");
     prefetchPublicRoute(nextPage);
     if (nextPage.startsWith("admin-")) pushPath("/admin");
@@ -670,7 +651,7 @@ export function RupantarSite() {
       setPage(nextPage);
       if (nextPage === "blog") {
         setSelectedBlog(null);
-        if (!blogsLoadedRef.current) void refreshBlogs().catch((error) => console.error("Unable to load blog", error));
+        void refreshBlogs().catch((error) => console.error("Unable to load blog", error));
       }
       if (nextPage === "works") {
         setSelectedWork(null);
@@ -685,6 +666,7 @@ export function RupantarSite() {
 
   const goToEstimate = () => {
     routeRequestIdRef.current += 1;
+    worksRequestIdRef.current += 1;
     setDetailLoadError("");
     if (page !== "home") {
       pushPath("/");
@@ -701,6 +683,7 @@ export function RupantarSite() {
 
   const openCategory = (category: string) => {
     routeRequestIdRef.current += 1;
+    worksRequestIdRef.current += 1;
     setDetailLoadError("");
     prefetchPublicRoute("works");
     pushPath(categoryPath(category));
@@ -716,7 +699,7 @@ export function RupantarSite() {
     const blog = blogsRef.current.find((item) => item.id === id);
     if (!blog) return;
     routeRequestIdRef.current += 1;
-    blogsRequestIdRef.current += 1;
+    worksRequestIdRef.current += 1;
     setDetailLoadError("");
     prefetchPublicRoute("blog-detail");
     pushPath(blogArticlePath(blog.slug));
@@ -1012,6 +995,7 @@ export function RupantarSite() {
     setAdminBusy(true);
     try {
       const savedBlog = await saveBlog(formSnapshot, editingId);
+      invalidatePublicBlogs();
       blogsRequestIdRef.current += 1;
       const existingIndex = blogsRef.current.findIndex((blog) => blog.id === savedBlog.id);
       const nextBlogs = existingIndex >= 0
@@ -1051,6 +1035,7 @@ export function RupantarSite() {
     setAdminBusy(true);
     try {
       await deleteBlog(id);
+      invalidatePublicBlogs();
       blogsRequestIdRef.current += 1;
       if (editingBlogId === id) {
         setEditingBlogId(null);
@@ -1072,6 +1057,7 @@ export function RupantarSite() {
     setAdminBusy(true);
     try {
       const savedReview = await saveReview(formSnapshot);
+      invalidatePublicContent();
       contentRequestIdRef.current += 1;
       setReviews((current) => [savedReview, ...current.filter((review) => review.id !== savedReview.id)]);
       setReviewForm(emptyReview);
@@ -1086,6 +1072,7 @@ export function RupantarSite() {
     setAdminBusy(true);
     try {
       await deleteReview(id);
+      invalidatePublicContent();
       contentRequestIdRef.current += 1;
       setReviews((current) => current.filter((review) => review.id !== id));
     } catch (error) { window.alert(messageFrom(error)); }
@@ -1099,6 +1086,7 @@ export function RupantarSite() {
     setAdminBusy(true);
     try {
       const savedSettings = await saveSettings(settingsSnapshot);
+      invalidatePublicContent();
       contentRequestIdRef.current += 1;
       setSettings(savedSettings);
       window.alert("Settings saved.");

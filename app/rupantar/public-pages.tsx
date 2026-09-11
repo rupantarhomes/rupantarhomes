@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { rupantarBlogSlugFromUrl } from "./blog";
 import { brandAssets, categories, interiorDesignCategories, worksFilterCategories } from "./data";
-import { loadPublicBlogBySlug } from "./repository";
+import { loadPublicBlogBySlug } from "./public-data";
 import { categoryIcons, PhotoPlaceholder, WorkPhoto } from "./shared";
 import { WorkImageGallery } from "./work-image-gallery";
 import type { Page, SiteSettings, Work } from "./types";

@@ -4,7 +4,8 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useEffect, useMemo, useState, type MouseEvent as ReactMouseEvent } from "react";
 import "./blog-article.css";
 import { blogCategories, blogExcerpt, type Blog, type BlogCategory } from "./blog";
-import { loadLinkedWorkForBlog, type BlogLinkedWork } from "./blog-project-link";
+import type { BlogLinkedWork } from "./blog-project-link";
+import { loadLinkedWorkForBlog, peekLinkedWorkForBlog } from "./public-data";
 import { workPath } from "./routes";
 import type { Page } from "./types";
 
@@ -62,18 +63,18 @@ export function BlogIndexPage({ blogs, loading, navigate, onBlog }: { blogs: Blo
 export function BlogArticlePage({ blog, navigate }: { blog: Blog; navigate: (page: Page) => void }) {
   const label = blogCategories.find((item) => item.value === blog.category)?.label ?? blog.category;
   const paragraphs = blog.body.split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean);
-  const [linkedWork, setLinkedWork] = useState<BlogLinkedWork | null>(null);
+  const [linkedWork, setLinkedWork] = useState<BlogLinkedWork | null>(() => peekLinkedWorkForBlog(blog.slug) ?? null);
 
   useEffect(() => {
     let active = true;
-    setLinkedWork(null);
+    setLinkedWork(peekLinkedWorkForBlog(blog.slug) ?? null);
     void loadLinkedWorkForBlog(blog.slug)
       .then((work) => {
         if (active) setLinkedWork(work);
       })
       .catch((error) => {
         console.error("Unable to resolve Blog project images", error);
-        if (active) setLinkedWork(null);
+        if (active && !peekLinkedWorkForBlog(blog.slug)) setLinkedWork(null);
       });
     return () => {
       active = false;
