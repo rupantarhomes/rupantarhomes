@@ -39,18 +39,21 @@ test("native Work gallery renders a swipe-only image track with dots and no full
     assert.doesNotMatch(html, /rh-native-work-front|Open Kitchen image gallery|rh-native-work-viewer-photo/);
     assert.doesNotMatch(html, /Previous gallery image|Next gallery image/);
     if (count === 1) {
-      assert.doesNotMatch(html, /rh-native-work-page-dots|Swipe to view more images|rh-native-work-gesture-cue/);
+      assert.doesNotMatch(html, /rh-native-work-page-dots|Swipe to view more images|rh-native-work-gesture-cue|rh-native-work-desktop-nav/);
     } else {
       assert.match(html, /class="rh-native-work-gesture-cue" aria-hidden="true"><span><\/span><\/div>/);
       assert.match(html, /class="rh-native-work-dots rh-native-work-page-dots"/);
+      assert.match(html, /class="rh-native-work-desktop-nav"/);
       assert.equal((html.match(/class="rh-native-work-dot(?: is-active)?"/g) ?? []).length, count);
       assert.equal((html.match(/aria-current="true"/g) ?? []).length, 1);
+      assert.match(html, /aria-label="Previous Work photo"/);
+      assert.match(html, /aria-label="Next Work photo"/);
       assert.match(html, />Swipe to view more images<\/div>/);
     }
   }
 });
 
-test("the page gallery keeps 9:16 framing, fluid manual slide motion and passive liquid-glass cue", () => {
+test("the page gallery keeps 9:16 framing, fluid manual slide motion and branded liquid-glass cue", () => {
   const css = read("app/rupantar/work-image-gallery.css");
   const rule = (selector) => css.slice(css.indexOf(selector + " {"), css.indexOf("}", css.indexOf(selector + " {")) + 1);
   assert.match(rule(".rh-native-work-stack"), /aspect-ratio: 9 \/ 16/);
@@ -61,9 +64,13 @@ test("the page gallery keeps 9:16 framing, fluid manual slide motion and passive
   assert.match(rule(".rh-native-work-stack-photo img"), /object-fit: cover/);
   assert.match(rule(".rh-native-work-slide"), /pointer-events: none/);
   assert.match(rule(".rh-native-work-gesture-cue"), /pointer-events: none/);
-  assert.match(rule(".rh-native-work-gesture-cue"), /backdrop-filter: blur\(12px\) saturate\(170%\)/);
+  assert.match(rule(".rh-native-work-gesture-cue"), /rgb\(255 71 96 \/ \.92\)/);
+  assert.match(rule(".rh-native-work-gesture-cue"), /backdrop-filter: blur\(13px\) saturate\(180%\)/);
   assert.match(rule(".rh-native-work-viewer-photo img"), /object-fit: contain/);
   assert.match(rule("main:has([data-native-work-gallery]) > button:first-child"), /display: none/);
+  assert.match(css, /scroll-snap-type: y proximity/);
+  assert.match(css, /scroll-snap-align: start/);
+  assert.match(css, /width: min\(100%, calc\(\(100dvh - 210px\) \* 9 \/ 16\)\)/);
   const { WorkImageGallery } = load("app/rupantar/work-image-gallery.tsx");
   const html = renderToStaticMarkup(React.createElement(WorkImageGallery, { images: images.slice(0, 2), title: "Work" }));
   assert.match(html, /transform:translate3d\(calc\(-0% \+ 0px\), 0, 0\)/);
@@ -166,6 +173,7 @@ test("Admin viewer keeps safe portal behavior while public Work gallery stays in
   assert.match(source, /rh-native-work-track/);
   assert.match(source, /rh-native-work-gesture-cue/);
   assert.match(source, /rh-native-work-page-dots/);
+  assert.match(source, /rh-native-work-desktop-nav/);
   assert.match(source, /rh-native-work-viewer-dots/);
   assert.match(source, /Swipe to view more images/);
   assert.doesNotMatch(source, /Previous gallery image|Next gallery image|rh-native-work-prev|rh-native-work-next|rh-native-work-rear/);
@@ -185,14 +193,17 @@ test("Admin viewer keeps safe portal behavior while public Work gallery stays in
   assert.match(read("app/rupantar/work-media-enhancer.ts"), /!image\.closest\("\[data-native-work-gallery\]"\)/);
 });
 
-test("public gallery has no autoplay and the passive cue disappears after the first real swipe begins", () => {
+test("public gallery has no autoplay, keeps cue until final image, and adds desktop arrow controls", () => {
   const source = read("app/rupantar/work-image-gallery.tsx");
   const publicGallery = source.slice(source.indexOf("export function WorkImageGallery"));
   assert.doesNotMatch(source, /galleryAutoplayDelayMs/);
   assert.doesNotMatch(publicGallery, /visibilitychange|document\.hidden|prefers-reduced-motion/);
-  assert.match(publicGallery, /const \[hasSwiped, setHasSwiped\] = useState\(false\)/);
-  assert.match(publicGallery, /currentPageIndex === 0 && !hasSwiped\) setHasSwiped\(true\)/);
-  assert.match(publicGallery, /images\.length > 1 && !hasSwiped && currentPageIndex === 0/);
+  assert.doesNotMatch(publicGallery, /hasSwiped|setHasSwiped/);
+  assert.match(publicGallery, /images\.length > 1 && currentPageIndex < lastIndex/);
+  assert.match(publicGallery, /aria-label="Previous Work photo"/);
+  assert.match(publicGallery, /aria-label="Next Work photo"/);
+  assert.match(publicGallery, /disabled=\{currentPageIndex === 0\}/);
+  assert.match(publicGallery, /disabled=\{currentPageIndex === lastIndex\}/);
   assert.match(publicGallery, /translate3d\(calc\(-\$\{currentPageIndex \* 100\}% \+ \$\{dragOffset\}px\), 0, 0\)/);
   assert.match(publicGallery, /isDragging \? " is-dragging" : ""/);
 });
