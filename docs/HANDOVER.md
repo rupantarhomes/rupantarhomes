@@ -6,16 +6,16 @@ Rupantar Homes is packaged for production handover as of 2026-09-11.
 
 - Production repository: `rupantarhomes/rupantarhomes`
 - Default/protected branch: `main`
-- Accepted runtime baseline commit: `054180452701184e824f3fa71ec53228bc2624cd`
+- Accepted runtime baseline commit: `1bcb53271caefa8227a6839078015d826423bbd4`
 - Hosting: Cloudflare Pages + Pages Functions, deployed from `main`
 - Database/Auth: Supabase
 - Work media: Cloudinary
 - Secondary form notification: Web3Forms
 - Required merge checks on `main`: `Build and tests` and `Cloudflare Pages`
 
-The final accepted post-handover polish preserves the fully filled solid dark gray (`#3f3f46`) Work-detail category box with white text. On every Work detail page, the dedicated `Back to Works` control is removed from view and the front gallery frame uses a true `9:16` portrait aspect ratio. Existing swipe gestures, pagination dots, image order, image preloading, fullscreen viewer behavior, gallery copy, category/location treatment, project title, `Project Overview`/`Details` styling, public content, Admin UI, routes, Supabase schema/data, Cloudinary behavior, inquiry behavior, and production environment values remain unchanged.
+The final accepted Work-detail presentation keeps the fully filled solid dark gray (`#3f3f46`) category box with white text, removes the dedicated `Back to Works` control, and keeps the front gallery in a true `9:16` portrait frame. The public Work gallery is inline-only: tapping/clicking the front image does not open a separate fullscreen/black-background viewer and does not trigger a pressed/zoom response. Manual mobile swipe and desktop pointer drag remain available. For multi-image Works, the gallery advances forward automatically after each 2-second dwell with a smooth 720 ms horizontal transition, while manual interaction resets the timer. Autoplay pauses while the browser tab is hidden and is disabled for reduced-motion users. Pagination dots, swipe hint, image order, smart preload/decode behavior, category/location treatment, project title, `Project Overview`/`Details` styling, public content, Admin UI, routes, Supabase schema/data, Cloudinary behavior, inquiry behavior, and production environment values remain unchanged. The separate image viewer remains available only where Admin preview explicitly uses it.
 
-The exact final deployed `main` SHA is recorded separately after the final handover merge. The runtime baseline above identifies the code-bearing commit for the accepted portrait Work-detail gallery state.
+The exact final deployed `main` SHA is recorded separately after the final handover merge. The runtime baseline above identifies the code-bearing commit for the accepted swipe-only autoplay Work-detail gallery state.
 
 ## Production freeze contract
 
@@ -142,8 +142,12 @@ Perform these on the live production domain after the final handover packaging P
 - Work detail pages open directly and via cards;
 - Work detail pages do not show the dedicated `Back to Works` control;
 - Work detail front galleries render in a true `9:16` portrait frame on mobile and desktop;
-- Work detail swipe gestures, dots, image order, preload behavior, and fullscreen viewer remain functional;
-- fullscreen Work images remain uncropped/contained while the front portrait frame continues to use the existing cover treatment;
+- tapping/clicking a Work detail gallery image does not open a separate fullscreen/black-background viewer and does not create a pressed/zoom effect;
+- manual mobile swipe and desktop pointer drag work across the front gallery;
+- multi-image Work galleries automatically advance forward after each 2-second dwell using the smooth horizontal slide transition;
+- manual gallery interaction resets the autoplay timing, pagination dots track the active image, and the swipe hint remains present;
+- autoplay does not continue while the browser tab is hidden and reduced-motion users are not forced through automated motion;
+- Work image order and smart preload/decode behavior remain intact;
 - Work detail category badges render as fully filled solid dark gray (`#3f3f46`) boxes with white text while location badges retain the existing brand-red treatment;
 - Work detail `Project Overview` and `Details` headings render in brand red (`#FF1A3D`) and their body-copy paragraphs render black (`#18181b`);
 - Blog cards and direct article routes work;
@@ -165,6 +169,7 @@ Perform these on the live production domain after the final handover packaging P
 - unauthorized/non-admin access remains denied;
 - Dashboard totals and Leads load;
 - Work create/update/delete and image lifecycle work with disposable test content;
+- Admin image preview/viewer remains functional where explicitly used;
 - Blog create/update/delete works with disposable test content;
 - Review create/delete works with disposable test content;
 - Settings save only after live settings are confirmed loaded;
@@ -205,4 +210,4 @@ The repository itself is the canonical package. Key documents are:
 - `.github/production-lock.json` — frozen production-bearing Git fingerprints
 - `scripts/verify-production-lock.mjs` — lock verifier
 
-The final runtime baseline recorded for handover is `054180452701184e824f3fa71ec53228bc2624cd`.
+The final runtime baseline recorded for handover is `1bcb53271caefa8227a6839078015d826423bbd4`.
