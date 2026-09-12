@@ -51,6 +51,49 @@
         });
         return payload;
       }
+      function directRupantarHomeBootstrap() {
+        var supabaseUrl = "%VITE_SUPABASE_URL%";
+        var supabaseKey = "%VITE_SUPABASE_PUBLISHABLE_KEY%";
+        if (supabaseUrl.indexOf("https://") !== 0 || supabaseUrl.indexOf("%VITE_") !== -1 || !supabaseKey || supabaseKey.indexOf("%VITE_") !== -1) {
+          throw new Error("Home bootstrap configuration unavailable");
+        }
+        var headers = { Accept: "application/json", apikey: supabaseKey };
+        var worksSelect = "id,title,slug,category,location,short_description,long_description,featured,blog_url,work_images(id,work_id,secure_url,cloudinary_public_id,alt_text,sort_order,width,height,byte_size)";
+        var urls = [
+          supabaseUrl + "/rest/v1/works?select=" + encodeURIComponent(worksSelect) + "&order=created_at.desc&work_images.order=sort_order.asc&limit=6",
+          supabaseUrl + "/rest/v1/reviews?select=id,name,location,message,rating,instagram_url&order=created_at.desc",
+          supabaseUrl + "/rest/v1/site_settings?select=slogan,phone,instagram_url,tiktok_url,address,workshop_note&id=eq.1&limit=1"
+        ];
+        return Promise.all(urls.map(function (url) {
+          return fetch(url, { headers: headers }).then(function (response) {
+            if (!response.ok) throw new Error("Direct Home bootstrap unavailable");
+            return response.json();
+          });
+        })).then(function (results) {
+          var settings = results[2] && results[2][0];
+          if (!Array.isArray(results[0]) || !Array.isArray(results[1]) || !settings) throw new Error("Direct Home bootstrap invalid");
+          var number = function (value) { return typeof value === "number" && isFinite(value) ? value : undefined; };
+          var works = results[0].map(function (work) {
+            return {
+              id: String(work.id == null ? "" : work.id), title: String(work.title || ""), slug: String(work.slug || ""),
+              category: String(work.category || ""), location: String(work.location || ""), shortDesc: String(work.short_description || ""),
+              longDesc: String(work.long_description || ""), featured: work.featured === true, blogUrl: work.blog_url || undefined,
+              images: (Array.isArray(work.work_images) ? work.work_images : []).map(function (image) {
+                return { id: String(image.id == null ? "" : image.id), workId: String(image.work_id == null ? "" : image.work_id),
+                  url: String(image.secure_url || ""), publicId: String(image.cloudinary_public_id || ""), altText: String(image.alt_text || ""),
+                  sortOrder: number(image.sort_order) || 0, width: number(image.width), height: number(image.height), bytes: number(image.byte_size) };
+              }).sort(function (left, right) { return left.sortOrder - right.sortOrder; })
+            };
+          });
+          var reviews = results[1].map(function (review) {
+            return { id: String(review.id == null ? "" : review.id), name: String(review.name || ""), location: String(review.location || ""),
+              message: String(review.message || ""), rating: number(review.rating) || 5, instagramLink: review.instagram_url || undefined };
+          });
+          return { works: works, reviews: reviews, settings: { slogan: String(settings.slogan || ""), phone: String(settings.phone || ""),
+            instagram: String(settings.instagram_url || ""), tiktok: String(settings.tiktok_url || ""), address: String(settings.address || ""),
+            workshopNote: String(settings.workshop_note || "") }, confirmedAt: Date.now() };
+        });
+      }
       if (window.location.pathname === "/") {
         try {
           var storedHome = JSON.parse(window.localStorage.getItem("rupantar-home-bootstrap-v1") || "null");
@@ -58,6 +101,7 @@
         } catch (error) {}
         window.__RUPANTAR_HOME_BOOTSTRAP__ = fetch("/api/public-home", { headers: { Accept: "application/json" } })
         .then(function (response) { if (!response.ok) throw new Error("Home bootstrap unavailable"); return response.json(); })
+        .catch(directRupantarHomeBootstrap)
         .then(preloadRupantarHomeCovers);
         window.__RUPANTAR_HOME_BOOTSTRAP__.catch(function () {});
       }

@@ -103,6 +103,32 @@ test("stored and early Home bootstraps accept confirmed live Works and reject ma
   await assert.rejects(module.earlyHomeContent(), /invalid/);
 });
 
+test("early Home script falls back to the public Supabase client configuration before React", async () => {
+  const html = readFileSync(resolve(root, "index.html"), "utf8")
+    .replaceAll("%VITE_SUPABASE_URL%", "https://example.supabase.co")
+    .replaceAll("%VITE_SUPABASE_PUBLISHABLE_KEY%", "public-key");
+  const script = html.match(/<script>\s*([\s\S]*?)<\/script>/)?.[1];
+  assert.ok(script);
+  const calls = [];
+  const links = [];
+  const window = { location: { pathname: "/" }, localStorage: { getItem: () => null } };
+  const document = { createElement: () => ({ setAttribute(name, value) { this[name] = value; } }), head: { appendChild: (link) => links.push(link) } };
+  const fetch = async (url, init) => {
+    calls.push({ url: String(url), init });
+    if (url === "/api/public-home") return Response.json({}, { status: 503 });
+    if (String(url).includes("/works?")) return Response.json(rows);
+    if (String(url).includes("/reviews?")) return Response.json([{ id: 1, name: "Client", location: "Kathmandu", message: "Excellent", rating: 5 }]);
+    return Response.json([{ slogan: "Spaces", phone: "9745941799", address: "Kathmandu", workshop_note: "Visit" }]);
+  };
+  new Function("window", "document", "fetch", script)(window, document, fetch);
+  const payload = await window.__RUPANTAR_HOME_BOOTSTRAP__;
+  assert.equal(calls.length, 4);
+  assert.equal(payload.works[0].images[0].publicId, "one");
+  assert.equal(payload.settings.phone, "9745941799");
+  assert.equal(links.length, 1);
+  assert.match(links[0].imagesrcset, /w_160/);
+});
+
 function settings() {
   return { slogan: "Spaces", phone: "9745941799", instagram: "", tiktok: "", address: "Kathmandu", workshopNote: "Visit" };
 }
@@ -118,6 +144,11 @@ test("Home starts six stable slots and requests correctly sized Recent Work cove
   assert.match(html, /localStorage\.getItem\("rupantar-home-bootstrap-v1"\)/);
   assert.match(html, /link\.fetchPriority = "low"/);
   assert.match(html, /link\.setAttribute\("imagesrcset"/);
+  assert.match(html, /%VITE_SUPABASE_URL%/);
+  assert.match(html, /%VITE_SUPABASE_PUBLISHABLE_KEY%/);
+  assert.match(html, /\.catch\(directRupantarHomeBootstrap\)/);
+  assert.match(html, /work_images\(id,work_id,secure_url/);
+  assert.match(html, /work_images\.order=sort_order\.asc&limit=6/);
   assert.match(site, /earlyHomeContent\(\)/);
   assert.match(site, /primePublicContent\(/);
   assert.match(site, /liveHomeContentConfirmedRef\.current/);
