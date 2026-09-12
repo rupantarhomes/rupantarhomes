@@ -199,7 +199,6 @@ export function HomePage({
                   src={slide.desktop}
                   alt=""
                   loading={index === 0 ? "eager" : "lazy"}
-                  fetchPriority={index === 0 ? "high" : "auto"}
                   decoding="async"
                   aria-hidden="true"
                   style={{
