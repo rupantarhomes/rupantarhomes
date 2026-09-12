@@ -133,6 +133,19 @@ test("CSP-safe early Home module falls back to public Supabase configuration bef
   assert.ok(html.indexOf('/app/home-bootstrap-early.js') < html.indexOf('/app/client-entry.tsx'));
 });
 
+test("production build executes the tiny Home bootstrap before the React entry", () => {
+  const builtHtml = readFileSync(resolve(root, "dist/index.html"), "utf8");
+  const builtBootstrap = readFileSync(resolve(root, "dist/assets/home-bootstrap-early.js"), "utf8");
+  const bootstrapTag = '<script type="module" crossorigin src="/assets/home-bootstrap-early.js"></script>';
+  const mainEntry = builtHtml.match(/<script type="module" crossorigin src="\/assets\/index-[^"]+\.js"><\/script>/)?.[0];
+
+  assert.ok(mainEntry, "built React entry must remain the hashed index asset");
+  assert.ok(builtHtml.includes(bootstrapTag), "built HTML must execute the Home bootstrap as its own module");
+  assert.ok(builtHtml.indexOf(bootstrapTag) < builtHtml.indexOf(mainEntry), "Home bootstrap must execute before the React entry");
+  assert.doesNotMatch(builtHtml, /modulepreload[^>]+home-bootstrap-early\.js/);
+  assert.ok(Buffer.byteLength(builtBootstrap, "utf8") < 5_000, "early Home bootstrap must stay tiny");
+});
+
 function settings() {
   return { slogan: "Spaces", phone: "9745941799", instagram: "", tiktok: "", address: "Kathmandu", workshopNote: "Visit" };
 }
