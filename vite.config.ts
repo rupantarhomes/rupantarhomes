@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: true,
       rollupOptions: {
         input: {
-          main: resolve(process.cwd(), "index.html"),
+          index: resolve(process.cwd(), "index.html"),
           homeBootstrap: resolve(process.cwd(), "app/home-bootstrap-early.js"),
         },
       },
