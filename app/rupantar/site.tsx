@@ -1213,7 +1213,6 @@ export function RupantarSite() {
       {page === "home" && (
         <HomePage
           works={works}
-          worksLoading={worksLoading}
           reviews={reviews}
           settings={settings}
           estimate={estimate}

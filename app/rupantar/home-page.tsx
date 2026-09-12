@@ -28,7 +28,6 @@ import type {
 
 type HomePageProps = {
   works: Work[];
-  worksLoading: boolean;
   reviews: Review[];
   settings: SiteSettings;
   estimate: EstimateForm;
@@ -85,7 +84,6 @@ function isInteractiveTarget(target: EventTarget) {
 
 export function HomePage({
   works,
-  worksLoading,
   reviews,
   settings,
   estimate,
@@ -331,7 +329,7 @@ export function HomePage({
               </div>
             </article>
           ))}
-          {featured.length === 0 && worksLoading && Array.from({ length: 6 }, (_, index) => (
+          {featured.length === 0 && Array.from({ length: 6 }, (_, index) => (
             <article key={`recent-work-loading-${index}`} aria-hidden="true" className="h-full bg-white border border-zinc-100/90 rounded-[1.5rem] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
               <div className="p-3"><PhotoPlaceholder /></div>
               <div className="px-5 pb-5">

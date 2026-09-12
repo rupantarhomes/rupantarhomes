@@ -137,7 +137,7 @@ test("Home starts six stable slots and requests correctly sized Recent Work cove
   const home = readFileSync(resolve(root, "app/rupantar/home-page.tsx"), "utf8");
   const html = readFileSync(resolve(root, "index.html"), "utf8");
   const site = readFileSync(resolve(root, "app/rupantar/site.tsx"), "utf8");
-  assert.match(home, /featured\.length === 0 && worksLoading && Array\.from\(\{ length: 6 \}/);
+  assert.match(home, /featured\.length === 0 && Array\.from\(\{ length: 6 \}/);
   assert.match(home, /sizes="\(min-width: 1024px\) 33vw, \(min-width: 640px\) 50vw, 33vw" widths=\{\[160, 320, 480, 768\]\}/);
   assert.ok(html.indexOf("__RUPANTAR_HOME_BOOTSTRAP__") < html.indexOf("/app/client-entry.tsx"));
   assert.match(html, /window\.location\.pathname === "\/"/);
