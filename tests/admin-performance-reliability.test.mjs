@@ -32,7 +32,8 @@ test("opens Admin immediately after authorization and avoids full Admin reloads 
 test("does not seed Admin dashboard or production Home with fake public works while live data is loading", async () => {
   const site = await read("../app/rupantar/site.tsx");
   assert.match(site, /const initialRouteIsAdmin = initialRoute\.kind === "admin";/);
-  assert.match(site, /const initialHomeWorks = isSupabaseConfigured \? \[\] : initialWorks;/);
+  assert.match(site, /const storedHome = isSupabaseConfigured \? storedHomeContent\(\) : null;/);
+  assert.match(site, /const initialHomeWorks = isSupabaseConfigured \? storedHome\?\.works \?\? \[\] : initialWorks;/);
   assert.match(site, /const initialWorksState = initialRouteUsesWorks \|\| initialRouteIsAdmin \? \[\] : initialHomeWorks;/);
   assert.match(site, /useState\(initialRouteUsesWorks \|\| initialRouteIsAdmin \? 0 : initialHomeWorks\.length\)/);
 });

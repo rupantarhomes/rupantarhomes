@@ -10,11 +10,6 @@ const viewerGalleryWidths = [480, 768, 1200, 1920] as const;
 const galleryPreloadCache = new Set<string>();
 const galleryPreloaders = new Map<string, HTMLImageElement>();
 
-type IdleWindow = Window & typeof globalThis & {
-  requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
-  cancelIdleCallback?: (handle: number) => void;
-};
-
 type NetworkNavigator = Navigator & {
   connection?: { saveData?: boolean; effectiveType?: string };
 };
@@ -43,7 +38,7 @@ function preloadGalleryImage(image: WorkImage, sizes: string, widths: readonly n
   galleryPreloadCache.add(cacheKey);
   const preload = new Image();
   preload.decoding = "async";
-  preload.fetchPriority = "low";
+  preload.fetchPriority = "auto";
   preload.sizes = sizes;
   preload.srcset = srcSet;
   preload.src = galleryDeliveryUrl(image.url, fallbackWidth);
@@ -64,26 +59,9 @@ function useGalleryPreload(images: WorkImage[], activeIndex: number, sizes: stri
 
     const connection = (navigator as NetworkNavigator).connection;
     const constrained = connection?.saveData === true || connection?.effectiveType === "slow-2g" || connection?.effectiveType === "2g";
-    const unique = (indices: number[]) => [...new Set(indices)].filter((index) => index >= 0 && index < images.length && index !== activeIndex);
-    const nearby = unique(constrained ? [activeIndex + 1] : [activeIndex + 1, activeIndex - 1, activeIndex + 2]);
-    nearby.forEach((index) => preloadGalleryImage(images[index], sizes, widths));
     if (constrained) return;
-
-    const remaining = images.map((_, index) => index).filter((index) => index !== activeIndex && !nearby.includes(index));
-    if (!remaining.length) return;
-
-    const idleWindow = window as IdleWindow;
-    let idleHandle: number | undefined;
-    const timer = window.setTimeout(() => {
-      const loadRemaining = () => remaining.forEach((index) => preloadGalleryImage(images[index], sizes, widths));
-      if (idleWindow.requestIdleCallback) idleHandle = idleWindow.requestIdleCallback(loadRemaining, { timeout: 1200 });
-      else loadRemaining();
-    }, 900);
-
-    return () => {
-      window.clearTimeout(timer);
-      if (idleHandle !== undefined) idleWindow.cancelIdleCallback?.(idleHandle);
-    };
+    const next = images[activeIndex + 1];
+    if (next) preloadGalleryImage(next, sizes, widths);
   }, [activeIndex, images, sizes, widths]);
 }
 
@@ -203,35 +181,64 @@ export function WorkImageViewer({ images, title, initialIndex = 0, onClose }: {
 
 export function WorkImageGallery({ images, title }: { images: WorkImage[]; title: string }) {
   const [pageIndex, setPageIndex] = useState(0);
-  const [dragOffset, setDragOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const dragFrame = useRef<number | null>(null);
+  const pendingDragOffset = useRef(0);
   const pageTouchStart = useRef<{ x: number; y: number } | null>(null);
   const pagePointerStart = useRef<{ x: number; y: number; id: number } | null>(null);
   const lastIndex = images.length - 1;
   const currentPageIndex = images.length ? Math.max(0, Math.min(pageIndex, lastIndex)) : 0;
   useGalleryPreload(images, currentPageIndex, "(min-width: 1024px) 520px, 100vw", pageGalleryWidths);
 
+  useEffect(() => () => {
+    if (dragFrame.current !== null) window.cancelAnimationFrame(dragFrame.current);
+  }, []);
+
   if (!images.length) return <WorkPhoto alt={title} aspect="aspect-square" label="Main Gallery Photo Coming Soon" />;
+
+  const positionTrack = (index: number, offset: number, dragging: boolean) => {
+    const track = trackRef.current;
+    if (!track) return;
+    track.classList.toggle("is-dragging", dragging);
+    track.style.transform = `translate3d(calc(-${index * 100}% + ${offset}px), 0, 0)`;
+  };
+
+  const beginDrag = () => {
+    if (dragFrame.current !== null) window.cancelAnimationFrame(dragFrame.current);
+    dragFrame.current = null;
+    pendingDragOffset.current = 0;
+    positionTrack(currentPageIndex, 0, true);
+  };
 
   const updateDrag = (dx: number, dy: number) => {
     if (Math.abs(dx) < 4 || Math.abs(dx) <= Math.abs(dy)) return;
     const atStartEdge = currentPageIndex === 0 && dx > 0;
     const atEndEdge = currentPageIndex === lastIndex && dx < 0;
-    setIsDragging(true);
-    setDragOffset(atStartEdge || atEndEdge ? dx * 0.24 : dx);
+    pendingDragOffset.current = atStartEdge || atEndEdge ? dx * 0.24 : dx;
+    if (dragFrame.current !== null) return;
+    dragFrame.current = window.requestAnimationFrame(() => {
+      dragFrame.current = null;
+      positionTrack(currentPageIndex, pendingDragOffset.current, true);
+    });
   };
 
   const finishPageSwipe = (dx: number, dy: number) => {
-    setIsDragging(false);
-    setDragOffset(0);
-    if (Math.abs(dx) < 42 || Math.abs(dx) <= Math.abs(dy) * 1.2) return;
-    const nextIndex = Math.max(0, Math.min(currentPageIndex + (dx < 0 ? 1 : -1), lastIndex));
+    if (dragFrame.current !== null) window.cancelAnimationFrame(dragFrame.current);
+    dragFrame.current = null;
+    pendingDragOffset.current = 0;
+    const shouldMove = Math.abs(dx) >= 42 && Math.abs(dx) > Math.abs(dy) * 1.2;
+    const nextIndex = shouldMove
+      ? Math.max(0, Math.min(currentPageIndex + (dx < 0 ? 1 : -1), lastIndex))
+      : currentPageIndex;
+    positionTrack(nextIndex, 0, false);
     if (nextIndex !== currentPageIndex) setPageIndex(nextIndex);
   };
 
   const cancelDrag = () => {
-    setIsDragging(false);
-    setDragOffset(0);
+    if (dragFrame.current !== null) window.cancelAnimationFrame(dragFrame.current);
+    dragFrame.current = null;
+    pendingDragOffset.current = 0;
+    positionTrack(currentPageIndex, 0, false);
   };
 
   const moveTo = (nextIndex: number) => {
@@ -239,14 +246,14 @@ export function WorkImageGallery({ images, title }: { images: WorkImage[]; title
     cancelDrag();
   };
 
-  const trackTransform = `translate3d(calc(-${currentPageIndex * 100}% + ${dragOffset}px), 0, 0)`;
+  const trackTransform = `translate3d(calc(-${currentPageIndex * 100}% + 0px), 0, 0)`;
 
   return (
     <div data-native-work-gallery className="rh-native-work-gallery">
       <div className="rh-native-work-stack"
         onTouchStart={(event) => {
           pageTouchStart.current = event.touches.length === 1 ? { x: event.touches[0].clientX, y: event.touches[0].clientY } : null;
-          cancelDrag();
+          beginDrag();
         }}
         onTouchMove={(event) => {
           const start = pageTouchStart.current;
@@ -292,11 +299,13 @@ export function WorkImageGallery({ images, title }: { images: WorkImage[]; title
           }
           finishPageSwipe(event.clientX - start.x, event.clientY - start.y);
         }}>
-        <div className={`rh-native-work-track${isDragging ? " is-dragging" : ""}`} style={{ transform: trackTransform }} aria-live="polite">
+        <div ref={trackRef} className="rh-native-work-track" style={{ transform: trackTransform }} aria-live="polite">
           {images.map((image, imageIndex) => (
             <div key={image.id} className="rh-native-work-slide" aria-hidden={imageIndex === currentPageIndex ? undefined : "true"}>
-              <WorkPhoto image={image} alt={title} aspect="rh-native-work-stack-photo" eager={imageIndex === 0}
-                sizes="(min-width: 1024px) 520px, 100vw" widths={pageGalleryWidths} />
+              {Math.abs(imageIndex - currentPageIndex) <= 1 && (
+                <WorkPhoto image={image} alt={title} aspect="rh-native-work-stack-photo" eager={imageIndex === currentPageIndex}
+                  sizes="(min-width: 1024px) 520px, 100vw" widths={pageGalleryWidths} />
+              )}
             </div>
           ))}
         </div>

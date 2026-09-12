@@ -252,6 +252,10 @@ function enhance() {
 }
 
 export function initWorkMediaEnhancements() {
+  if (window.location.pathname.startsWith("/admin")) return;
+  const root = document.getElementById("root");
+  if (!root) return;
+
   let scheduled = false;
   const schedule = () => {
     if (scheduled) return;
@@ -265,5 +269,5 @@ export function initWorkMediaEnhancements() {
   schedule();
 
   const observer = new MutationObserver(schedule);
-  observer.observe(document.body, { childList: true, subtree: true });
+  observer.observe(root, { childList: true, subtree: true });
 }

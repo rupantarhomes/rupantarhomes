@@ -30,6 +30,38 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      var rupantarHomePreloads = {};
+      function preloadRupantarHomeCovers(payload) {
+        if (!payload || !Array.isArray(payload.works)) return payload;
+        payload.works.forEach(function (work) {
+          var image = work && Array.isArray(work.images) ? work.images[0] : null;
+          if (!image || typeof image.url !== "string" || image.url.indexOf("https://res.cloudinary.com/") !== 0) return;
+          var delivery = function (width) { return image.url.replace("/image/upload/", "/image/upload/c_limit,w_" + width + "/f_auto/q_auto:good/"); };
+          if (rupantarHomePreloads[image.url]) return;
+          rupantarHomePreloads[image.url] = true;
+          var link = document.createElement("link");
+          link.rel = "preload";
+          link.as = "image";
+          link.fetchPriority = "low";
+          link.href = delivery(480);
+          link.setAttribute("imagesrcset", [160, 320, 480, 768].map(function (width) { return delivery(width) + " " + width + "w"; }).join(", "));
+          link.setAttribute("imagesizes", "(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 33vw");
+          document.head.appendChild(link);
+        });
+        return payload;
+      }
+      if (window.location.pathname === "/") {
+        try {
+          var storedHome = JSON.parse(window.localStorage.getItem("rupantar-home-bootstrap-v1") || "null");
+          if (storedHome && Date.now() - storedHome.confirmedAt <= 86400000) preloadRupantarHomeCovers(storedHome);
+        } catch (error) {}
+        window.__RUPANTAR_HOME_BOOTSTRAP__ = fetch("/api/public-home", { headers: { Accept: "application/json" } })
+        .then(function (response) { if (!response.ok) throw new Error("Home bootstrap unavailable"); return response.json(); })
+        .then(preloadRupantarHomeCovers);
+        window.__RUPANTAR_HOME_BOOTSTRAP__.catch(function () {});
+      }
+    </script>
     <script type="module" src="/app/navigation-precision.ts"></script>
     <script type="module" src="/app/public-performance.ts"></script>
     <script type="module" src="/app/admin-mobile-lock.ts"></script>

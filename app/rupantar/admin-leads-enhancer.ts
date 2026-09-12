@@ -165,6 +165,8 @@ function enhanceViewSiteButton() {
 }
 
 export function initAdminLeadsEnhancements() {
+  if (window.location.pathname !== "/admin") return;
+
   let enhancementScheduled = false;
   let busySyncScheduled = false;
   let watchedLogout: HTMLButtonElement | null = null;

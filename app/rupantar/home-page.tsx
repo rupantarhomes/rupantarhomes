@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type Dispatch, type MouseEvent as ReactMouseEvent, type SetStateAction } from "react";
 import { categories, interiorDesignCategories } from "./data";
-import { categoryIcons, WorkPhoto } from "./shared";
+import { categoryIcons, PhotoPlaceholder, WorkPhoto } from "./shared";
 import type {
   EstimateForm,
   Page,
@@ -28,6 +28,7 @@ import type {
 
 type HomePageProps = {
   works: Work[];
+  worksLoading: boolean;
   reviews: Review[];
   settings: SiteSettings;
   estimate: EstimateForm;
@@ -84,6 +85,7 @@ function isInteractiveTarget(target: EventTarget) {
 
 export function HomePage({
   works,
+  worksLoading,
   reviews,
   settings,
   estimate,
@@ -142,7 +144,7 @@ export function HomePage({
         });
       };
       image.src = nextSource;
-    }, 0);
+    }, 1800);
 
     if (!heroSlidesReady.has(nextSource)) {
       return () => {
@@ -197,6 +199,7 @@ export function HomePage({
                   src={slide.desktop}
                   alt=""
                   loading={index === 0 ? "eager" : "lazy"}
+                  fetchPriority={index === 0 ? "high" : "auto"}
                   decoding="async"
                   aria-hidden="true"
                   style={{
@@ -303,7 +306,8 @@ export function HomePage({
               className="rh-recent-work-card group h-full cursor-pointer bg-white border border-zinc-100/90 rounded-[1.5rem] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-[border-color,box-shadow,transform] duration-300 ease-out hover:border-zinc-200 hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(0,0,0,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF1A3D]/30"
             >
               <div className="p-3">
-                <WorkPhoto image={work.images[0]} alt={work.title} />
+                <WorkPhoto image={work.images[0]} alt={work.title}
+                  sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 33vw" widths={[160, 320, 480, 768]} />
               </div>
               <div className="px-5 pb-5">
                 <div className="flex items-center gap-2 mb-2">
@@ -325,6 +329,18 @@ export function HomePage({
                 >
                   View Details <ArrowRight className="w-4 h-4" />
                 </button>
+              </div>
+            </article>
+          ))}
+          {featured.length === 0 && worksLoading && Array.from({ length: 6 }, (_, index) => (
+            <article key={`recent-work-loading-${index}`} aria-hidden="true" className="h-full bg-white border border-zinc-100/90 rounded-[1.5rem] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
+              <div className="p-3"><PhotoPlaceholder /></div>
+              <div className="px-5 pb-5">
+                <div className="h-5 w-20 rounded-full bg-zinc-100" />
+                <div className="mt-3 h-4 w-4/5 rounded bg-zinc-100" />
+                <div className="mt-2 h-3 w-2/5 rounded bg-zinc-100" />
+                <div className="mt-4 h-3 w-full rounded bg-zinc-100" />
+                <div className="mt-2 h-3 w-3/4 rounded bg-zinc-100" />
               </div>
             </article>
           ))}
