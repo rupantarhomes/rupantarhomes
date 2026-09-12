@@ -15,6 +15,7 @@ import {
   initialWorks,
 } from "./data";
 import { HomePage } from "./home-page";
+import { earlyHomeContent, storedHomeContent } from "./home-bootstrap";
 import { SiteErrorBoundary } from "./error-boundary";
 import {
   claimExpiredCloudinaryDrafts,
@@ -42,6 +43,7 @@ import {
   peekPublicWork, peekPublicBlog, peekPublicWorksPage,
   publicContentIsFresh, publicBlogsAreFresh, publicWorksAreFresh, publicWorkIsFresh, publicBlogIsFresh,
   invalidatePublicWorks, invalidatePublicBlogs, invalidatePublicContent,
+  primePublicContent,
 } from "./public-data";
 import { PublicFooter, PublicHeader, TopBar } from "./shared";
 import { blogArticlePath, categoryPath, pagePath, parseRoute, workPath } from "./routes";
@@ -158,7 +160,8 @@ export function RupantarSite() {
   const initialRoute = initialBrowserRoute();
   const initialRouteUsesWorks = initialRoute.kind === "works" || initialRoute.kind === "work-detail";
   const initialRouteIsAdmin = initialRoute.kind === "admin";
-  const initialHomeWorks = isSupabaseConfigured ? [] : initialWorks;
+  const storedHome = isSupabaseConfigured ? storedHomeContent() : null;
+  const initialHomeWorks = isSupabaseConfigured ? storedHome?.works ?? [] : initialWorks;
   const initialWorksState = initialRouteUsesWorks || initialRouteIsAdmin ? [] : initialHomeWorks;
   const [page, setPage] = useState<Page>(() => pageForRoute(initialRoute));
   const [filter, setFilter] = useState(() => initialRoute.kind === "works" || initialRoute.kind === "work-detail" ? initialRoute.category : "all");
@@ -171,8 +174,8 @@ export function RupantarSite() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [works, setWorks] = useState<Work[]>(initialWorksState);
   const [worksTotal, setWorksTotal] = useState(initialRouteUsesWorks || initialRouteIsAdmin ? 0 : initialHomeWorks.length);
-  const [worksLoading, setWorksLoading] = useState(initialRoute.kind === "works" || (initialRoute.kind === "home" && isSupabaseConfigured));
-  const [reviews, setReviews] = useState<Review[]>(initialReviews);
+  const [worksLoading, setWorksLoading] = useState(initialRoute.kind === "works" || (initialRoute.kind === "home" && isSupabaseConfigured && initialHomeWorks.length === 0));
+  const [reviews, setReviews] = useState<Review[]>(storedHome?.reviews ?? initialReviews);
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [blogsLoading, setBlogsLoading] = useState(false);
   const [blogsLoaded, setBlogsLoaded] = useState(false);
@@ -187,7 +190,7 @@ export function RupantarSite() {
   const [workForm, setWorkForm] = useState<WorkForm>(emptyWork);
   const [editingWorkId, setEditingWorkId] = useState<string | null>(null);
   const [reviewForm, setReviewForm] = useState<ReviewForm>(emptyReview);
-  const [settings, setSettings] = useState<SiteSettings>(initialSettings);
+  const [settings, setSettings] = useState<SiteSettings>(storedHome?.settings ?? initialSettings);
   const [adminStats, setAdminStats] = useState<AdminStats>({ queries: 0, estimates: 0 });
   const [loginError, setLoginError] = useState("");
   const [loginBusy, setLoginBusy] = useState(false);
@@ -198,7 +201,8 @@ export function RupantarSite() {
   const [estimateSaved, setEstimateSaved] = useState(false);
 
   const homeWorksRef = useRef<Work[]>(initialHomeWorks);
-  const homeWorksConfirmedRef = useRef(!isSupabaseConfigured);
+  const homeWorksConfirmedRef = useRef(!isSupabaseConfigured || initialHomeWorks.length > 0);
+  const liveHomeContentConfirmedRef = useRef(!isSupabaseConfigured);
   const worksRef = useRef(works);
   const worksLoadedRef = useRef(false);
   const adminWorksLoadedRef = useRef(false);
@@ -277,6 +281,7 @@ export function RupantarSite() {
     setSettings(content.settings);
     homeWorksRef.current = content.works;
     homeWorksConfirmedRef.current = true;
+    liveHomeContentConfirmedRef.current = true;
     const route = parseRoute(window.location.pathname);
     if (route.kind !== "home") return;
     worksRequestIdRef.current += 1;
@@ -583,7 +588,28 @@ export function RupantarSite() {
     document.title = "Rupantar Homes";
     let active = true;
     const startupRoute = parseRoute(window.location.pathname);
-    void applyBrowserRoute().catch((error) => { if (active) console.error("Unable to apply website route", error); });
+    if (startupRoute.kind === "home" && isSupabaseConfigured) {
+      void earlyHomeContent().then((bootstrap) => {
+        if (!active || liveHomeContentConfirmedRef.current) return;
+        primePublicContent({ works: bootstrap.works, reviews: bootstrap.reviews, settings: bootstrap.settings });
+        homeWorksRef.current = bootstrap.works;
+        homeWorksConfirmedRef.current = true;
+        setReviews(bootstrap.reviews);
+        setSettings(bootstrap.settings);
+        if (parseRoute(window.location.pathname).kind !== "home") return;
+        worksRef.current = bootstrap.works;
+        worksLoadedRef.current = true;
+        setWorks(bootstrap.works);
+        setWorksTotal(bootstrap.works.length);
+        setWorksLoading(false);
+      }).catch((error) => {
+        if (!active) return;
+        console.error("Unable to load early Home content", error);
+        void refreshContent().catch((refreshError) => console.error("Unable to load website shell content", refreshError));
+      });
+    } else {
+      void applyBrowserRoute().catch((error) => { if (active) console.error("Unable to apply website route", error); });
+    }
 
     if (startupRoute.kind !== "home" && startupRoute.kind !== "admin") {
       void refreshContent().catch((error) => { if (active) console.error("Unable to load website shell content", error); });

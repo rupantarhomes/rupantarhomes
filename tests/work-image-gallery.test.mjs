@@ -35,7 +35,7 @@ test("native Work gallery renders a swipe-only image track with dots and no full
     assert.match(html, /class="rh-native-work-track"/);
     assert.equal((html.match(/class="rh-native-work-slide"/g) ?? []).length, count);
     assert.equal((html.match(/loading="eager"/g) ?? []).length, 1);
-    assert.equal((html.match(/loading="lazy"/g) ?? []).length, Math.max(0, count - 1));
+    assert.equal((html.match(/loading="lazy"/g) ?? []).length, count > 1 ? 1 : 0);
     assert.doesNotMatch(html, /rh-native-work-front|Open Kitchen image gallery|rh-native-work-viewer-photo/);
     assert.doesNotMatch(html, /Previous gallery image|Next gallery image/);
     if (count === 1) {
@@ -59,7 +59,7 @@ test("the page gallery keeps 9:16 framing, fluid manual slide motion and branded
   assert.match(rule(".rh-native-work-stack"), /aspect-ratio: 9 \/ 16/);
   assert.match(rule(".rh-native-work-stack"), /overflow: hidden/);
   assert.match(rule(".rh-native-work-stack"), /-webkit-tap-highlight-color: transparent/);
-  assert.match(rule(".rh-native-work-track"), /transition: transform 560ms cubic-bezier\(\.22,\.8,\.24,1\)/);
+  assert.match(rule(".rh-native-work-track"), /transition: transform 320ms cubic-bezier\(\.22,\.8,\.24,1\)/);
   assert.match(rule(".rh-native-work-track.is-dragging"), /transition: none/);
   assert.match(rule(".rh-native-work-stack-photo img"), /object-fit: cover/);
   assert.match(rule(".rh-native-work-slide"), /pointer-events: none/);
@@ -169,7 +169,9 @@ test("Admin viewer keeps safe portal behavior while public Work gallery stays in
   assert.match(source, /pagePointerStart/);
   assert.match(source, /onTouchMove/);
   assert.match(source, /onPointerMove/);
-  assert.match(source, /dragOffset/);
+  assert.match(source, /pendingDragOffset/);
+  assert.match(source, /window\.requestAnimationFrame/);
+  assert.doesNotMatch(source, /setDragOffset|setIsDragging/);
   assert.match(source, /rh-native-work-track/);
   assert.match(source, /rh-native-work-gesture-cue/);
   assert.match(source, /rh-native-work-page-dots/);
@@ -204,23 +206,23 @@ test("public gallery has no autoplay, keeps cue until final image, and adds desk
   assert.match(publicGallery, /aria-label="Next Work photo"/);
   assert.match(publicGallery, /disabled=\{currentPageIndex === 0\}/);
   assert.match(publicGallery, /disabled=\{currentPageIndex === lastIndex\}/);
-  assert.match(publicGallery, /translate3d\(calc\(-\$\{currentPageIndex \* 100\}% \+ \$\{dragOffset\}px\), 0, 0\)/);
-  assert.match(publicGallery, /isDragging \? " is-dragging" : ""/);
+  assert.match(publicGallery, /track\.style\.transform = `translate3d\(calc\(-\$\{index \* 100\}% \+ \$\{offset\}px\), 0, 0\)`/);
+  assert.match(publicGallery, /track\.classList\.toggle\("is-dragging", dragging\)/);
+  assert.match(publicGallery, /Math\.abs\(imageIndex - currentPageIndex\) <= 1/);
 });
 
-test("gallery preloads exact Cloudinary variants without delaying the first image", () => {
+test("gallery prioritizes the visible image and preloads only the next slide", () => {
   const source = read("app/rupantar/work-image-gallery.tsx");
   assert.match(source, /function useGalleryPreload/);
-  assert.match(source, /fetchPriority = "low"/);
+  assert.match(source, /fetchPriority = "auto"/);
   assert.match(source, /preload\.decode\(\)/);
-  assert.match(source, /requestIdleCallback/);
-  assert.match(source, /setTimeout\(\(\) => \{/);
-  assert.match(source, /activeIndex \+ 1, activeIndex - 1, activeIndex \+ 2/);
+  assert.match(source, /const next = images\[activeIndex \+ 1\]/);
+  assert.doesNotMatch(source, /const remaining|loadRemaining|activeIndex \+ 2/);
   assert.match(source, /saveData === true/);
   assert.match(source, /effectiveType === "slow-2g"/);
   assert.match(source, /effectiveType === "2g"/);
   assert.match(source, /c_limit,w_\$\{width\}\/f_auto\/q_auto:good/);
   assert.match(source, /useGalleryPreload\(images, currentPageIndex, "\(min-width: 1024px\) 520px, 100vw", pageGalleryWidths\)/);
   assert.match(source, /useGalleryPreload\(images, selectedIndex, "100vw", viewerGalleryWidths\)/);
-  assert.doesNotMatch(source, /fetchPriority = "high"/);
+  assert.match(read("app/rupantar/shared.tsx"), /fetchPriority=\{eager \? "high" : "auto"\}/);
 });

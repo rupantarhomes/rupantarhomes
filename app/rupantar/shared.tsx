@@ -92,6 +92,7 @@ export function WorkPhoto({
         alt={image.altText || alt}
         className="w-full h-full object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.025]"
         loading={eager ? "eager" : "lazy"}
+        fetchPriority={eager ? "high" : "auto"}
         decoding="async"
         onError={() => setFailed(true)}
       />

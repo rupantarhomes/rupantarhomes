@@ -577,3 +577,21 @@ The public navigation audit in `docs/PUBLIC-NAVIGATION-AUDIT.md` records the rep
 The `app` and `tests` fingerprints are the only production-lock objects updated for this change. Existing 110 tests remain intact; 15 new deterministic cache/handler tests cover the root causes. TypeScript and production build pass. Browser preview and production acceptance are separate gates; do not infer their success from this local verification entry.
 
 PR #137 implementation head `751e7aaf6c10424ce9a83f8c8fc1bb4e8a513596` passed GitHub Build and tests and Cloudflare Pages preview deployment. Desktop navigation at https://99958839.rupantarhomes.pages.dev/ was verified across Home, Works, categories, related Works, Blog, posts, project cross-links and Back/Forward. The audit records exact cases and explicitly excludes unmeasured mobile/throttled-network/timing claims. This evidence-only follow-up does not change protected production objects.
+
+## Public media responsiveness follow-up — 2026-09-12
+
+Branch: `reliability/public-navigation-cache`.
+
+The live-site investigation found that Work gallery touch movement updated React state for every move event, the 560 ms settle animation amplified perceived delay, every gallery image stayed mounted, and the preload routine expanded from adjacent images to the complete gallery after 900 ms. Home startup also promoted three below-fold Work covers and immediately started the next hero download while speculative route chunks were warming. Public pages additionally initialized Admin-only scans and broad body observers.
+
+The accepted implementation moves the gallery track directly once per animation frame and commits React state only when a gesture finishes. It keeps the current and adjacent slide mounted, gives the visible Work photo high fetch priority, preloads only the next slide on unconstrained connections, reduces settle time to 320 ms, delays the second hero request, and defers route chunk warming until after load and an idle window. Admin enhancement exits on public routes, and public observers are scoped to the application root. Layout, colors, content, gallery controls, 9:16 framing and Cloudinary responsive delivery remain unchanged.
+
+The protected `app` and `tests` fingerprints are updated for this intentional performance change. TypeScript, production build and 126 tests pass locally. Preview interaction and deployment status must be recorded after the branch build completes; no mobile timing number is claimed without a physical-device trace.
+
+### Cold Home completion
+
+The initial Home path now renders six stable Recent Work slots immediately and receives current Works, images, Reviews and Settings through the 30-second edge-cached `/api/public-home` bootstrap. Its joined Work/Image request removes the dependent browser round trip, early responsive cover preloads use low priority behind the hero, and successful bootstrap data prevents a duplicate browser database read. Validated previously confirmed content supplies an immediate returning-visitor render, while the existing direct Supabase path remains the cold-edge failure fallback. Mobile Recent Work covers now declare the actual three-column width and include a 160 px Cloudinary candidate.
+
+This intentional completion changes the protected `app`, `functions`, `index.html` and `tests` objects. The full production verification now contains 131 tests, including executable edge-cache, joined mapping, stored-data validation, duplicate-read prevention and cold-slot coverage. Preview verification remains required before merge.
+
+PR #138 preview `b1b00248` deployed successfully but correctly failed the acceptance gate because Cloudflare Preview lacked the production Function environment: `/api/public-home` and `/api/health` both returned 503. The page eventually recovered through the older React data path, which was not accepted as instant Home behavior. The candidate therefore adds a pre-React direct fallback using the already-public Vite Supabase configuration, retaining the joined six-Work/Image query and responsive cover preloads. A new executable regression test forces the edge 503 and proves the early fallback completes before the React entry. A replacement exact-head preview and workflow pass are required.

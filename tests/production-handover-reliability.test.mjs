@@ -30,8 +30,9 @@ test("Work image uploads use bounded concurrency while preserving ordered result
 test("home navigation restores only confirmed live Works and revalidates them", async () => {
   const site = await read("../app/rupantar/site.tsx");
 
-  assert.match(site, /const initialHomeWorks = isSupabaseConfigured \? \[\] : initialWorks;/);
-  assert.match(site, /const homeWorksConfirmedRef = useRef\(!isSupabaseConfigured\);/);
+  assert.match(site, /const storedHome = isSupabaseConfigured \? storedHomeContent\(\) : null;/);
+  assert.match(site, /const initialHomeWorks = isSupabaseConfigured \? storedHome\?\.works \?\? \[\] : initialWorks;/);
+  assert.match(site, /const homeWorksConfirmedRef = useRef\(!isSupabaseConfigured \|\| initialHomeWorks\.length > 0\);/);
   assert.match(site, /if \(!homeWorksConfirmedRef\.current\) \{[\s\S]*setWorks\(\[\]\);[\s\S]*setWorksLoading\(isSupabaseConfigured\);[\s\S]*return;/);
   assert.match(site, /homeWorksRef\.current = content\.works;\s*homeWorksConfirmedRef\.current = true;/);
   assert.match(site, /if \(route\.kind === "home"\) \{[\s\S]*restoreHomeWorks\(\);[\s\S]*setPage\("home"\);[\s\S]*refreshContent\(\)/);

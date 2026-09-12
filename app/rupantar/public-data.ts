@@ -32,6 +32,11 @@ export class PublicReadCache {
     this.entries.set(key, { value, confirmedAt: this.now(), revision });
     this.trim();
   }
+  prime<T>(key: string, value: T, onStore?: (value: T, revision: number) => void): void {
+    const revision = ++this.revision;
+    this.seed(key, value, revision);
+    onStore?.(value, revision);
+  }
   read<T>(key: string, loader: () => Promise<T>, onStore?: (value: T, revision: number) => void): Promise<T> {
     const previous = this.entries.get(key);
     if (previous?.pending) return previous.pending as Promise<T>;
@@ -86,6 +91,9 @@ export const peekLinkedWorkForBlog = (slug: string) => cache.peek<BlogLinkedWork
 
 export function loadPublicContent() {
   return cache.read("home", repository.loadPublicContent, (content, revision) => rememberWorks(content.works, revision));
+}
+export function primePublicContent(content: Awaited<ReturnType<typeof repository.loadPublicContent>>) {
+  cache.prime("home", content, (value, revision) => rememberWorks(value.works, revision));
 }
 export function loadPublicWorksPage(offset = 0, limit = 12, category = "all") {
   // Admin requires a current complete collection, never the public cache.

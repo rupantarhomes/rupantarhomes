@@ -20,7 +20,7 @@ export const flush = async () => { for (let i = 0; i < 30; i++) await Promise.re
 export function dataFixture(repository, now = () => Date.now()) {
   return compile(source('app/rupantar/public-data.ts'), { './repository': repository, './blog-project-link': repository }, { Date: { now } });
 }
-export function siteFixture(repository, { path = '/', now } = {}) {
+export function siteFixture(repository, { path = '/', now, homeBootstrap } = {}) {
   const data = dataFixture(repository, now);
   const routes = compile(source('app/rupantar/routes.ts'), {});
   const effects = [], slots = [], listeners = new Map(), errors = [], scrolls = [];
@@ -51,6 +51,13 @@ export function siteFixture(repository, { path = '/', now } = {}) {
     react: hooks, './repository': { ...repository, getCurrentAdminSession: async () => null }, './public-data': data,
     './routes': routes, './supabase': { isSupabaseConfigured: true }, './blog': { emptyBlogForm: {} },
     './cloudinary': {}, './types': {}, './shared': {}, './home-page': {}, './error-boundary': {},
+    './home-bootstrap': {
+      storedHomeContent: () => homeBootstrap?.stored ?? null,
+      earlyHomeContent: async () => {
+        if (homeBootstrap?.early) return homeBootstrap.early;
+        throw Error('bootstrap unavailable in navigation fixture');
+      },
+    },
     './data': { initialWorks: [{ id: 'DEMO' }], initialReviews: [], initialSettings: {}, emptyEstimate: {}, emptyQuery: {}, emptyWork: {}, emptyReview: {} },
     './public-pages': fallback, './blog-pages': fallback,
   };

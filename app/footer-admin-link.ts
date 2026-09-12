@@ -29,8 +29,11 @@ function ensureFooterAdminLink() {
   bottomBar.append(separator, link);
 }
 
-const observer = new MutationObserver(ensureFooterAdminLink);
-observer.observe(document.body, { childList: true, subtree: true });
+const root = document.getElementById("root");
+if (root) {
+  const observer = new MutationObserver(ensureFooterAdminLink);
+  observer.observe(root, { childList: true, subtree: true });
+}
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", ensureFooterAdminLink, { once: true });

@@ -86,6 +86,17 @@ test('production cold Home never uses demo Works and restores confirmed content 
   requests[1].resolve(content([work('b')])); await flush(); assert.equal(site.render().works[0].id, 'b');
 });
 
+test('edge Home bootstrap renders confirmed Works without a duplicate browser database read', async () => {
+  const { repository, requests } = fixture();
+  const bootstrap = content(Array.from({ length: 6 }, (_, index) => work(`home-${index}`)));
+  const site = siteFixture(repository, { homeBootstrap: { early: { ...bootstrap, confirmedAt: 100 } } });
+  site.mount();
+  await flush();
+  assert.equal(site.render().works.length, 6);
+  assert.equal(site.render().worksLoading, false);
+  assert.equal(requests.length, 0);
+});
+
 test('Works → Home → Works preserves page data and makes no repeat fresh reads', async () => {
   const { repository, requests } = fixture(); const site = siteFixture(repository);
   site.mount(); await flush(); requests[0].resolve(content([work('a')])); await flush();

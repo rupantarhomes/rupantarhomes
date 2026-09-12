@@ -30,36 +30,25 @@ function warmPublicChunks() {
   void import("./rupantar/blog-pages").catch((error) => console.error("Unable to prefetch blog pages", error));
 }
 
-function prioritizeFirstWorkRow(root: HTMLElement): boolean {
-  const images = Array.from(root.querySelectorAll<HTMLImageElement>(".rh-recent-work-card img")).slice(0, 3);
-  if (!images.length) return false;
-  for (const [index, image] of images.entries()) {
-    image.loading = "eager";
-    image.fetchPriority = index === 0 ? "high" : "auto";
-  }
-  return images.length >= 3;
-}
+type IdleWindow = Window & typeof globalThis & {
+  requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+  cancelIdleCallback?: (handle: number) => void;
+};
 
 function initPublicPerformanceRuntime() {
   if (parseRoute(window.location.pathname).kind === "admin") return;
 
+  const idleWindow = window as IdleWindow;
   let chunkTimer = 0;
-  let imageTimer = 0;
-  let imageObserver: MutationObserver | null = null;
-  const frame = window.requestAnimationFrame(() => {
-    chunkTimer = window.setTimeout(warmPublicChunks, 60);
-    imageTimer = window.setTimeout(() => {
-      const root = document.getElementById("root");
-      if (!root || prioritizeFirstWorkRow(root)) return;
-      imageObserver = new MutationObserver(() => {
-        if (prioritizeFirstWorkRow(root)) {
-          imageObserver?.disconnect();
-          imageObserver = null;
-        }
-      });
-      imageObserver.observe(root, { childList: true, subtree: true });
-    }, 250);
-  });
+  let idleHandle: number | undefined;
+  const scheduleChunkWarm = () => {
+    chunkTimer = window.setTimeout(() => {
+      if (idleWindow.requestIdleCallback) idleHandle = idleWindow.requestIdleCallback(warmPublicChunks, { timeout: 2500 });
+      else warmPublicChunks();
+    }, 900);
+  };
+  if (document.readyState === "complete") scheduleChunkWarm();
+  else window.addEventListener("load", scheduleChunkWarm, { once: true });
 
   const onClick = (event: MouseEvent) => {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -78,10 +67,9 @@ function initPublicPerformanceRuntime() {
 
   document.addEventListener("click", onClick, true);
   window.addEventListener("pagehide", () => {
-    window.cancelAnimationFrame(frame);
     if (chunkTimer) window.clearTimeout(chunkTimer);
-    if (imageTimer) window.clearTimeout(imageTimer);
-    imageObserver?.disconnect();
+    if (idleHandle !== undefined) idleWindow.cancelIdleCallback?.(idleHandle);
+    window.removeEventListener("load", scheduleChunkWarm);
     document.removeEventListener("click", onClick, true);
   }, { once: true });
 }
