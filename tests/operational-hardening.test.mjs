@@ -24,6 +24,12 @@ test("production monitoring is read-only, scheduled, and opens one recoverable i
   assert.match(smoke, /directEvidence\.home = true/);
   assert.match(smoke, /directEvidence\.shell = true/);
   assert.match(smoke, /directEvidence\.appEntry = true/);
+  assert.match(smoke, /isKnownPlatformConsoleNoise/);
+  assert.match(smoke, /static\\\.cloudflareinsights\\\.com/);
+  assert.match(smoke, /status >= 500 && sameProductionOrigin\(url\)/);
+  assert.match(smoke, /waitForImageDecode/);
+  assert.match(smoke, /did not decode within 15s/);
+  assert.doesNotMatch(smoke, /extraHTTPHeaders/);
   assert.doesNotMatch(smoke, /method:\s*["'](?:POST|PUT|PATCH|DELETE)["']/);
 });
 
