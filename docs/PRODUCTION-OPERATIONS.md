@@ -37,6 +37,13 @@ Suggested checks:
 - alert after 2-3 consecutive failures to avoid one transient false alarm;
 - record incident start/end and root cause.
 
+The repository now enforces this with `.github/workflows/production-monitor.yml`.
+It runs every 15 minutes, after every `main` push, and on demand. The smoke is
+read-only and checks both mobile and desktop rendering, the six Home cards,
+Works image delivery and priority, Work detail, Blog/Post navigation, both
+Back-to-Posts controls, `/api/health`, `/api/public-home`, and current Work cover
+availability. One GitHub incident is opened on failure and closed after recovery.
+
 ## Database backup and restore
 
 The production Supabase project currently uses the Free plan. Treat managed
@@ -55,6 +62,24 @@ Until then:
    Settings, Queries, Estimates, Leads, Admin membership, functions, and key
    constraints.
 5. Record backup date, checksum/location, migration head, and restore-test date.
+
+`.github/workflows/encrypted-supabase-backup.yml` automates the weekly export.
+Repository administrators must configure these GitHub Actions secrets before
+enabling reliance on it:
+
+- `SUPABASE_DB_URL`: the production session-pooler/direct database URL;
+- `BACKUP_ENCRYPTION_PASSPHRASE`: a long unique passphrase stored separately
+  from GitHub and Supabase.
+
+The workflow exports filtered roles, schema, and data separately with the pinned Supabase CLI,
+checks the expected Works data, records SHA-256 checksums, encrypts the archive
+with AES-256/PBKDF2, removes plaintext from the runner, and retains only the
+encrypted GitHub artifact for 30 days. A failed export opens one GitHub incident.
+Never restore this archive into production as a test. Quarterly restoration must
+use a disposable project and the owner must verify the checksums first.
+Supabase Auth provider settings, API keys, JWT secrets, Cloudinary binaries, and
+Cloudflare configuration are separate recovery items and are not recreated by
+this database archive.
 
 After moving to a paid Supabase plan, document the actual backup retention and
 whether PITR is enabled. Keep periodic off-platform exports for independent
@@ -221,6 +246,18 @@ Quarterly:
 - verify GitHub `main` protection remains active;
 - verify health monitoring still alerts;
 - confirm backup/export and restore-test records are current.
+
+Dependency versions are locked by `package-lock.json`; CI uses `npm ci` and
+fails builds that exceed the committed JavaScript, CSS, image, gzip, or total
+artifact budgets. Dependabot proposes weekly npm and monthly GitHub Actions
+updates, but those PRs must never auto-merge and must pass the complete baseline.
+
+Supabase's current security advisor also reports leaked-password protection as
+disabled. Enable it in the Supabase Auth password-security settings after
+confirming plan availability, then test an authorized Admin login. The other
+current advisor notices concern intentionally private RLS tables and
+authenticated SECURITY DEFINER Admin functions; audit their explicit Admin
+checks before changing grants rather than applying an automatic remediation.
 
 ## Incident priorities
 

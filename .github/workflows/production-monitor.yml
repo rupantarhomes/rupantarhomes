@@ -1,0 +1,72 @@
+name: Production Monitor
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: production-monitor
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    name: Public production smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.16.0"
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - id: smoke
+        continue-on-error: true
+        env:
+          PRODUCTION_URL: https://rupantarhomes.com
+        run: |
+          attempts=1
+          if [ "${{ github.event_name }}" = "push" ]; then attempts=12; fi
+          for attempt in $(seq 1 "$attempts"); do
+            npm run smoke:production && exit 0
+            if [ "$attempt" -lt "$attempts" ]; then sleep 20; fi
+          done
+          exit 1
+      - name: Open one production incident
+        if: steps.smoke.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = "Production monitor: Rupantar Homes smoke failed";
+            const { data } = await github.rest.issues.listForRepo({ owner: context.repo.owner, repo: context.repo.repo, state: "open", per_page: 100 });
+            if (!data.some((issue) => issue.title === title)) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body: `The read-only production smoke failed. Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nNo production writes were attempted.`,
+              });
+            }
+      - name: Close recovered production incident
+        if: steps.smoke.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = "Production monitor: Rupantar Homes smoke failed";
+            const { data } = await github.rest.issues.listForRepo({ owner: context.repo.owner, repo: context.repo.repo, state: "open", per_page: 100 });
+            for (const issue of data.filter((item) => item.title === title)) {
+              await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: issue.number, body: "The production smoke has recovered and is passing again." });
+              await github.rest.issues.update({ owner: context.repo.owner, repo: context.repo.repo, issue_number: issue.number, state: "closed" });
+            }
+      - name: Fail unhealthy production
+        if: steps.smoke.outcome == 'failure'
+        run: exit 1
