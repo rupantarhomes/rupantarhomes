@@ -651,7 +651,7 @@ Verification requirement: `npm run verify`, Cloudflare Pages preview, and post-m
 ## Final instant public UX architecture — 2026-09-14
 
 Starting production main: `7278fe7f1599b0737c62c8102f70b8aa201ebe41`.
-Code-bearing checkpoint: `8b97737e4b14a1adc679808b00b2120c095fb748`.
+Code-bearing checkpoint: `6b9a2c4c65541013470f8f378fe2a8ef594a6929`.
 Branch: `performance/final-instant-ux`.
 
 This coherent pass replaces fragmented public navigation/loading behavior with one immediate scroll-reset owner, one route-preparation owner, edge-first Works and Blog reads, validated persistent last-known-good snapshots, prepared Blog/Work cross-links, and a native horizontal scroll-snap Work gallery. Unknown Network Information API support is normal rather than slow, the first-session Brand Intro is non-blocking and bounded to 480 ms, and Admin-only CSS/runtime no longer enters the public startup path. The approved rendered design, routes, content, responsive image quality, Cloudinary `f_auto`/`q_auto:good` delivery, Admin writes, Supabase schema/RLS/Auth/RPC security, Cloudinary upload/save/delete lifecycle, inquiries, CSP, and production data are unchanged.
@@ -661,9 +661,9 @@ Local verification passed strict TypeScript, production build, all performance b
 Accepted protected fingerprints for this code checkpoint:
 
 - `.github/workflows/production-baseline.yml`: `f489ae7c2686c4c0fe9976fe566cdfc209b36bfd`
-- `app`: `75d2502606bed3fabcc64672ad83cc32f9b0afca`
+- `app`: `7219924197292b18b502ffc72e4547e7bf62920c`
 - `functions`: `ab40ccc48b74d75d9dd8a1380b0f2d27e30b60b3`
 - `index.html`: `d93320b1ae772f7014e76cd2cb4121cf1860f7c4`
 - `package.json`: `106235e81f233042da49b371dc58c613b60f7ad5`
 - `scripts`: `26e276627e7989c36e2bb192a263071f1bab4389`
-- `tests`: `0018659170da549f031a7634efa75d774bddf271`
+- `tests`: `9d6fbcc9d6dd01290bd8a3328bd2a55ee4ba1352`
