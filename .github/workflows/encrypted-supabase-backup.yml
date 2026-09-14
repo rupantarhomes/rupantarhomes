@@ -1,0 +1,77 @@
+name: Encrypted Supabase Backup
+
+on:
+  schedule:
+    - cron: "20 2 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: encrypted-supabase-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require backup secrets
+        run: |
+          test -n "$SUPABASE_DB_URL"
+          test -n "$BACKUP_ENCRYPTION_PASSPHRASE"
+      - name: Export schema and data
+        run: |
+          mkdir -p backup
+          npx -y supabase@2.117.0 db dump --db-url "$SUPABASE_DB_URL" -f backup/roles.sql --role-only
+          npx -y supabase@2.117.0 db dump --db-url "$SUPABASE_DB_URL" -f backup/schema.sql
+          npx -y supabase@2.117.0 db dump --db-url "$SUPABASE_DB_URL" -f backup/data.sql --use-copy --data-only
+          test -s backup/roles.sql
+          test -s backup/schema.sql
+          test -s backup/data.sql
+          grep -q "CREATE TABLE.*works" backup/schema.sql
+          grep -q "COPY .*works" backup/data.sql
+          sha256sum backup/roles.sql backup/schema.sql backup/data.sql > backup/SHA256SUMS
+      - name: Encrypt backup
+        run: |
+          tar -C backup -czf backup.tar.gz roles.sql schema.sql data.sql SHA256SUMS
+          openssl enc -aes-256-cbc -salt -pbkdf2 -iter 200000 -in backup.tar.gz -out rupantar-supabase-${{ github.run_id }}.tar.gz.enc -pass env:BACKUP_ENCRYPTION_PASSPHRASE
+          rm -rf backup backup.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rupantar-supabase-${{ github.run_id }}
+          path: rupantar-supabase-${{ github.run_id }}.tar.gz.enc
+          retention-days: 30
+          if-no-files-found: error
+      - name: Close recovered backup incident
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = "Backup monitor: encrypted Supabase export failed";
+            const { data } = await github.rest.issues.listForRepo({ owner: context.repo.owner, repo: context.repo.repo, state: "open", per_page: 100 });
+            for (const issue of data.filter((item) => item.title === title)) {
+              await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: issue.number, body: "The encrypted Supabase export has recovered and completed successfully." });
+              await github.rest.issues.update({ owner: context.repo.owner, repo: context.repo.repo, issue_number: issue.number, state: "closed" });
+            }
+      - name: Open one backup incident
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = "Backup monitor: encrypted Supabase export failed";
+            const { data } = await github.rest.issues.listForRepo({ owner: context.repo.owner, repo: context.repo.repo, state: "open", per_page: 100 });
+            if (!data.some((issue) => issue.title === title)) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body: `The encrypted weekly database export failed. Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              });
+            }

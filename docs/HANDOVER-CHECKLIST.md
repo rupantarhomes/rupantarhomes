@@ -125,6 +125,11 @@ Only use clearly disposable records/media and remove them after verification.
 - [ ] Restore procedure in `docs/PRODUCTION-OPERATIONS.md` is understood
 - [ ] Cloudinary backup/account policy is understood
 - [ ] Incident rollback uses a reviewed revert PR, not force-push/hot editing
+- [ ] GitHub `SUPABASE_DB_URL` backup secret is configured
+- [ ] GitHub `BACKUP_ENCRYPTION_PASSPHRASE` is configured and separately recoverable
+- [ ] Encrypted Supabase Backup workflow has completed successfully
+- [ ] One encrypted archive checksum has been verified in a disposable restore drill
+- [ ] Production Monitor workflow is green and its incident notification reaches the owner
 
 ## 11. Credentials rotation
 

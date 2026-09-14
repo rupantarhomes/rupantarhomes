@@ -607,3 +607,28 @@ The intentional production-lock updates are limited to `app` and `tests`:
 - `tests`: `32dd291593e9c0341f0c8d4539eb268846c602db`
 
 Strict TypeScript, the production build, all 134 deterministic regression tests, the frontend behavior guard, exact-head CI/preview verification, and post-merge production smoke testing are required before final handover. No Home component, Supabase schema/RLS/RPC/Auth, Cloudinary upload contract, Admin mutation behavior, or deployment configuration is changed.
+
+## Operational resilience hardening — 2026-09-14
+
+Starting production main: `8eb7c808250477303eb709e53636877e988e26b9`.
+
+This change adds only operational safety controls. The public and Admin UI, Supabase schema/RLS/RPC/Auth behavior, Cloudinary upload lifecycle, forms, content, and Cloudflare application runtime remain unchanged.
+
+- CI now installs the committed dependency graph with `npm ci` and enforces explicit JavaScript, CSS, gzip, image, and total-build budgets.
+- A read-only Playwright smoke runs every 15 minutes, after `main` pushes, and on demand across mobile and desktop. It checks the health and Home endpoints, six Home cards, live Work covers, Works/Work detail, Blog/Post navigation, direct refresh, and both Back-to-Posts controls. One GitHub incident opens on failure and closes on recovery.
+- A weekly workflow creates separate Supabase roles/schema/data dumps with pinned CLI `2.117.0`, validates expected content, records SHA-256 checksums, encrypts with AES-256/PBKDF2 before upload, deletes runner plaintext, and retains the encrypted artifact for 30 days. It cannot succeed until the repository owner configures `SUPABASE_DB_URL` and `BACKUP_ENCRYPTION_PASSPHRASE` secrets.
+- Exact dependency versions and `package-lock.json` are protected; Dependabot may propose bounded updates but cannot bypass the existing PR gates.
+- The runbook and handover checklist now include monitoring ownership, encrypted-backup setup, disposable restore drills, and current Supabase advisor review.
+
+Accepted protected fingerprints for the exact PR tree:
+
+- `.github/dependabot.yml`: `4c2c1fde36f600b701f0d3c2a3917af7df032e7d`
+- `.github/workflows/production-baseline.yml`: `76c184ce8921c7b62ef464167f63ed5fc8a9c01f`
+- `.github/workflows/production-monitor.yml`: `39fe57bc0ec209391ad65c4fd6792fe8d41d7473`
+- `.github/workflows/encrypted-supabase-backup.yml`: `36edf5e234d6c67f6d6d35462b974c799b2650e0`
+- `package.json`: `e276e2e58f4333175588663e841f8335abadb54c`
+- `package-lock.json`: `2aec56549f52032ab671c5da71475717a97459c0`
+- `scripts`: `1fe773ba73e9243088c34e2dc1f75bd3bed4a0f1`
+- `tests`: `8a2a0a4906b15c596782fd1683c8ce322709e5f2`
+
+Local verification passed strict TypeScript, production build, all performance budgets, YAML parsing, and 137 deterministic tests. Exact-head GitHub CI, production smoke workflow execution, and Cloudflare deployment remain required before final acceptance.

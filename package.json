@@ -8,7 +8,9 @@
     "typecheck": "tsc --noEmit",
     "build": "vite build",
     "test": "node --test tests/*.test.mjs",
-    "verify": "npm run typecheck && npm run build && npm test",
+    "budget": "node scripts/check-performance-budget.mjs",
+    "smoke:production": "node scripts/production-smoke.mjs",
+    "verify": "npm run typecheck && npm run build && npm run budget && npm test",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -22,6 +24,7 @@
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "@vitejs/plugin-react": "6.0.5",
+    "playwright": "1.62.1",
     "typescript": "5.9.3",
     "vite": "8.2.1"
   }

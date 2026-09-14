@@ -4,9 +4,11 @@ import { readFileSync } from 'node:fs';
 const manifest = JSON.parse(readFileSync(new URL('../.github/production-lock.json', import.meta.url), 'utf8'));
 // The manifest must not be able to silently remove an existing protected path.
 const requiredPaths = [
-  '.cloudflare-deploy-trigger', '.env.example', '.github/workflows/production-baseline.yml',
+  '.cloudflare-deploy-trigger', '.env.example', '.github/dependabot.yml',
+  '.github/workflows/production-baseline.yml', '.github/workflows/production-monitor.yml',
+  '.github/workflows/encrypted-supabase-backup.yml',
   'app', 'eslint.config.mjs', 'functions', 'index.html', 'package.json', 'pnpm-workspace.yaml',
-  'public', 'scripts', 'supabase', 'tests', 'tsconfig.json', 'vite.config.ts', 'worker-configuration.d.ts',
+  'package-lock.json', 'public', 'scripts', 'supabase', 'tests', 'tsconfig.json', 'vite.config.ts', 'worker-configuration.d.ts',
 ];
 if (manifest.schema !== 1 || !manifest.objects || Array.isArray(manifest.objects)
   || !requiredPaths.every((path) => Object.hasOwn(manifest.objects, path))
