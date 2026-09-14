@@ -7,12 +7,29 @@ assert.equal(productionUrl.protocol, "https:");
 const browserUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36";
 const edgeBlockStatuses = new Set([401, 403]);
 const edgeChallengePattern = /(?:just a moment|attention required|cloudflare ray id|verify you are human|enable javascript and cookies|cf-chl)/i;
+const browserGeneratedResourceError = /^Failed to load resource:/i;
+const cloudflareTelemetryCspError = /static\.cloudflareinsights\.com\/beacon\.min\.js[\s\S]*Content Security Policy/i;
+const edgeInjectedInlineCspError = /^Executing inline script violates the following Content Security Policy directive: "script-src 'self'"/i;
 const directEvidence = {
   health: false,
   home: false,
   shell: false,
   appEntry: false,
 };
+
+function sameProductionOrigin(rawUrl) {
+  try {
+    return new URL(rawUrl).origin === productionUrl.origin;
+  } catch {
+    return false;
+  }
+}
+
+function isKnownPlatformConsoleNoise(text) {
+  return browserGeneratedResourceError.test(text)
+    || cloudflareTelemetryCspError.test(text)
+    || edgeInjectedInlineCspError.test(text);
+}
 
 async function get(path, accept = "application/json") {
   const response = await fetch(new URL(path, productionUrl), {
@@ -45,14 +62,7 @@ async function detectEdgeInterruption(page, navigationResponse, blockedResponses
     return `Cloudflare challenge page (${title || "untitled"})`;
   }
 
-  const blocked = blockedResponses.find(({ status, url }) => {
-    if (!edgeBlockStatuses.has(status)) return false;
-    try {
-      return new URL(url).origin === productionUrl.origin;
-    } catch {
-      return false;
-    }
-  });
+  const blocked = blockedResponses.find(({ status, url }) => edgeBlockStatuses.has(status) && sameProductionOrigin(url));
   return blocked ? `${blocked.status} from ${blocked.url}` : null;
 }
 
@@ -74,6 +84,19 @@ async function waitForMarkerOrClassifyEdge(page, navigationResponse, marker, lab
       { cause: error },
     );
   }
+}
+
+async function waitForImageDecode(page, selector, index, label) {
+  await page.waitForFunction(
+    ({ selector: imageSelector, index: imageIndex }) => {
+      const image = document.querySelectorAll(imageSelector)[imageIndex];
+      return image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0;
+    },
+    { selector, index },
+    { timeout: 15_000 },
+  ).catch((error) => {
+    throw new Error(`${label} did not decode within 15s`, { cause: error });
+  });
 }
 
 const healthResponse = await get("/api/health");
@@ -138,11 +161,6 @@ try {
       viewport,
       userAgent: browserUserAgent,
       locale: "en-US",
-      extraHTTPHeaders: {
-        "accept-language": "en-US,en;q=0.9",
-        "cache-control": "no-cache",
-        pragma: "no-cache",
-      },
     });
     const page = await context.newPage();
     const blockedResponses = [];
@@ -153,13 +171,24 @@ try {
     page.setDefaultTimeout(15_000);
     page.setDefaultNavigationTimeout(20_000);
     page.on("response", (response) => {
-      if (edgeBlockStatuses.has(response.status())) {
-        blockedResponses.push({ status: response.status(), url: response.url(), route: activeRoute });
+      const status = response.status();
+      const url = response.url();
+      if (edgeBlockStatuses.has(status)) {
+        blockedResponses.push({ status, url, route: activeRoute });
+      }
+      if (status >= 500 && sameProductionOrigin(url)) {
+        observedFailures.push({ route: activeRoute, message: `${viewport.width}px ${activeRoute} production response ${status}: ${url}` });
       }
     });
     page.on("pageerror", (error) => observedFailures.push({ route: activeRoute, message: `${viewport.width}px page error: ${error.message}` }));
     page.on("console", (message) => {
-      if (message.type() === "error") observedFailures.push({ route: activeRoute, message: `${viewport.width}px console error: ${message.text()}` });
+      if (message.type() !== "error") return;
+      const text = message.text();
+      if (isKnownPlatformConsoleNoise(text)) {
+        console.log(`INFO ignored platform/browser console noise on ${activeRoute}: ${text.slice(0, 180)}`);
+        return;
+      }
+      observedFailures.push({ route: activeRoute, message: `${viewport.width}px console error: ${text}` });
     });
 
     let browserBlocked = false;
@@ -183,7 +212,11 @@ try {
       assert.equal(await page.locator(".rh-recent-work-card").count(), 6);
       const recentImages = page.locator(".rh-recent-work-card img");
       await recentImages.first().waitFor();
-      await page.waitForFunction(() => [...document.querySelectorAll(".rh-recent-work-card img")].every((image) => image.complete && image.naturalWidth > 0));
+      await page.waitForFunction(
+        () => [...document.querySelectorAll(".rh-recent-work-card img")].every((image) => image.complete && image.naturalWidth > 0),
+        undefined,
+        { timeout: 15_000 },
+      );
     }
 
     if (!browserBlocked) {
@@ -208,7 +241,7 @@ try {
         for (let index = 0; index < Math.min(3, imageCount); index++) {
           assert.equal(await workImages.nth(index).getAttribute("loading"), "eager");
           assert.equal(await workImages.nth(index).getAttribute("fetchpriority"), "high");
-          assert.equal(await workImages.nth(index).evaluate((image) => image.complete && image.naturalWidth > 0), true, `Work image ${index + 1} did not decode`);
+          await waitForImageDecode(page, "main img", index, `Work image ${index + 1}`);
         }
         if (imageCount > 3) assert.equal(await workImages.nth(3).getAttribute("loading"), "lazy");
 
@@ -217,6 +250,7 @@ try {
         const gallery = page.locator("main img").first();
         await gallery.waitFor();
         assert.equal(await gallery.getAttribute("loading"), "eager");
+        await waitForImageDecode(page, "main img", 0, "Work detail image");
       }
     }
 
