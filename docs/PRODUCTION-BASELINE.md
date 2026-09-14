@@ -595,3 +595,15 @@ The initial Home path now renders six stable Recent Work slots immediately and r
 This intentional completion changes the protected `app`, `functions`, `index.html` and `tests` objects. The full production verification now contains 131 tests, including executable edge-cache, joined mapping, stored-data validation, duplicate-read prevention and cold-slot coverage. Preview verification remains required before merge.
 
 PR #138 preview `b1b00248` deployed successfully but correctly failed the acceptance gate because Cloudflare Preview lacked the production Function environment: `/api/public-home` and `/api/health` both returned 503. The page eventually recovered through the older React data path, which was not accepted as instant Home behavior. The candidate therefore adds a pre-React direct fallback using the already-public Vite Supabase configuration, retaining the joined six-Work/Image query and responsive cover preloads. A new executable regression test forces the edge 503 and proves the early fallback completes before the React entry. A replacement exact-head preview and workflow pass are required.
+
+
+### Non-Home media and Blog navigation completion
+
+Starting from merged PR #138, this follow-up leaves the approved Home path unchanged. Blog navigation intent now warms both the route chunk and the deduplicated public Blog read, so pointer intent and the subsequent route share one request. Blog articles provide an explicit “Back to Posts” control above and below the article. The Works listing prioritizes only its first visible desktop row, uses a tighter responsive Cloudinary candidate set, and leaves every below-fold card lazy. The About portrait declares its intrinsic dimensions, keeps high initial priority, and decodes asynchronously.
+
+The intentional production-lock updates are limited to `app` and `tests`:
+
+- `app`: `ffefff2c4466d3d7973b1a671d620588a6a9bb9f`
+- `tests`: `32dd291593e9c0341f0c8d4539eb268846c602db`
+
+Strict TypeScript, the production build, all 134 deterministic regression tests, the frontend behavior guard, exact-head CI/preview verification, and post-merge production smoke testing are required before final handover. No Home component, Supabase schema/RLS/RPC/Auth, Cloudinary upload contract, Admin mutation behavior, or deployment configuration is changed.

@@ -77,7 +77,7 @@ export function WorksPage({
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 mt-8">
-        {visibleWorks.map((work) => (
+        {visibleWorks.map((work, index) => (
           <div
             key={work.id}
             onClick={() => onWork(work.id)}
@@ -89,7 +89,13 @@ export function WorksPage({
             className="group cursor-pointer bg-white border border-zinc-100/90 rounded-[1.5rem] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-[border-color,box-shadow,transform] duration-300 ease-out hover:border-zinc-200 hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(0,0,0,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF1A3D]/30"
           >
             <div className="p-3">
-              <WorkPhoto image={work.images[0]} alt={work.title} />
+              <WorkPhoto
+                image={work.images[0]}
+                alt={work.title}
+                eager={index < 3}
+                sizes="(min-width: 1280px) 389px, (min-width: 1024px) calc((100vw - 112px) / 3), (min-width: 640px) calc((100vw - 68px) / 2), calc(100vw - 56px)"
+                widths={[320, 480, 768]}
+              />
             </div>
             <div className="px-5 pb-5">
               <div className="flex items-center gap-2 mb-2">
@@ -312,10 +318,13 @@ export function AboutPage({ navigate, settings }: { navigate: (page: Page) => vo
                 <img
                   src={brandAssets.founder}
                   alt="Gokul Kunwar Founder & Curator"
+                  width="320"
+                  height="320"
                   className="w-full h-full object-cover object-top"
                   style={{ imageRendering: "auto", filter: "contrast(1.06) brightness(1.03) saturate(1.06)" }}
                   loading="eager"
-                  decoding="sync"
+                  fetchPriority="high"
+                  decoding="async"
                 />
               </div>
               <div className="max-w-[180px] space-y-0">

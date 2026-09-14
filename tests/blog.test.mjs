@@ -93,3 +93,13 @@ test("Blog article uses original editorial title/body typography while keeping s
   assert.match(editorial, /main\.max-w-\\\[1280px\\\] > article\.max-w-\\\[800px\\\] > h1 \+ div \{[\s\S]*?font-size: 15px;[\s\S]*?line-height: 1\.72;/);
   assert.match(editorial, /@media \(max-width: 639px\) \{[\s\S]*?main\.max-w-\\\[1280px\\\] > article\.max-w-\\\[800px\\\] > h1 \{[\s\S]*?font-size: 30px;[\s\S]*?line-height: 1\.16;/);
 });
+
+test("Blog articles provide Back to Posts controls above and below the article", async () => {
+  const [pages, navigation] = await Promise.all([
+    read("app/rupantar/blog-pages.tsx"),
+    read("app/rupantar/blog-navigation.tsx"),
+  ]);
+  assert.match(pages, /<BackToPostsButton navigate=\{navigate\} className="mb-8" \/>/);
+  assert.match(pages, /Back to Posts<\/button>/);
+  assert.match(navigation, /onClick=\{\(\) => navigate\("blog"\)\}/);
+});
