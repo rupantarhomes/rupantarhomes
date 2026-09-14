@@ -102,11 +102,11 @@ test("Blog article uses original editorial title/body typography while keeping s
   assert.match(editorial, /@media \(max-width: 639px\) \{[\s\S]*?main\.max-w-\\\[1280px\\\] > article\.max-w-\\\[800px\\\] > h1 \{[\s\S]*?font-size: 30px;[\s\S]*?line-height: 1\.16;/);
 });
 
-test("Blog articles keep only the lower Back to Posts control", async () => {
+test("Blog articles keep Back to Posts controls above and below the article", async () => {
   const pages = await read("app/rupantar/blog-pages.tsx");
   const [, articlePage] = pages.split("export function BlogArticlePage");
 
-  assert.doesNotMatch(articlePage, /BackToPostsButton/);
-  assert.equal((articlePage.match(/Back to Posts/g) ?? []).length, 1);
+  assert.equal((articlePage.match(/Back to Posts/g) ?? []).length, 2);
   assert.match(articlePage, /navigate\("blog"\)/);
+  assert.match(articlePage, /onClick=\{\(event\) => \{ event\.preventDefault\(\); onWork\(linkedWork\); \}\}/);
 });

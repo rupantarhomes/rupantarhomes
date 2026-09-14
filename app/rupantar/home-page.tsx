@@ -2,6 +2,8 @@
 
 import {
   ArrowRight,
+  ChevronLeft,
+  ChevronRight,
   Check,
   ImageUp,
   Instagram,
@@ -14,10 +16,10 @@ import {
   Star,
   Upload,
 } from "lucide-react";
-import { useEffect, useState, type Dispatch, type MouseEvent as ReactMouseEvent, type SetStateAction } from "react";
+import { useEffect, useRef, useState, type Dispatch, type MouseEvent as ReactMouseEvent, type SetStateAction } from "react";
 import { heroPreloadDelayMs } from "../network-policy";
 import { categories, interiorDesignCategories } from "./data";
-import { categoryIcons, PhotoPlaceholder, WorkPhoto } from "./shared";
+import { categoryIcons, facebookUrl, FacebookIcon, PhotoPlaceholder, WorkPhoto } from "./shared";
 import type {
   EstimateForm,
   Page,
@@ -59,8 +61,8 @@ const heroSlides = [
 const mobileHeroMedia = "(max-width: 639px)";
 const workSteps = [
   { step: "01", icon: ImageUp, title: "Send Photo", desc: "Share site photos, video & measurements on WhatsApp. Get instant budget range." },
-  { step: "02", icon: Ruler, title: "Home Visit, Samples & 3D", desc: "We visit, show laminates, ply, handles. You get 3D design & final quote." },
-  { step: "03", icon: ShieldCheck, title: "Fabrication & Install", desc: "Factory finish at Kathmandu workshop. Clean install in 7-21 days." },
+  { step: "02", icon: Ruler, title: "Home Visit, Samples & design", desc: "We visit, show laminates, ply, handles. You get design preview & final quote." },
+  { step: "03", icon: ShieldCheck, title: "Fabrication & Install", desc: "Proper Finishing. Clean installation." },
 ] as const;
 const maximumAttachmentBytes = 10 * 1024 * 1024;
 const acceptedAttachmentTypes = new Set(["image/jpeg", "image/png"]);
@@ -107,6 +109,16 @@ export function HomePage({
   const [heroSlidesReady, setHeroSlidesReady] = useState<Set<string>>(
     () => new Set([heroSlides[0].desktop, heroSlides[0].mobile]),
   );
+  const reviewTrackRef = useRef<HTMLDivElement>(null);
+
+  const scrollReviews = (direction: -1 | 1) => {
+    const track = reviewTrackRef.current;
+    const card = track?.querySelector<HTMLElement>(".rh-review-card");
+    if (!track || !card) return;
+    const styles = window.getComputedStyle(track);
+    const gap = Number.parseFloat(styles.columnGap || styles.gap || "20") || 20;
+    track.scrollBy({ left: direction * (card.getBoundingClientRect().width + gap), behavior: "smooth" });
+  };
 
   const openWorkCard = (event: ReactMouseEvent<HTMLElement>, id: string) => {
     if (isInteractiveTarget(event.target)) return;
@@ -303,10 +315,12 @@ export function HomePage({
                 event.preventDefault();
                 onWork(work.id);
               }}
-              className="rh-recent-work-card group h-full cursor-pointer bg-white border border-zinc-100/90 rounded-[1.5rem] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-[border-color,box-shadow,transform] duration-300 ease-out hover:border-zinc-200 hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(0,0,0,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF1A3D]/30"
+              className="rh-recent-work-card rh-work-card group h-full cursor-pointer bg-white border border-zinc-100/90 rounded-[1.5rem] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-[border-color,box-shadow,transform] duration-300 ease-out hover:border-zinc-200 hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(0,0,0,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF1A3D]/30"
             >
-              <div className="p-3">
+              <div className="rh-work-media-shell p-3">
                 <WorkPhoto image={work.images[0]} alt={work.title}
+                  mediaClassName="rh-work-media-slot"
+                  overlay={<span className="rh-work-location"><MapPin /> {work.location}</span>}
                   sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 33vw" widths={[160, 320, 480, 768]} />
               </div>
               <div className="px-5 pb-5">
@@ -319,7 +333,7 @@ export function HomePage({
                   )}
                 </div>
                 <div className="font-heading font-semibold text-[16px] leading-tight">{work.title}</div>
-                <div className="text-[12px] text-zinc-500 mt-1 flex items-center gap-1">
+                <div className="rh-work-location-source text-[12px] text-zinc-500 mt-1 flex items-center gap-1">
                   <MapPin className="w-3 h-3" /> {work.location}
                 </div>
                 <div className="text-[13px] text-zinc-600 mt-2.5 leading-5 line-clamp-2">{work.shortDesc}</div>
@@ -354,7 +368,7 @@ export function HomePage({
             <h3 className="font-heading text-[28px] sm:text-[32px] font-bold mt-1">Crafted for Nepali Homes</h3>
           </div>
           <div className="hidden sm:block text-[13px] text-zinc-500 max-w-[320px] text-right">
-            8 core services from our Kathmandu workshop. Click any card to see works.
+            3 core services. Click any card to see works.
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
@@ -502,25 +516,30 @@ export function HomePage({
         </div>
       </section>
 
-      <section className="py-12 sm:py-16">
+      <section className="rh-review-section py-12 sm:py-16">
         <div className="flex items-end justify-between mb-7">
           <div>
             <div className="text-[11px] tracking-[0.18em] uppercase font-semibold text-[#FF1A3D]">Client Reviews</div>
             <h3 className="font-heading text-[26px] sm:text-[30px] font-bold mt-1">Real Homes, Real Reviews</h3>
           </div>
-          <div className="hidden sm:flex items-center gap-1 text-[12px] font-medium"><Star className="w-4 h-4 fill-[#FF1A3D] text-[#FF1A3D]" /> 4.9 average from 80+ homes</div>
+          <div className="hidden sm:flex items-center gap-1 text-[12px] font-medium"><Star className="w-4 h-4 fill-[#FF1A3D] text-[#FF1A3D]" /> 4.9 average from 80+ homes
+            <span className="rh-review-controls" role="group" aria-label="Review carousel controls">
+              <button type="button" className="rh-review-arrow" aria-label="Previous review" onClick={() => scrollReviews(-1)}><ChevronLeft /></button>
+              <button type="button" className="rh-review-arrow" aria-label="Next review" onClick={() => scrollReviews(1)}><ChevronRight /></button>
+            </span>
+          </div>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        <div ref={reviewTrackRef} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           {reviews.map((review) => (
-            <div key={review.id} className="rounded-[1.5rem] border border-zinc-100 p-5 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+            <div key={review.id} className="rh-review-card rounded-[1.5rem] border border-zinc-100 p-5 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
               <div className="hidden" />
-              <div className="flex gap-0.5 mb-2">{Array.from({ length: review.rating }).map((_, index) => <Star key={index} className="w-3.5 h-3.5 fill-[#FF1A3D] text-[#FF1A3D]" />)}</div>
-              <div className="text-[13px] leading-5 text-zinc-700 line-clamp-4">“{review.message}”</div>
-              <div className="mt-4 flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-zinc-900 text-white flex items-center justify-center text-[11px] font-semibold">{review.name[0]}</div>
-                <div><div className="text-[12px] font-semibold leading-none">{review.name}</div><div className="text-[11px] text-zinc-500 mt-1">{review.location}</div></div>
+              <div className="rh-review-stars flex gap-0.5 mb-2">{Array.from({ length: review.rating }).map((_, index) => <Star key={index} className="w-3.5 h-3.5 fill-[#FF1A3D] text-[#FF1A3D]" />)}</div>
+              <div className="rh-review-quote text-[13px] leading-5 text-zinc-700 line-clamp-4">“{review.message}”</div>
+              <div className="rh-review-author mt-4 flex items-center gap-2">
+                <div className="rh-review-monogram w-8 h-8 rounded-full bg-zinc-900 text-white flex items-center justify-center text-[11px] font-semibold">{review.name[0]}</div>
+                <div><div className="rh-review-author-name text-[12px] font-semibold leading-none">{review.name}</div><div className="rh-review-location text-[11px] text-zinc-500 mt-1">{review.location}</div></div>
               </div>
-              <a href={review.instagramLink || "#"} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex h-7 px-3 rounded-full bg-[#FFF0F2] text-[#FF1A3D] text-[11px] font-medium items-center hover:bg-[#FF1A3D] hover:text-white transition">View Review →</a>
+              {review.instagramLink && <a href={review.instagramLink} target="_blank" rel="noopener noreferrer" className="rh-review-link mt-3 inline-flex h-7 px-3 rounded-full bg-[#FFF0F2] text-[#FF1A3D] text-[11px] font-medium items-center hover:bg-[#FF1A3D] hover:text-white transition">View Review →</a>}
             </div>
           ))}
         </div>
@@ -530,11 +549,12 @@ export function HomePage({
         <div className="rounded-[2rem] bg-[#FFF0F2] border border-[#FF1A3D]/10 p-7 sm:p-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div>
             <h3 className="font-heading text-[22px] sm:text-[24px] font-bold">Connect With Us</h3>
-            <p className="text-[13px] text-zinc-600 mt-1.5 max-w-[420px]">Daily site updates, before-after reels and material tips. Follow Rupantar Homes on Instagram &amp; TikTok.</p>
+            <p className="text-[13px] text-zinc-600 mt-1.5 max-w-[420px]">Daily site updates, before-after reels and material tips. Follow Rupantar Homes on Instagram, TikTok &amp; Facebook.</p>
           </div>
           <div className="flex gap-3">
             <a href={settings.instagram} target="_blank" rel="noopener noreferrer" className="h-11 px-6 rounded-full bg-white border border-zinc-200 text-[13px] font-medium flex items-center gap-2 hover:border-[#FF1A3D]/30 transition"><Instagram className="w-4 h-4" /> Instagram</a>
             <a href={settings.tiktok} target="_blank" rel="noopener noreferrer" className="h-11 px-6 rounded-full bg-zinc-900 text-white text-[13px] font-medium flex items-center gap-2 hover:opacity-90 transition"><Music2 className="w-4 h-4" /> TikTok</a>
+            <a href={facebookUrl} target="_blank" rel="noopener noreferrer" className="rh-facebook-connect h-11 px-6 rounded-full bg-white border border-zinc-200 text-[13px] font-medium flex items-center gap-2 hover:border-[#FF1A3D]/30 transition"><FacebookIcon /> Facebook</a>
           </div>
         </div>
       </section>

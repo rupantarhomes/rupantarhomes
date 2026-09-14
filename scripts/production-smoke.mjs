@@ -259,7 +259,7 @@ try {
         await article.click();
         const backButtons = page.getByRole("button", { name: "Back to Posts", exact: true });
         await backButtons.first().waitFor();
-        assert.equal(await backButtons.count(), 1);
+        assert.equal(await backButtons.count(), 2);
         await backButtons.first().click();
         await page.getByRole("heading", { name: "Blog", exact: true }).waitFor();
         await page.reload({ waitUntil: "domcontentloaded" });

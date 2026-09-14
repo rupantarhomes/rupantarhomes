@@ -29,8 +29,9 @@ export function readNetworkProfile(): NetworkProfile {
   const effectiveType = String(current?.effectiveType ?? "").toLowerCase();
   const saveData = current?.saveData === true;
   const constrained = saveData || effectiveType === "slow-2g" || effectiveType === "2g";
-  const unknownMobile = !effectiveType && typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
-  const slow = constrained || effectiveType === "3g" || unknownMobile
+  // Safari (including iPhone) does not expose the Network Information API.
+  // Missing information is normal, not evidence of a slow connection.
+  const slow = constrained || effectiveType === "3g"
     || (typeof current?.downlink === "number" && current.downlink > 0 && current.downlink < 1.5);
   return { saveData, effectiveType, constrained, slow };
 }

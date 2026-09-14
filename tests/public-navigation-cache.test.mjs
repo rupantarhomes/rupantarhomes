@@ -206,3 +206,31 @@ test('Blog project-link lookups share requests and are invalidated by Work chang
   data.invalidatePublicWorks(); assert.equal(data.peekLinkedWorkForBlog('post'), undefined);
   await data.loadLinkedWorkForBlog('post'); assert.equal(calls, 2);
 });
+
+test('validated Works and Blog snapshots restore across page loads while corrupt storage is ignored', async () => {
+  let now = 10_000;
+  const store = new Map();
+  const window = { localStorage: { getItem: (key) => store.get(key) ?? null, setItem: (key, value) => store.set(key, value) } };
+  const image = { id: 'image-a', publicId: 'rupantar-homes/works/a', url: 'https://res.cloudinary.com/test/image/upload/a.webp', altText: 'A', sortOrder: 0 };
+  const savedWork = { ...work('a'), location: 'Kathmandu', shortDesc: 'Short', longDesc: 'Long', images: [image] };
+  const savedBlog = { ...blog('post'), createdAt: '2026-09-01', updatedAt: '2026-09-02' };
+  const repository = {
+    loadPublicWorksPage: async () => ({ works: [savedWork], total: 1 }),
+    loadPublicBlogsPayload: async () => ({ blogs: [savedBlog], linkedWorks: { post: savedWork } }),
+  };
+  const first = dataFixture(repository, () => now, { window });
+  await first.loadPublicWorksPage(0, 12, 'all');
+  await first.loadPublicBlogs();
+  assert.ok(store.get('rupantar-public-snapshots-v2'));
+
+  now += 1_000;
+  const restored = dataFixture({}, () => now, { window });
+  assert.equal(restored.peekPublicWorksPage(0, 'all').works[0].id, 'a');
+  assert.equal(restored.peekPublicBlogs()[0].slug, 'post');
+  assert.equal(restored.peekLinkedWorkForBlog('post').slug, 'a');
+
+  store.set('rupantar-public-snapshots-v2', '{broken json');
+  const corrupt = dataFixture({}, () => now, { window });
+  assert.equal(corrupt.peekPublicWorksPage(0, 'all'), undefined);
+  assert.equal(corrupt.peekPublicBlogs(), undefined);
+});

@@ -10,8 +10,8 @@ export function BrandIntro({ enabled }: { enabled: boolean }) {
     if (!enabled) return;
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const revealDelay = reduceMotion ? 180 : 1500;
-    const removeDelay = reduceMotion ? 320 : 2500;
+    const revealDelay = reduceMotion ? 80 : 260;
+    const removeDelay = reduceMotion ? 160 : 480;
 
     const revealTimer = window.setTimeout(() => setLeaving(true), revealDelay);
     const removeTimer = window.setTimeout(() => setVisible(false), removeDelay);

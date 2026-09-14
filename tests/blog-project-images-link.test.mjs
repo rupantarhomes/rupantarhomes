@@ -62,7 +62,8 @@ test("does not change the existing Work-to-Blog project story contract", async (
   const source = await read("../app/rupantar/public-pages.tsx");
 
   assert.match(source, /rupantarBlogSlugFromUrl\(work\.blogUrl\)/);
-  assert.match(source, /loadPublicBlogBySlug\(blogSlug\)/);
+  assert.match(source, /loadPublicBlogBySlug\(projectBlogSlug\)/);
   assert.match(source, /Project Story/);
   assert.match(source, /href=\{work\.blogUrl\}/);
+  assert.match(source, /event\.preventDefault\(\); if \(projectBlogSlug\) onBlog\(projectBlogSlug\)/);
 });

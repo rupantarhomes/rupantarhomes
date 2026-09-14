@@ -19,7 +19,7 @@ jobs:
   verify:
     name: Build and tests
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -67,3 +67,9 @@ jobs:
 
       - name: Regression tests
         run: npm test
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Mobile, desktop, throttled and warm-cache UX journeys
+        run: npm run test:e2e:ux

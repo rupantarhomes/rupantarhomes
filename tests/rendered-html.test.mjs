@@ -34,7 +34,7 @@ test("keeps locked public and admin surfaces in source components", async () => 
   assert.match(publicPages, /One team, one responsibility, from your first design to the final finish\./);
   assert.doesNotMatch(publicPages, /Craftsman/);
   assert.match(shared, /Architecture/);
-  assert.match(shared, /Kathmandu Nepal/);
+  assert.match(shared, /All Right Reserved • Rupantar Homes by Gokul Kunwar/);
   assert.doesNotMatch(shared, /Crafted with/);
   assert.match(data, /slug: "architect"/);
   assert.match(data, /name: "Architecture"/);

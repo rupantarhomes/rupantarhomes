@@ -14,22 +14,25 @@ test("critical public origins and first hero asset are warmed from the entry doc
   assert.ok(html.indexOf("/app/public-performance.ts") < html.indexOf("/app/client-entry.tsx"));
 });
 
-test("first-visit brand intro keeps the original timing but cannot block interaction", async () => {
+test("first-visit brand intro is non-blocking and clears within 500ms", async () => {
   const intro = await read("../app/rupantar/brand-intro.tsx");
-  assert.match(intro, /const revealDelay = reduceMotion \? 180 : 1500/);
-  assert.match(intro, /const removeDelay = reduceMotion \? 320 : 2500/);
+  assert.match(intro, /const revealDelay = reduceMotion \? 80 : 260/);
+  assert.match(intro, /const removeDelay = reduceMotion \? 160 : 480/);
   assert.match(intro, /style=\{\{ pointerEvents: "none" \}\}/);
 });
 
-test("public delivery has one network-aware route warmer and keeps detail cross-links inside the SPA", async () => {
-  const [runtime, site] = await Promise.all([read("../app/public-performance.ts"), read("../app/rupantar/site.tsx")]);
+test("public delivery has one network-aware route warmer and React-owned detail cross-links", async () => {
+  const [runtime, site, html, blogs, pages] = await Promise.all([read("../app/public-performance.ts"), read("../app/rupantar/site.tsx"), read("../index.html"), read("../app/rupantar/blog-pages.tsx"), read("../app/rupantar/public-pages.tsx")]);
   assert.doesNotMatch(runtime, /import\("\.\/rupantar\/public-pages"\)|import\("\.\/rupantar\/blog-pages"\)/);
   assert.match(site, /function prefetchPublicPageModules\(\)[\s\S]*shouldWarmPublicRoutes\(\)[\s\S]*loadPublicPages\(\)[\s\S]*loadBlogPages\(\)/);
-  assert.match(site, /window\.setTimeout\(prefetchPublicPageModules, 1200\)/);
+  assert.match(site, /requestIdleCallback\(prefetchPublicPageModules, \{ timeout: 900 \}\)/);
+  assert.match(site, /window\.setTimeout\(prefetchPublicPageModules, 450\)/);
   assert.doesNotMatch(runtime, /\.rh-recent-work-card img|image\.loading = "eager"/);
-  assert.match(runtime, /route\.kind !== "blog-detail" && route\.kind !== "work-detail"/);
-  assert.match(runtime, /window\.history\.pushState\(null, "", path\)/);
-  assert.match(runtime, /window\.dispatchEvent\(new PopStateEvent\("popstate"\)\)/);
+  assert.doesNotMatch(html, /public-performance\.ts/);
+  assert.match(blogs, /event\.preventDefault\(\); onWork\(linkedWork\)/);
+  assert.match(pages, /event\.preventDefault\(\); if \(projectBlogSlug\) onBlog\(projectBlogSlug\)/);
+  assert.match(site, /const openLinkedWork[\s\S]*applyBrowserRoute\(\)/);
+  assert.match(site, /const openLinkedBlog[\s\S]*applyBrowserRoute\(\)/);
 });
 
 test("public pages do not run admin scans and DOM observers stay inside the app root", async () => {

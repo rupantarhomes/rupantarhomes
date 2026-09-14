@@ -293,10 +293,27 @@ function mapBlog(row: BlogRow): Blog {
 }
 
 export type PublicWorksPage = { works: Work[]; total: number };
+export type PublicBlogLinkedWork = Pick<Work, "id" | "title" | "slug" | "category">;
+export type PublicBlogsPayload = { blogs: Blog[]; linkedWorks: Record<string, PublicBlogLinkedWork | null> };
+export type PublicBlogPayload = { blog: Blog | null; linkedWork?: PublicBlogLinkedWork | null };
+
+async function publicEndpoint<T>(parameters: Record<string, string>): Promise<T> {
+  const url = new URL("/api/public-content", window.location.origin);
+  for (const [name, value] of Object.entries(parameters)) url.searchParams.set(name, value);
+  const response = await fetchWithTimeout(url.toString(), { headers: { Accept: "application/json" } }, 8_000);
+  if (!response.ok) throw new Error(`Public edge returned ${response.status}`);
+  return response.json() as Promise<T>;
+}
 
 export async function loadPublicWorkBySlug(category: string, slug: string): Promise<Work | null> {
   if (!isSupabaseConfigured) {
     return initialWorks.find((work) => work.category === category && work.slug === slug) ?? null;
+  }
+  try {
+    const payload = await publicEndpoint<{ work?: Work | null }>({ resource: "work", category, slug });
+    if (payload && Object.hasOwn(payload, "work")) return payload.work ?? null;
+  } catch (error) {
+    console.error("Public Work edge fallback", error);
   }
   const supabase = getSupabase();
   const workResult = await supabase
@@ -319,6 +336,14 @@ export async function loadPublicWorkBySlug(category: string, slug: string): Prom
 
 export async function loadPublicWorksPage(offset = 0, limit = 12, category = "all"): Promise<PublicWorksPage> {
   if (!isSupabaseConfigured) return { works: initialWorks.slice(offset, offset + limit), total: initialWorks.length };
+  if (limit <= 24) {
+    try {
+      const payload = await publicEndpoint<PublicWorksPage>({ resource: "works", offset: String(offset), limit: String(limit), category });
+      if (payload && Array.isArray(payload.works) && Number.isSafeInteger(payload.total)) return payload;
+    } catch (error) {
+      console.error("Public Works edge fallback", error);
+    }
+  }
   const supabase = getSupabase();
   let query = supabase
     .from("works")
@@ -704,16 +729,46 @@ function blogBody(value: unknown): string {
   return body;
 }
 
-export async function loadPublicBlogs(): Promise<Blog[]> {
+async function loadBlogsDirect(): Promise<Blog[]> {
   const { data, error } = await getSupabase().from("blogs").select(blogColumns).order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return ((data ?? []) as BlogRow[]).map(mapBlog);
 }
 
-export async function loadPublicBlogBySlug(slug: string): Promise<Blog | null> {
+export async function loadPublicBlogsPayload(): Promise<PublicBlogsPayload> {
+  try {
+    const payload = await publicEndpoint<Partial<PublicBlogsPayload>>({ resource: "blogs" });
+    if (payload && Array.isArray(payload.blogs) && payload.linkedWorks && typeof payload.linkedWorks === "object") {
+      return { blogs: payload.blogs, linkedWorks: payload.linkedWorks };
+    }
+  } catch (error) {
+    console.error("Public Blog edge fallback", error);
+  }
+  return { blogs: await loadBlogsDirect(), linkedWorks: {} };
+}
+
+export async function loadPublicBlogs(): Promise<Blog[]> {
+  return (await loadPublicBlogsPayload()).blogs;
+}
+
+export async function loadAdminBlogs(): Promise<Blog[]> {
+  return loadBlogsDirect();
+}
+
+export async function loadPublicBlogPayload(slug: string): Promise<PublicBlogPayload> {
+  try {
+    const payload = await publicEndpoint<PublicBlogPayload>({ resource: "blog", slug });
+    if (payload && Object.hasOwn(payload, "blog")) return payload;
+  } catch (error) {
+    console.error("Public Blog detail edge fallback", error);
+  }
   const { data, error } = await getSupabase().from("blogs").select(blogColumns).eq("slug", slug).maybeSingle();
   if (error) throw new Error(error.message);
-  return data ? mapBlog(data as BlogRow) : null;
+  return { blog: data ? mapBlog(data as BlogRow) : null };
+}
+
+export async function loadPublicBlogBySlug(slug: string): Promise<Blog | null> {
+  return (await loadPublicBlogPayload(slug)).blog;
 }
 
 async function nextBlogSlug(title: string): Promise<string> {

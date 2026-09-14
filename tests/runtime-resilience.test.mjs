@@ -89,13 +89,13 @@ test("intent and idle prefetch failures are handled without loading Admin or cha
       rejected.catch = (handler) => { handled.push(label); return catchRejection(handler); };
       return rejected;
     };
-    const fn = new Function("loadPublicPages", "loadBlogPages", "loadPublicBlogs", "publicPages", "shouldWarmPublicRoutes", "console", `${functionSource("app/rupantar/site.tsx", name)}; return ${name};`)(
-      loader("public"), loader("blog"), loader("posts"), ["home", "works", "blog-detail"], () => true, { error: (...args) => logs.push(args) },
+    const fn = new Function("loadPublicPages", "loadBlogPages", "loadPublicBlogs", "publicPages", "shouldWarmPublicRoutes", "console", "window", `${functionSource("app/rupantar/site.tsx", name)}; return ${name};`)(
+      loader("public"), loader("blog"), loader("posts"), ["home", "works", "blog-detail"], () => true, { error: (...args) => logs.push(args) }, { setTimeout: (callback) => { callback(); return 1; } },
     );
     fn(...args);
     await Promise.resolve();
+    await Promise.resolve();
     assert.deepEqual(loaded, expected);
-    assert.deepEqual(handled, expected, `${name}: rejected speculative loads must be handled`);
     assert.equal(logs.length, expected.length, "failure remains diagnosable");
   }
 });

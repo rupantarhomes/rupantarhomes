@@ -60,7 +60,7 @@ export function BlogIndexPage({ blogs, loading, navigate, onBlog }: { blogs: Blo
   );
 }
 
-export function BlogArticlePage({ blog, navigate }: { blog: Blog; navigate: (page: Page) => void }) {
+export function BlogArticlePage({ blog, navigate, onWork }: { blog: Blog; navigate: (page: Page) => void; onWork: (work: BlogLinkedWork) => void }) {
   const label = blogCategories.find((item) => item.value === blog.category)?.label ?? blog.category;
   const paragraphs = blog.body.split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean);
   const [linkedWork, setLinkedWork] = useState<BlogLinkedWork | null>(() => peekLinkedWorkForBlog(blog.slug) ?? null);
@@ -84,6 +84,7 @@ export function BlogArticlePage({ blog, navigate }: { blog: Blog; navigate: (pag
   return (
     <main className="rh-blog-article-page max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-[4.75rem] pb-14 sm:py-16">
       <article className="rh-blog-article max-w-[800px]">
+        <button onClick={() => navigate("blog")} className="mb-8 inline-flex items-center gap-1.5 text-[13px] text-zinc-600 transition-colors duration-200 hover:text-[#FF1A3D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF1A3D]/40"><ArrowLeft className="w-4 h-4" /> Back to Posts</button>
         <div className="rh-blog-article-category text-[11px] font-semibold uppercase tracking-[0.12em] text-[#FF1A3D]">{label}</div>
         <h1 className="rh-blog-article-title mt-3 font-heading text-[40px] sm:text-[56px] leading-[1.04] font-bold tracking-[-0.045em]">{blog.title}</h1>
         <div className="rh-blog-article-body mt-9 space-y-6 text-[16px] leading-7 sm:leading-8 text-zinc-700">{paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
@@ -92,7 +93,7 @@ export function BlogArticlePage({ blog, navigate }: { blog: Blog; navigate: (pag
             <div className="rh-blog-project-eyebrow text-[10px] font-semibold uppercase tracking-[0.16em] text-[#FF1A3D]">Project Images</div>
             <h2 className="rh-blog-project-title mt-2 font-heading text-[18px] sm:text-[20px] font-bold leading-tight text-zinc-950">{linkedWork.title}</h2>
             <p className="rh-blog-project-description mt-2 text-[13px] leading-6 text-zinc-600">See the completed project and its full image gallery.</p>
-            <a href={workPath(linkedWork)} className="rh-blog-project-link mt-5 inline-flex h-10 items-center gap-2 rounded-full bg-[#FF1A3D] px-5 text-[12px] font-semibold text-white transition hover:bg-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF1A3D]/40 focus-visible:ring-offset-2">
+            <a href={workPath(linkedWork)} onClick={(event) => { event.preventDefault(); onWork(linkedWork); }} className="rh-blog-project-link mt-5 inline-flex h-10 items-center gap-2 rounded-full bg-[#FF1A3D] px-5 text-[12px] font-semibold text-white transition hover:bg-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF1A3D]/40 focus-visible:ring-offset-2">
               View Project Images <ArrowRight className="w-4 h-4" />
             </a>
           </aside>
