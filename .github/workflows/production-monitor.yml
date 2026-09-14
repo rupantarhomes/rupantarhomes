@@ -43,7 +43,7 @@ jobs:
           exit 1
       - name: Open one production incident
         if: steps.smoke.outcome == 'failure'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const title = "Production monitor: Rupantar Homes smoke failed";
@@ -58,7 +58,7 @@ jobs:
             }
       - name: Close recovered production incident
         if: steps.smoke.outcome == 'success'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const title = "Production monitor: Rupantar Homes smoke failed";
