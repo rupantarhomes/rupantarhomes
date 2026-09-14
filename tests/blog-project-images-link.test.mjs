@@ -65,5 +65,5 @@ test("does not change the existing Work-to-Blog project story contract", async (
   assert.match(source, /loadPublicBlogBySlug\(projectBlogSlug\)/);
   assert.match(source, /Project Story/);
   assert.match(source, /href=\{work\.blogUrl\}/);
-  assert.match(source, /event\.preventDefault\(\); if \(projectBlogSlug\) onBlog\(projectBlogSlug\)/);
+  assert.doesNotMatch(source, /onBlog|event\.preventDefault/);
 });

@@ -106,7 +106,8 @@ test("Blog articles keep Back to Posts controls above and below the article", as
   const pages = await read("app/rupantar/blog-pages.tsx");
   const [, articlePage] = pages.split("export function BlogArticlePage");
 
-  assert.equal((articlePage.match(/Back to Posts/g) ?? []).length, 2);
+  assert.match(articlePage, /<BackToPostsButton navigate=\{navigate\} className="mb-8" \/>/);
+  assert.equal((articlePage.match(/Back to Posts/g) ?? []).length, 1);
   assert.match(articlePage, /navigate\("blog"\)/);
-  assert.match(articlePage, /onClick=\{\(event\) => \{ event\.preventDefault\(\); onWork\(linkedWork\); \}\}/);
+  assert.doesNotMatch(articlePage, /onWork|event\.preventDefault/);
 });

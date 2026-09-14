@@ -762,18 +762,6 @@ export function RupantarSite() {
     setPage("work-detail");
   };
 
-  const openLinkedWork = (work: { category: string; slug: string }) => {
-    prefetchPublicRoute("work-detail");
-    pushPath(workPath(work));
-    void applyBrowserRoute().catch((error) => console.error("Unable to open linked project", error));
-  };
-
-  const openLinkedBlog = (slug: string) => {
-    prefetchPublicRoute("blog-detail");
-    pushPath(blogArticlePath(slug));
-    void applyBrowserRoute().catch((error) => console.error("Unable to open linked article", error));
-  };
-
   const persistedDraftImageIds = () => new Set(persistedDraftImageIdsRef.current);
   const draftImagePublicIds = () => {
     const persisted = persistedDraftImageIds();
@@ -1260,7 +1248,7 @@ export function RupantarSite() {
         ? <ListLoadFailure label="articles" onRetry={() => void refreshBlogs().catch((error) => console.error("Unable to retry blog", error))} />
         : <Suspense fallback={<PageLoader />}><BlogIndexPage blogs={blogs} loading={!blogsLoaded || blogsLoading} navigate={navigate} onBlog={openBlog} /></Suspense>)}
       {page === "blog-detail" && (selectedBlog
-        ? <Suspense fallback={<PageLoader />}><BlogArticlePage blog={selectedBlog} navigate={navigate} onWork={openLinkedWork} /></Suspense>
+        ? <Suspense fallback={<PageLoader />}><BlogArticlePage blog={selectedBlog} navigate={navigate} /></Suspense>
         : detailLoadError ? <DetailLoadFailure label="article" /> : <PageLoader />)}
       {page === "works" && (worksLoadError && works.length === 0
         ? <ListLoadFailure label="projects" onRetry={() => void loadWorks(filter, 0, true).catch((error) => console.error("Unable to retry works", error))} />
@@ -1269,7 +1257,7 @@ export function RupantarSite() {
             <Suspense fallback={<PageLoader />}><WorksPage works={works} total={worksTotal} loading={worksLoading} filter={filter} setFilter={openCategory} onLoadMore={() => void loadWorks(filter, works.length).catch((error) => console.error("Unable to load more works", error))} navigate={navigate} onWork={openWork} /></Suspense>
           </>)}
       {page === "work-detail" && (selectedWork ? (
-        <Suspense fallback={<PageLoader />}><WorkDetailPage work={selectedWork} works={works} navigate={navigate} onWork={openWork} onEstimate={goToEstimate} onBlog={openLinkedBlog} /></Suspense>
+        <Suspense fallback={<PageLoader />}><WorkDetailPage work={selectedWork} works={works} navigate={navigate} onWork={openWork} onEstimate={goToEstimate} /></Suspense>
       ) : detailLoadError ? <DetailLoadFailure label="project" /> : <PageLoader />)}
       {page === "about" && <Suspense fallback={<PageLoader />}><AboutPage navigate={navigate} settings={settings} /></Suspense>}
       {page === "contact" && <Suspense fallback={<PageLoader />}><ContactPage navigate={navigate} /></Suspense>}

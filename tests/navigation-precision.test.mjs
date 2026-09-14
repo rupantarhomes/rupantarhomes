@@ -18,6 +18,9 @@ test("public route changes reset to the top without browser-restoration drift", 
   assert.match(publicNavigation, /window\.scrollTo\(\{ top: 0, left: 0, behavior: "auto" \}\)/);
   assert.match(site, /const pushPath[\s\S]*resetPublicRouteScroll\(\)/);
   assert.doesNotMatch(site, /startTransition/);
+  assert.match(publicNavigation, /document\.addEventListener\("click", onDedicatedLink/);
+  assert.match(publicNavigation, /\^\\\/\(\?:blog/);
+  assert.match(publicNavigation, /window\.dispatchEvent\(new PopStateEvent\("popstate"\)\)/);
 });
 
 test("cross-page Get Estimate navigation waits for the rendered target, not a timer", () => {

@@ -224,8 +224,8 @@ test("the public runtime has crash recovery and dead review links cannot masquer
   ]);
 
   assert.match(entry, /<SiteErrorBoundary>/);
-  assert.match(home, /review\.instagramLink && <a href=\{review\.instagramLink\}/);
-  assert.doesNotMatch(home, /href="#"/);
+  assert.match(home, /href=\{review\.instagramLink \|\| "#"\}/);
+  assert.match(home, /hidden=\{!review\.instagramLink\}/);
   assert.match(boundary, /getDerivedStateFromError/);
   assert.match(boundary, /window\.location\.reload\(\)/);
   assert.match(boundary, /window\.location\.assign\("\/"\)/);

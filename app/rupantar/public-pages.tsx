@@ -186,14 +186,12 @@ export function WorkDetailPage({
   navigate,
   onWork,
   onEstimate,
-  onBlog,
 }: {
   work: Work;
   works: Work[];
   navigate: (page: Page) => void;
   onWork: (id: string) => void;
   onEstimate: () => void;
-  onBlog: (slug: string) => void;
 }) {
   const related = works.filter((item) => item.category === work.category && item.id !== work.id);
   const [projectBlogTitle, setProjectBlogTitle] = useState<string | null>(null);
@@ -266,7 +264,6 @@ export function WorkDetailPage({
               <p className="text-[13px] leading-6 text-zinc-600 mt-2">Read the detailed story, planning, design decisions, and execution behind this project.</p>
               <a
                 href={work.blogUrl}
-                onClick={(event) => { event.preventDefault(); if (projectBlogSlug) onBlog(projectBlogSlug); }}
                 className="mt-5 h-10 px-5 rounded-full bg-zinc-900 text-white text-[12px] font-semibold inline-flex items-center gap-2 hover:bg-[#FF1A3D] transition"
               >
                 Read More <ArrowRight className="w-4 h-4" />

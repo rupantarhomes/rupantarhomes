@@ -2,8 +2,6 @@
 
 import {
   ArrowRight,
-  ChevronLeft,
-  ChevronRight,
   Check,
   ImageUp,
   Instagram,
@@ -16,10 +14,11 @@ import {
   Star,
   Upload,
 } from "lucide-react";
-import { useEffect, useRef, useState, type Dispatch, type MouseEvent as ReactMouseEvent, type SetStateAction } from "react";
+import { useEffect, useState, type Dispatch, type MouseEvent as ReactMouseEvent, type SetStateAction } from "react";
 import { heroPreloadDelayMs } from "../network-policy";
 import { categories, interiorDesignCategories } from "./data";
-import { categoryIcons, facebookUrl, FacebookIcon, PhotoPlaceholder, WorkPhoto } from "./shared";
+import { categoryIcons, PhotoPlaceholder, WorkPhoto } from "./shared";
+import { FacebookConnectLink, ReviewControls } from "./public-interactions";
 import type {
   EstimateForm,
   Page,
@@ -109,17 +108,6 @@ export function HomePage({
   const [heroSlidesReady, setHeroSlidesReady] = useState<Set<string>>(
     () => new Set([heroSlides[0].desktop, heroSlides[0].mobile]),
   );
-  const reviewTrackRef = useRef<HTMLDivElement>(null);
-
-  const scrollReviews = (direction: -1 | 1) => {
-    const track = reviewTrackRef.current;
-    const card = track?.querySelector<HTMLElement>(".rh-review-card");
-    if (!track || !card) return;
-    const styles = window.getComputedStyle(track);
-    const gap = Number.parseFloat(styles.columnGap || styles.gap || "20") || 20;
-    track.scrollBy({ left: direction * (card.getBoundingClientRect().width + gap), behavior: "smooth" });
-  };
-
   const openWorkCard = (event: ReactMouseEvent<HTMLElement>, id: string) => {
     if (isInteractiveTarget(event.target)) return;
     onWork(id);
@@ -523,13 +511,10 @@ export function HomePage({
             <h3 className="font-heading text-[26px] sm:text-[30px] font-bold mt-1">Real Homes, Real Reviews</h3>
           </div>
           <div className="hidden sm:flex items-center gap-1 text-[12px] font-medium"><Star className="w-4 h-4 fill-[#FF1A3D] text-[#FF1A3D]" /> 4.9 average from 80+ homes
-            <span className="rh-review-controls" role="group" aria-label="Review carousel controls">
-              <button type="button" className="rh-review-arrow" aria-label="Previous review" onClick={() => scrollReviews(-1)}><ChevronLeft /></button>
-              <button type="button" className="rh-review-arrow" aria-label="Next review" onClick={() => scrollReviews(1)}><ChevronRight /></button>
-            </span>
+            <ReviewControls />
           </div>
         </div>
-        <div ref={reviewTrackRef} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           {reviews.map((review) => (
             <div key={review.id} className="rh-review-card rounded-[1.5rem] border border-zinc-100 p-5 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
               <div className="hidden" />
@@ -539,7 +524,7 @@ export function HomePage({
                 <div className="rh-review-monogram w-8 h-8 rounded-full bg-zinc-900 text-white flex items-center justify-center text-[11px] font-semibold">{review.name[0]}</div>
                 <div><div className="rh-review-author-name text-[12px] font-semibold leading-none">{review.name}</div><div className="rh-review-location text-[11px] text-zinc-500 mt-1">{review.location}</div></div>
               </div>
-              {review.instagramLink && <a href={review.instagramLink} target="_blank" rel="noopener noreferrer" className="rh-review-link mt-3 inline-flex h-7 px-3 rounded-full bg-[#FFF0F2] text-[#FF1A3D] text-[11px] font-medium items-center hover:bg-[#FF1A3D] hover:text-white transition">View Review →</a>}
+              <a href={review.instagramLink || "#"} target="_blank" rel="noopener noreferrer" hidden={!review.instagramLink} className="rh-review-link mt-3 inline-flex h-7 px-3 rounded-full bg-[#FFF0F2] text-[#FF1A3D] text-[11px] font-medium items-center hover:bg-[#FF1A3D] hover:text-white transition">View Review →</a>
             </div>
           ))}
         </div>
@@ -554,7 +539,7 @@ export function HomePage({
           <div className="flex gap-3">
             <a href={settings.instagram} target="_blank" rel="noopener noreferrer" className="h-11 px-6 rounded-full bg-white border border-zinc-200 text-[13px] font-medium flex items-center gap-2 hover:border-[#FF1A3D]/30 transition"><Instagram className="w-4 h-4" /> Instagram</a>
             <a href={settings.tiktok} target="_blank" rel="noopener noreferrer" className="h-11 px-6 rounded-full bg-zinc-900 text-white text-[13px] font-medium flex items-center gap-2 hover:opacity-90 transition"><Music2 className="w-4 h-4" /> TikTok</a>
-            <a href={facebookUrl} target="_blank" rel="noopener noreferrer" className="rh-facebook-connect h-11 px-6 rounded-full bg-white border border-zinc-200 text-[13px] font-medium flex items-center gap-2 hover:border-[#FF1A3D]/30 transition"><FacebookIcon /> Facebook</a>
+            <FacebookConnectLink />
           </div>
         </div>
       </section>

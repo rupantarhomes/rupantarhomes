@@ -22,17 +22,17 @@ test("first-visit brand intro is non-blocking and clears within 500ms", async ()
 });
 
 test("public delivery has one network-aware route warmer and React-owned detail cross-links", async () => {
-  const [runtime, site, html, blogs, pages] = await Promise.all([read("../app/public-performance.ts"), read("../app/rupantar/site.tsx"), read("../index.html"), read("../app/rupantar/blog-pages.tsx"), read("../app/rupantar/public-pages.tsx")]);
+  const [runtime, site, html, blogs, pages, navigation] = await Promise.all([read("../app/public-performance.ts"), read("../app/rupantar/site.tsx"), read("../index.html"), read("../app/rupantar/blog-pages.tsx"), read("../app/rupantar/public-pages.tsx"), read("../app/public-navigation.ts")]);
   assert.doesNotMatch(runtime, /import\("\.\/rupantar\/public-pages"\)|import\("\.\/rupantar\/blog-pages"\)/);
   assert.match(site, /function prefetchPublicPageModules\(\)[\s\S]*shouldWarmPublicRoutes\(\)[\s\S]*loadPublicPages\(\)[\s\S]*loadBlogPages\(\)/);
   assert.match(site, /requestIdleCallback\(prefetchPublicPageModules, \{ timeout: 900 \}\)/);
   assert.match(site, /window\.setTimeout\(prefetchPublicPageModules, 450\)/);
   assert.doesNotMatch(runtime, /\.rh-recent-work-card img|image\.loading = "eager"/);
   assert.doesNotMatch(html, /public-performance\.ts/);
-  assert.match(blogs, /event\.preventDefault\(\); onWork\(linkedWork\)/);
-  assert.match(pages, /event\.preventDefault\(\); if \(projectBlogSlug\) onBlog\(projectBlogSlug\)/);
-  assert.match(site, /const openLinkedWork[\s\S]*applyBrowserRoute\(\)/);
-  assert.match(site, /const openLinkedBlog[\s\S]*applyBrowserRoute\(\)/);
+  assert.doesNotMatch(blogs, /onWork|event\.preventDefault/);
+  assert.doesNotMatch(pages, /onBlog|event\.preventDefault/);
+  assert.match(navigation, /document\.addEventListener\("click", onDedicatedLink/);
+  assert.match(navigation, /window\.dispatchEvent\(new PopStateEvent\("popstate"\)\)/);
 });
 
 test("public pages do not run admin scans and DOM observers stay inside the app root", async () => {

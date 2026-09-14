@@ -24,15 +24,10 @@ import {
 import { useState, type ReactNode } from "react";
 import { brandAssets, categories, interiorDesignCategories } from "./data";
 import type { Page, SiteSettings, WorkImage } from "./types";
+import { AdminFooterLink, FacebookFooterLink } from "./public-interactions";
 
 export const whatsappUrl = `https://wa.me/9779745941799?text=${encodeURIComponent("Hello Rupantar Homes, I would like to discuss my interior project.")}`;
 export const callUrl = "tel:+9779745941799";
-export const facebookUrl = "https://www.facebook.com/rupantarbygokulkunwar";
-
-export function FacebookIcon({ className = "w-4 h-4" }: { className?: string }) {
-  return <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" className={className}><path fill="currentColor" d="M14 8h3V4h-3c-3.3 0-5 2-5 5v3H6v4h3v8h4v-8h3.5l.5-4H13V9c0-.7.3-1 1-1Z" /></svg>;
-}
-
 export const categoryIcons = {
   architect: PencilRuler,
   interior: House,
@@ -177,9 +172,7 @@ export function PublicHeader({
 
   const intent = (page: Page) => ({
     onPointerDown: () => onPublicNavigationIntent(page),
-    onTouchStart: () => onPublicNavigationIntent(page),
     onPointerEnter: () => onPublicNavigationIntent(page),
-    onFocus: () => onPublicNavigationIntent(page),
   });
 
   return (
@@ -318,7 +311,7 @@ export function PublicFooter({
             <div className="flex gap-2">
               <a href={settings.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="w-9 h-9 rounded-full bg-white/10 border border-white/10 text-white flex items-center justify-center hover:border-[#FF1A3D]/50 transition"><Instagram className="w-4 h-4" /></a>
               <a href={settings.tiktok} target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="w-9 h-9 rounded-full bg-[#FEFEFE] text-[#111111] flex items-center justify-center hover:bg-white transition"><Music2 className="w-4 h-4" /></a>
-              <a href={facebookUrl} target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="rh-facebook-footer w-9 h-9 rounded-full bg-white/10 border border-white/10 text-white flex items-center justify-center hover:border-[#FF1A3D]/50 transition"><FacebookIcon /></a>
+              <FacebookFooterLink />
             </div>
             <a
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(settings.address)}`}
@@ -342,7 +335,7 @@ export function PublicFooter({
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 h-12 flex items-center justify-center text-[11px] text-zinc-400">
           <span>All Right Reserved • Rupantar Homes by Gokul Kunwar</span>
           <span className="mx-2 text-zinc-500">•</span>
-          <a href="/admin" aria-label="Open admin portal" className="text-[11px] leading-none text-zinc-400 no-underline transition-colors hover:text-white">000</a>
+          <AdminFooterLink />
         </div>
       </div>
     </footer>
