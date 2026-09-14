@@ -28,6 +28,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Repair patch runner
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = 'scripts/apply-network-resilience.mjs';
+          let source = fs.readFileSync(path, 'utf8');
+          const marker = 'console.log(JSON.stringify({\\n';
+          const at = source.indexOf(marker);
+          if (at < 0) throw new Error('Broken patch-runner marker not found');
+          source = source.slice(0, at) + 'console.log(JSON.stringify({ app: productionLock.objects.app, functions: productionLock.objects.functions, index: productionLock.objects["index.html"], tests: productionLock.objects.tests }, null, 2));\n';
+          fs.writeFileSync(path, source);
+          NODE
+
       - name: Apply deterministic patch
         run: node scripts/apply-network-resilience.mjs
 
