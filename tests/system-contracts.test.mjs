@@ -217,14 +217,15 @@ test("public and Admin list failures use explicit React retry state without DOM 
 });
 
 test("the public runtime has crash recovery and dead review links cannot masquerade as actions", async () => {
-  const [entry, boundary] = await Promise.all([
+  const [entry, boundary, home] = await Promise.all([
     read("../app/client-entry.tsx"),
     read("../app/rupantar/error-boundary.tsx"),
+    read("../app/rupantar/home-page.tsx"),
   ]);
 
   assert.match(entry, /<SiteErrorBoundary>/);
-  assert.match(entry, /if \(link\.getAttribute\("href"\) === "#"\)/);
-  assert.match(entry, /link\.hidden = true/);
+  assert.match(home, /href=\{review\.instagramLink \|\| "#"\}/);
+  assert.match(home, /hidden=\{!review\.instagramLink\}/);
   assert.match(boundary, /getDerivedStateFromError/);
   assert.match(boundary, /window\.location\.reload\(\)/);
   assert.match(boundary, /window\.location\.assign\("\/"\)/);

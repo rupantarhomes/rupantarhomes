@@ -35,7 +35,7 @@ test("native Work gallery renders a swipe-only image track with dots and no full
     assert.match(html, /class="rh-native-work-track"/);
     assert.equal((html.match(/class="rh-native-work-slide"/g) ?? []).length, count);
     assert.equal((html.match(/loading="eager"/g) ?? []).length, 1);
-    assert.equal((html.match(/loading="lazy"/g) ?? []).length, count > 1 ? 1 : 0);
+    assert.equal((html.match(/loading="lazy"/g) ?? []).length, Math.max(0, count - 1));
     assert.doesNotMatch(html, /rh-native-work-front|Open Kitchen image gallery|rh-native-work-viewer-photo/);
     assert.doesNotMatch(html, /Previous gallery image|Next gallery image/);
     if (count === 1) {
@@ -53,27 +53,29 @@ test("native Work gallery renders a swipe-only image track with dots and no full
   }
 });
 
-test("the page gallery keeps 9:16 framing, fluid manual slide motion and branded liquid-glass cue", () => {
+test("the page gallery keeps 9:16 framing, native scroll snap and branded liquid-glass cue", () => {
   const css = read("app/rupantar/work-image-gallery.css");
   const rule = (selector) => css.slice(css.indexOf(selector + " {"), css.indexOf("}", css.indexOf(selector + " {")) + 1);
   assert.match(rule(".rh-native-work-stack"), /aspect-ratio: 9 \/ 16/);
   assert.match(rule(".rh-native-work-stack"), /overflow: hidden/);
   assert.match(rule(".rh-native-work-stack"), /-webkit-tap-highlight-color: transparent/);
-  assert.match(rule(".rh-native-work-track"), /transition: transform 320ms cubic-bezier\(\.22,\.8,\.24,1\)/);
-  assert.match(rule(".rh-native-work-track.is-dragging"), /transition: none/);
+  assert.match(rule(".rh-native-work-track"), /overflow-x: auto/);
+  assert.match(rule(".rh-native-work-track"), /scroll-snap-type: x mandatory/);
+  assert.match(rule(".rh-native-work-track"), /-webkit-overflow-scrolling: touch/);
+  assert.match(rule(".rh-native-work-track"), /touch-action: pan-x pan-y pinch-zoom/);
   assert.match(rule(".rh-native-work-stack-photo img"), /object-fit: cover/);
   assert.match(rule(".rh-native-work-slide"), /pointer-events: none/);
   assert.match(rule(".rh-native-work-gesture-cue"), /pointer-events: none/);
   assert.match(rule(".rh-native-work-gesture-cue"), /rgb\(255 71 96 \/ \.92\)/);
   assert.match(rule(".rh-native-work-gesture-cue"), /backdrop-filter: blur\(13px\) saturate\(180%\)/);
   assert.match(rule(".rh-native-work-viewer-photo img"), /object-fit: contain/);
-  assert.match(rule("main:has([data-native-work-gallery]) > button:first-child"), /display: none/);
-  assert.match(css, /scroll-snap-type: y proximity/);
-  assert.match(css, /scroll-snap-align: start/);
+  assert.doesNotMatch(css, /main:has\(\[data-native-work-gallery\]\) > button:first-child \{\s*display: none/);
+  assert.match(rule(".rh-native-work-slide"), /scroll-snap-align: center/);
+  assert.doesNotMatch(css, /scroll-snap-type: y|scroll-snap-align: start|scroll-behavior: smooth !important/);
   assert.match(css, /width: min\(100%, calc\(\(100dvh - 210px\) \* 9 \/ 16\)\)/);
   const { WorkImageGallery } = load("app/rupantar/work-image-gallery.tsx");
   const html = renderToStaticMarkup(React.createElement(WorkImageGallery, { images: images.slice(0, 2), title: "Work" }));
-  assert.match(html, /transform:translate3d\(calc\(-0% \+ 0px\), 0, 0\)/);
+  assert.match(html, /class="rh-native-work-track"/);
   assert.doesNotMatch(html, /type="button" class="rh-native-work-front"/);
 });
 
@@ -165,11 +167,8 @@ test("Admin viewer keeps safe portal behavior while public Work gallery stays in
   assert.match(source, /Math\.abs\(dx\) >= 48 && Math\.abs\(dx\) > Math\.abs\(dy\) \* 1\.5/);
   assert.match(source, /onTouchCancel/);
   assert.match(source, /onPointerDown/);
-  assert.match(source, /pageTouchStart/);
-  assert.match(source, /pagePointerStart/);
-  assert.match(source, /onTouchMove/);
-  assert.match(source, /onPointerMove/);
-  assert.match(source, /pendingDragOffset/);
+  const publicGallery = source.slice(source.indexOf("export function WorkImageGallery"));
+  assert.doesNotMatch(publicGallery, /pageTouchStart|pagePointerStart|onTouchMove|onPointerMove|pendingDragOffset/);
   assert.match(source, /window\.requestAnimationFrame/);
   assert.doesNotMatch(source, /setDragOffset|setIsDragging/);
   assert.match(source, /rh-native-work-track/);
@@ -181,8 +180,9 @@ test("Admin viewer keeps safe portal behavior while public Work gallery stays in
   assert.doesNotMatch(source, /Previous gallery image|Next gallery image|rh-native-work-prev|rh-native-work-next|rh-native-work-rear/);
   assert.match(source, /selectedIndex \+ 1\} \/ \{images\.length/);
   assert.doesNotMatch(source, /MutationObserver|document\.createElement|appendChild/);
-  const publicGallery = source.slice(source.indexOf("export function WorkImageGallery"));
   assert.doesNotMatch(publicGallery, /WorkImageViewer|setSelectedIndex|createPortal/);
+  assert.match(publicGallery, /trackRef\.current\?\.scrollTo\(\{ left:/);
+  assert.match(publicGallery, /Math\.round\(track\.scrollLeft \/ track\.clientWidth\)/);
   const css = read("app/rupantar/work-image-gallery.css");
   assert.match(css, /position: fixed; inset: 0/);
   assert.match(css, /z-index: 2147483647/);
@@ -206,21 +206,21 @@ test("public gallery has no autoplay, keeps cue until final image, and adds desk
   assert.match(publicGallery, /aria-label="Next Work photo"/);
   assert.match(publicGallery, /disabled=\{currentPageIndex === 0\}/);
   assert.match(publicGallery, /disabled=\{currentPageIndex === lastIndex\}/);
-  assert.match(publicGallery, /track\.style\.transform = `translate3d\(calc\(-\$\{index \* 100\}% \+ \$\{offset\}px\), 0, 0\)`/);
-  assert.match(publicGallery, /track\.classList\.toggle\("is-dragging", dragging\)/);
-  assert.match(publicGallery, /Math\.abs\(imageIndex - currentPageIndex\) <= 1/);
+  assert.match(publicGallery, /className="rh-native-work-track"[\s\S]*onScroll/);
+  assert.doesNotMatch(publicGallery, /style\.transform|is-dragging|setPointerCapture/);
+  assert.doesNotMatch(publicGallery, /Math\.abs\(imageIndex - currentPageIndex\) <= 1/);
 });
 
-test("gallery prioritizes the visible image and preloads only the next slide", () => {
+test("gallery prioritizes the active image, decodes next, then prepares the small remaining set", () => {
   const source = read("app/rupantar/work-image-gallery.tsx");
   assert.match(source, /function useGalleryPreload/);
-  assert.match(source, /fetchPriority = "auto"/);
+  assert.match(source, /preload\.fetchPriority = priority/);
   assert.match(source, /preload\.decode\(\)/);
-  assert.match(source, /const next = images\[activeIndex \+ 1\]/);
-  assert.doesNotMatch(source, /const remaining|loadRemaining|activeIndex \+ 2/);
-  assert.match(source, /saveData === true/);
-  assert.match(source, /effectiveType === "slow-2g"/);
-  assert.match(source, /effectiveType === "2g"/);
+  assert.match(source, /const next = images\[activeIndex \+ 1\][\s\S]*preloadGalleryImage\(next, sizes, widths, "high"\)/);
+  assert.match(source, /const remaining = images\.filter/);
+  assert.match(source, /profile\.saveData/);
+  assert.match(source, /if \(profile\.constrained\) return/);
+  assert.match(source, /180 \+ index \* 160/);
   assert.match(source, /c_limit,w_\$\{width\}\/f_auto\/q_auto:good/);
   assert.match(source, /useGalleryPreload\(images, currentPageIndex, "\(min-width: 1024px\) 520px, 100vw", pageGalleryWidths\)/);
   assert.match(source, /useGalleryPreload\(images, selectedIndex, "100vw", viewerGalleryWidths\)/);

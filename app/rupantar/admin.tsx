@@ -1,5 +1,7 @@
 "use client";
 
+import "../admin-leads-enhancer.css";
+
 import {
   ArrowLeft,
   FileText,
@@ -17,6 +19,7 @@ import {
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { WorkPhoto } from "./shared";
 import { WorkImageViewer } from "./work-image-gallery";
+import { initAdminLeadsEnhancements } from "./admin-leads-enhancer";
 import { SiteErrorBoundary } from "./error-boundary";
 import { maximumWorkImages } from "./cloudinary";
 import { AdminBlogs } from "./blog-admin";
@@ -34,6 +37,8 @@ import type {
   WorkForm,
   WorkImage,
 } from "./types";
+
+if (typeof window !== "undefined") initAdminLeadsEnhancements();
 
 export function AdminLogin({
   navigate: _navigate,

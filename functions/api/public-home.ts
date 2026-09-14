@@ -1,4 +1,4 @@
-import { requireRuntimeEnv, type RuntimeEnv } from "../_lib/env";
+import { requirePublicRuntimeEnv, type RuntimeEnv } from "../_lib/env";
 import { fetchWithTimeout } from "../_lib/http";
 
 type PublicWorkImageRow = {
@@ -90,7 +90,7 @@ function mapSettings(row: PublicSettingsRow) {
 }
 
 async function fetchHomeWorks(env: RuntimeEnv): Promise<Response> {
-  const runtime = requireRuntimeEnv(env);
+  const runtime = requirePublicRuntimeEnv(env);
   const url = new URL(`${runtime.SUPABASE_URL}/rest/v1/works`);
   url.searchParams.set("select", "id,title,slug,category,location,short_description,long_description,featured,blog_url,work_images(id,work_id,secure_url,cloudinary_public_id,alt_text,sort_order,width,height,byte_size)");
   url.searchParams.set("order", "created_at.desc");

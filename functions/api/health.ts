@@ -1,10 +1,10 @@
-import { requireRuntimeEnv, type RuntimeEnv } from "../_lib/env";
+import { requirePublicRuntimeEnv, type RuntimeEnv } from "../_lib/env";
 import { errorMessage, fetchWithTimeout, json } from "../_lib/http";
 
 export const onRequestGet: PagesFunction<RuntimeEnv> = async ({ env }) => {
   const startedAt = Date.now();
   try {
-    const runtime = requireRuntimeEnv(env);
+    const runtime = requirePublicRuntimeEnv(env);
     const url = new URL(`${runtime.SUPABASE_URL}/rest/v1/site_settings`);
     url.searchParams.set("select", "id");
     url.searchParams.set("id", "eq.1");

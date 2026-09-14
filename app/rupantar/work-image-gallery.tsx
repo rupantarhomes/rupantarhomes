@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { readNetworkProfile } from "../network-policy";
 import { WorkPhoto } from "./shared";
 import type { WorkImage } from "./types";
 import "./work-image-gallery.css";
@@ -9,10 +10,6 @@ const pageGalleryWidths = [480, 768, 1200, 1600] as const;
 const viewerGalleryWidths = [480, 768, 1200, 1920] as const;
 const galleryPreloadCache = new Set<string>();
 const galleryPreloaders = new Map<string, HTMLImageElement>();
-
-type NetworkNavigator = Navigator & {
-  connection?: { saveData?: boolean; effectiveType?: string };
-};
 
 function galleryDeliveryUrl(sourceUrl: string, width: number): string {
   try {
@@ -29,7 +26,7 @@ function galleryDeliveryUrl(sourceUrl: string, width: number): string {
   }
 }
 
-function preloadGalleryImage(image: WorkImage, sizes: string, widths: readonly number[]) {
+function preloadGalleryImage(image: WorkImage, sizes: string, widths: readonly number[], priority: "high" | "auto" = "auto") {
   const fallbackWidth = widths[widths.length - 1] ?? 768;
   const srcSet = widths.map((width) => `${galleryDeliveryUrl(image.url, width)} ${width}w`).join(", ");
   const cacheKey = `${image.url}|${sizes}|${srcSet}`;
@@ -38,7 +35,7 @@ function preloadGalleryImage(image: WorkImage, sizes: string, widths: readonly n
   galleryPreloadCache.add(cacheKey);
   const preload = new Image();
   preload.decoding = "async";
-  preload.fetchPriority = "auto";
+  preload.fetchPriority = priority;
   preload.sizes = sizes;
   preload.srcset = srcSet;
   preload.src = galleryDeliveryUrl(image.url, fallbackWidth);
@@ -56,12 +53,14 @@ function preloadGalleryImage(image: WorkImage, sizes: string, widths: readonly n
 function useGalleryPreload(images: WorkImage[], activeIndex: number, sizes: string, widths: readonly number[]) {
   useEffect(() => {
     if (typeof window === "undefined" || images.length < 2) return;
-
-    const connection = (navigator as NetworkNavigator).connection;
-    const constrained = connection?.saveData === true || connection?.effectiveType === "slow-2g" || connection?.effectiveType === "2g";
-    if (constrained) return;
+    const profile = readNetworkProfile();
+    if (profile.saveData) return;
     const next = images[activeIndex + 1];
-    if (next) preloadGalleryImage(next, sizes, widths);
+    if (next) preloadGalleryImage(next, sizes, widths, "high");
+    if (profile.constrained) return;
+    const remaining = images.filter((_, index) => index !== activeIndex && index !== activeIndex + 1);
+    const timers = remaining.map((image, index) => window.setTimeout(() => preloadGalleryImage(image, sizes, widths), 180 + index * 160));
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
   }, [activeIndex, images, sizes, widths]);
 }
 
@@ -182,130 +181,44 @@ export function WorkImageViewer({ images, title, initialIndex = 0, onClose }: {
 export function WorkImageGallery({ images, title }: { images: WorkImage[]; title: string }) {
   const [pageIndex, setPageIndex] = useState(0);
   const trackRef = useRef<HTMLDivElement>(null);
-  const dragFrame = useRef<number | null>(null);
-  const pendingDragOffset = useRef(0);
-  const pageTouchStart = useRef<{ x: number; y: number } | null>(null);
-  const pagePointerStart = useRef<{ x: number; y: number; id: number } | null>(null);
+  const scrollFrame = useRef<number | null>(null);
   const lastIndex = images.length - 1;
   const currentPageIndex = images.length ? Math.max(0, Math.min(pageIndex, lastIndex)) : 0;
   useGalleryPreload(images, currentPageIndex, "(min-width: 1024px) 520px, 100vw", pageGalleryWidths);
 
   useEffect(() => () => {
-    if (dragFrame.current !== null) window.cancelAnimationFrame(dragFrame.current);
+    if (scrollFrame.current !== null) window.cancelAnimationFrame(scrollFrame.current);
   }, []);
 
   if (!images.length) return <WorkPhoto alt={title} aspect="aspect-square" label="Main Gallery Photo Coming Soon" />;
 
-  const positionTrack = (index: number, offset: number, dragging: boolean) => {
+  const syncIndexFromScroll = () => {
     const track = trackRef.current;
-    if (!track) return;
-    track.classList.toggle("is-dragging", dragging);
-    track.style.transform = `translate3d(calc(-${index * 100}% + ${offset}px), 0, 0)`;
-  };
-
-  const beginDrag = () => {
-    if (dragFrame.current !== null) window.cancelAnimationFrame(dragFrame.current);
-    dragFrame.current = null;
-    pendingDragOffset.current = 0;
-    positionTrack(currentPageIndex, 0, true);
-  };
-
-  const updateDrag = (dx: number, dy: number) => {
-    if (Math.abs(dx) < 4 || Math.abs(dx) <= Math.abs(dy)) return;
-    const atStartEdge = currentPageIndex === 0 && dx > 0;
-    const atEndEdge = currentPageIndex === lastIndex && dx < 0;
-    pendingDragOffset.current = atStartEdge || atEndEdge ? dx * 0.24 : dx;
-    if (dragFrame.current !== null) return;
-    dragFrame.current = window.requestAnimationFrame(() => {
-      dragFrame.current = null;
-      positionTrack(currentPageIndex, pendingDragOffset.current, true);
-    });
-  };
-
-  const finishPageSwipe = (dx: number, dy: number) => {
-    if (dragFrame.current !== null) window.cancelAnimationFrame(dragFrame.current);
-    dragFrame.current = null;
-    pendingDragOffset.current = 0;
-    const shouldMove = Math.abs(dx) >= 42 && Math.abs(dx) > Math.abs(dy) * 1.2;
-    const nextIndex = shouldMove
-      ? Math.max(0, Math.min(currentPageIndex + (dx < 0 ? 1 : -1), lastIndex))
-      : currentPageIndex;
-    positionTrack(nextIndex, 0, false);
-    if (nextIndex !== currentPageIndex) setPageIndex(nextIndex);
-  };
-
-  const cancelDrag = () => {
-    if (dragFrame.current !== null) window.cancelAnimationFrame(dragFrame.current);
-    dragFrame.current = null;
-    pendingDragOffset.current = 0;
-    positionTrack(currentPageIndex, 0, false);
+    if (!track || track.clientWidth <= 0) return;
+    const index = Math.max(0, Math.min(Math.round(track.scrollLeft / track.clientWidth), lastIndex));
+    setPageIndex((current) => current === index ? current : index);
   };
 
   const moveTo = (nextIndex: number) => {
-    setPageIndex(Math.max(0, Math.min(nextIndex, lastIndex)));
-    cancelDrag();
+    const index = Math.max(0, Math.min(nextIndex, lastIndex));
+    setPageIndex(index);
+    trackRef.current?.scrollTo({ left: index * trackRef.current.clientWidth, behavior: "smooth" });
   };
-
-  const trackTransform = `translate3d(calc(-${currentPageIndex * 100}% + 0px), 0, 0)`;
 
   return (
     <div data-native-work-gallery className="rh-native-work-gallery">
-      <div className="rh-native-work-stack"
-        onTouchStart={(event) => {
-          pageTouchStart.current = event.touches.length === 1 ? { x: event.touches[0].clientX, y: event.touches[0].clientY } : null;
-          beginDrag();
-        }}
-        onTouchMove={(event) => {
-          const start = pageTouchStart.current;
-          if (!start || event.touches.length !== 1) return;
-          updateDrag(event.touches[0].clientX - start.x, event.touches[0].clientY - start.y);
-        }}
-        onTouchCancel={() => {
-          pageTouchStart.current = null;
-          cancelDrag();
-        }}
-        onTouchEnd={(event) => {
-          const start = pageTouchStart.current;
-          pageTouchStart.current = null;
-          if (!start || event.touches.length || !event.changedTouches[0]) {
-            cancelDrag();
-            return;
-          }
-          finishPageSwipe(event.changedTouches[0].clientX - start.x, event.changedTouches[0].clientY - start.y);
-        }}
-        onPointerDown={(event) => {
-          if (event.pointerType === "touch") return;
-          pagePointerStart.current = { x: event.clientX, y: event.clientY, id: event.pointerId };
-          cancelDrag();
-          event.currentTarget.setPointerCapture(event.pointerId);
-        }}
-        onPointerMove={(event) => {
-          if (event.pointerType === "touch") return;
-          const start = pagePointerStart.current;
-          if (!start || start.id !== event.pointerId) return;
-          updateDrag(event.clientX - start.x, event.clientY - start.y);
-        }}
-        onPointerCancel={(event) => {
-          if (pagePointerStart.current?.id === event.pointerId) pagePointerStart.current = null;
-          cancelDrag();
-        }}
-        onPointerUp={(event) => {
-          if (event.pointerType === "touch") return;
-          const start = pagePointerStart.current;
-          pagePointerStart.current = null;
-          if (!start || start.id !== event.pointerId) {
-            cancelDrag();
-            return;
-          }
-          finishPageSwipe(event.clientX - start.x, event.clientY - start.y);
+      <div className="rh-native-work-stack">
+        <div ref={trackRef} className="rh-native-work-track" aria-live="polite" onScroll={() => {
+          if (scrollFrame.current !== null) return;
+          scrollFrame.current = window.requestAnimationFrame(() => {
+            scrollFrame.current = null;
+            syncIndexFromScroll();
+          });
         }}>
-        <div ref={trackRef} className="rh-native-work-track" style={{ transform: trackTransform }} aria-live="polite">
           {images.map((image, imageIndex) => (
             <div key={image.id} className="rh-native-work-slide" aria-hidden={imageIndex === currentPageIndex ? undefined : "true"}>
-              {Math.abs(imageIndex - currentPageIndex) <= 1 && (
-                <WorkPhoto image={image} alt={title} aspect="rh-native-work-stack-photo" eager={imageIndex === currentPageIndex}
-                  sizes="(min-width: 1024px) 520px, 100vw" widths={pageGalleryWidths} />
-              )}
+              <WorkPhoto image={image} alt={title} aspect="rh-native-work-stack-photo" eager={imageIndex === currentPageIndex}
+                sizes="(min-width: 1024px) 520px, 100vw" widths={pageGalleryWidths} />
             </div>
           ))}
         </div>

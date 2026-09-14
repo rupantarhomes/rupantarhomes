@@ -34,8 +34,8 @@ test("does not seed Admin dashboard or production Home with fake public works wh
   assert.match(site, /const initialRouteIsAdmin = initialRoute\.kind === "admin";/);
   assert.match(site, /const storedHome = isSupabaseConfigured \? storedHomeContent\(\) : null;/);
   assert.match(site, /const initialHomeWorks = isSupabaseConfigured \? storedHome\?\.works \?\? \[\] : initialWorks;/);
-  assert.match(site, /const initialWorksState = initialRouteUsesWorks \|\| initialRouteIsAdmin \? \[\] : initialHomeWorks;/);
-  assert.match(site, /useState\(initialRouteUsesWorks \|\| initialRouteIsAdmin \? 0 : initialHomeWorks\.length\)/);
+  assert.match(site, /const initialWorksState = initialRouteIsAdmin \? \[\][\s\S]*initialCachedWorksPage\?\.works[\s\S]*initialCachedWork \? \[initialCachedWork\][\s\S]*initialHomeWorks/);
+  assert.match(site, /useState\(initialRouteIsAdmin \? 0 : initialCachedWorksPage\?\.total \?\?/);
 });
 
 test("guards public, Admin Works, Leads and Blog reads against stale in-flight responses", async () => {
@@ -98,10 +98,12 @@ test("Work delete disappears immediately from Admin/home state after the confirm
 
 test("selected Work and Blog detail records are independent from mutable list pagination", async () => {
   const site = await read("../app/rupantar/site.tsx");
-  assert.match(site, /const \[selectedWork, setSelectedWork\] = useState<Work \| null>\(null\)/);
-  assert.match(site, /const \[selectedBlog, setSelectedBlog\] = useState<Blog \| null>\(null\)/);
-  assert.match(site, /worksRequestIdRef\.current \+= 1;[\s\S]*setSelectedWork\(work\);[\s\S]*setPage\("work-detail"\)/);
-  assert.match(site, /blogsRequestIdRef\.current \+= 1;[\s\S]*setSelectedBlog\(blog\);[\s\S]*setPage\("blog-detail"\)/);
+  assert.match(site, /const \[selectedWork, setSelectedWork\] = useState<Work \| null>\(initialCachedWork \?\? null\)/);
+  assert.match(site, /const \[selectedBlog, setSelectedBlog\] = useState<Blog \| null>\(initialCachedBlog \?\? null\)/);
+  const openWork = site.slice(site.indexOf("const openWork ="), site.indexOf("const openLinkedWork ="));
+  const openBlog = site.slice(site.indexOf("const openBlog ="), site.indexOf("const openWork ="));
+  assert.match(openWork, /setSelectedWork\(work\);[\s\S]*setPage\("work-detail"\)/);
+  assert.match(openBlog, /setSelectedBlog\(blog\);[\s\S]*setPage\("blog-detail"\)/);
   assert.doesNotMatch(site, /const selectedWork = works\.find/);
   assert.doesNotMatch(site, /const selectedBlog = blogs\.find/);
 });

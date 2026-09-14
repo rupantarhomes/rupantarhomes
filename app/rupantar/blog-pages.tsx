@@ -8,6 +8,7 @@ import type { BlogLinkedWork } from "./blog-project-link";
 import { loadLinkedWorkForBlog, peekLinkedWorkForBlog } from "./public-data";
 import { workPath } from "./routes";
 import type { Page } from "./types";
+import { BackToPostsButton } from "./blog-navigation";
 
 function isInteractiveTarget(target: EventTarget) {
   return target instanceof Element && Boolean(target.closest("button, a, input, select, textarea, label"));
@@ -84,6 +85,7 @@ export function BlogArticlePage({ blog, navigate }: { blog: Blog; navigate: (pag
   return (
     <main className="rh-blog-article-page max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-[4.75rem] pb-14 sm:py-16">
       <article className="rh-blog-article max-w-[800px]">
+        <BackToPostsButton navigate={navigate} className="mb-8" />
         <div className="rh-blog-article-category text-[11px] font-semibold uppercase tracking-[0.12em] text-[#FF1A3D]">{label}</div>
         <h1 className="rh-blog-article-title mt-3 font-heading text-[40px] sm:text-[56px] leading-[1.04] font-bold tracking-[-0.045em]">{blog.title}</h1>
         <div className="rh-blog-article-body mt-9 space-y-6 text-[16px] leading-7 sm:leading-8 text-zinc-700">{paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>

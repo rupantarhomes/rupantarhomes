@@ -46,7 +46,7 @@ test("public Home endpoint joins six Works and images behind one edge-cached bro
   const cachedResponses = [];
   const cache = { match: async () => null, put: async (key, response) => { cachedResponses.push({ key, response }); } };
   const endpoint = load("functions/api/public-home.ts", {
-    "../_lib/env": { requireRuntimeEnv: (env) => env },
+    "../_lib/env": { requirePublicRuntimeEnv: (env) => env },
     "../_lib/http": { fetchWithTimeout: async (url) => {
       dependencyCalls++;
       requestedUrls.push(url);
@@ -82,7 +82,7 @@ test("public Home endpoint joins six Works and images behind one edge-cached bro
 test("public Home endpoint serves an edge hit without touching Supabase", async () => {
   const cached = Response.json({ works: rows, confirmedAt: 1 });
   const endpoint = load("functions/api/public-home.ts", {
-    "../_lib/env": { requireRuntimeEnv: (env) => env },
+    "../_lib/env": { requirePublicRuntimeEnv: (env) => env },
     "../_lib/http": { fetchWithTimeout: async () => { throw new Error("must not run"); } },
   }, { caches: { default: { match: async () => cached, put: async () => {} } } });
   const response = await endpoint.onRequestGet({ request: new Request("https://rupantarhomes.com/api/public-home"), env: {}, waitUntil: () => {} });

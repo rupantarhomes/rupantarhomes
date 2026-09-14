@@ -3,19 +3,7 @@
  * Public navigation enhancement only. No data, form, media, auth or backend behavior.
  */
 
-const estimateSelector = "#estimate";
-const maxEstimateFrames = 90;
-
-function scrollEstimateWhenReady(frame = 0): void {
-  const estimate = document.querySelector<HTMLElement>(estimateSelector);
-  if (estimate) {
-    estimate.scrollIntoView({ behavior: "smooth", block: "start" });
-    return;
-  }
-
-  if (frame >= maxEstimateFrames) return;
-  window.requestAnimationFrame(() => scrollEstimateWhenReady(frame + 1));
-}
+import { scrollEstimateWhenReady } from "./public-navigation";
 
 function isGetEstimateControl(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false;

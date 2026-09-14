@@ -17,8 +17,8 @@ export const deferred = () => {
   return { promise, resolve, reject };
 };
 export const flush = async () => { for (let i = 0; i < 30; i++) await Promise.resolve(); };
-export function dataFixture(repository, now = () => Date.now()) {
-  return compile(source('app/rupantar/public-data.ts'), { './repository': repository, './blog-project-link': repository }, { Date: { now } });
+export function dataFixture(repository, now = () => Date.now(), globals = {}) {
+  return compile(source('app/rupantar/public-data.ts'), { './repository': repository, './blog-project-link': repository }, { Date: { now }, ...globals });
 }
 export function siteFixture(repository, { path = '/', now, homeBootstrap } = {}) {
   const data = dataFixture(repository, now);
@@ -51,6 +51,7 @@ export function siteFixture(repository, { path = '/', now, homeBootstrap } = {})
     react: hooks, './repository': { ...repository, getCurrentAdminSession: async () => null }, './public-data': data,
     './routes': routes, './supabase': { isSupabaseConfigured: true }, './blog': { emptyBlogForm: {} },
     './cloudinary': {}, './types': {}, './shared': {}, './home-page': {}, './error-boundary': {}, '../network-policy': { shouldWarmPublicRoutes: () => true },
+    '../public-navigation': { resetPublicRouteScroll: () => scrolls.push({ top: 0, left: 0, behavior: 'auto' }) },
     './home-bootstrap': {
       storedHomeContent: () => homeBootstrap?.stored ?? null,
       earlyHomeContent: async () => {

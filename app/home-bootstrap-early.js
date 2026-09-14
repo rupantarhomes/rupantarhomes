@@ -10,8 +10,7 @@ function homeCoverPreloadCount() {
   const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
   const effectiveType = String(connection?.effectiveType || "").toLowerCase();
   const constrained = connection?.saveData === true || effectiveType === "slow-2g" || effectiveType === "2g";
-  const unknownMobile = !effectiveType && typeof window.matchMedia === "function" && window.matchMedia("(max-width: 767px)").matches;
-  const slow = constrained || effectiveType === "3g" || unknownMobile
+  const slow = constrained || effectiveType === "3g"
     || (typeof connection?.downlink === "number" && connection.downlink > 0 && connection.downlink < 1.5);
   if (constrained) return 0;
   if (slow) return 1;

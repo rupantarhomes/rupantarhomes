@@ -4,7 +4,6 @@ import "./globals.css";
 import "./editorial-pages.css";
 import "./work-media-enhancer.css";
 import "./social-links-enhancer.css";
-import "./admin-leads-enhancer.css";
 import "./premium-architectural-theme.css";
 import "./public-display-typography.css";
 import "./review-cards-enhancer.css";
@@ -15,8 +14,7 @@ import "./recent-works-mobile-readable.css";
 import { BrandIntro } from "./rupantar/brand-intro";
 import { SiteErrorBoundary } from "./rupantar/error-boundary";
 import { RupantarSite } from "./rupantar/site";
-import { initWorkMediaEnhancements } from "./rupantar/work-media-enhancer";
-import { initAdminLeadsEnhancements } from "./rupantar/admin-leads-enhancer";
+import { initPublicRouteScroll } from "./public-navigation";
 
 const root = document.getElementById("root");
 
@@ -43,202 +41,10 @@ createRoot(root).render(
   </StrictMode>,
 );
 
-initWorkMediaEnhancements();
-initAdminLeadsEnhancements();
+initPublicRouteScroll();
 
-function resetPageScroll() {
-  window.requestAnimationFrame(() => {
-    window.requestAnimationFrame(() => {
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    });
-  });
-}
-
-function initPageScrollReset() {
-  if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
-
-  const originalPushState = window.history.pushState;
-  window.history.pushState = function (data: unknown, unused: string, url?: string | URL | null) {
-    originalPushState.call(window.history, data, unused, url);
-    resetPageScroll();
-  };
-
-  window.addEventListener("popstate", resetPageScroll);
-}
-
-initPageScrollReset();
-
-const facebookUrl = "https://www.facebook.com/rupantarbygokulkunwar";
-
-function createFacebookIcon() {
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", "0 0 24 24");
-  svg.setAttribute("aria-hidden", "true");
-  svg.setAttribute("focusable", "false");
-  svg.classList.add("rh-facebook-icon");
-
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute("fill", "currentColor");
-  path.setAttribute("d", "M14 8h3V4h-3c-3.3 0-5 2-5 5v3H6v4h3v8h4v-8h3.5l.5-4H13V9c0-.7.3-1 1-1Z");
-  svg.appendChild(path);
-  return svg;
-}
-
-function createFacebookLink(labelled: boolean) {
-  const link = document.createElement("a");
-  link.href = facebookUrl;
-  link.target = "_blank";
-  link.rel = "noopener noreferrer";
-  link.dataset.rhFacebookLink = labelled ? "connect" : "footer";
-  link.setAttribute("aria-label", "Facebook");
-  link.appendChild(createFacebookIcon());
-
-  if (labelled) {
-    link.className = "rh-facebook-connect h-11 px-6 rounded-full bg-white border border-zinc-200 text-[13px] font-medium flex items-center gap-2 hover:border-[#FF1A3D]/30 transition";
-    link.append(document.createTextNode("Facebook"));
-  } else {
-    link.className = "rh-facebook-footer w-9 h-9 rounded-full bg-white/10 border border-white/10 text-white flex items-center justify-center hover:border-[#FF1A3D]/50 transition";
-  }
-
-  return link;
-}
-
-function ensureFacebookLinks() {
-  const connectHeading = Array.from(document.querySelectorAll<HTMLElement>("h3")).find(
-    (element) => element.textContent?.trim() === "Connect With Us",
-  );
-  const connectPanel = connectHeading?.parentElement?.parentElement;
-  const connectActions = connectPanel?.lastElementChild;
-
-  if (connectPanel instanceof HTMLElement) connectPanel.classList.add("rh-connect-panel");
-
-  if (connectActions instanceof HTMLElement) {
-    connectActions.classList.add("rh-social-actions");
-    if (!connectActions.querySelector('[data-rh-facebook-link="connect"]')) {
-      connectActions.appendChild(createFacebookLink(true));
-    }
-  }
-
-  const footer = document.querySelector("footer");
-  if (footer) {
-    const socialHeading = Array.from(footer.querySelectorAll<HTMLElement>("div")).find(
-      (element) => element.textContent?.trim() === "Social Links" && element.children.length === 0,
-    );
-    const socialColumn = socialHeading?.parentElement;
-    const socialBody = socialColumn?.children.item(1);
-    const socialIcons = socialBody?.firstElementChild;
-
-    if (socialIcons instanceof HTMLElement) {
-      socialIcons.classList.add("rh-footer-social-links");
-      if (!socialIcons.querySelector('[data-rh-facebook-link="footer"]')) {
-        socialIcons.appendChild(createFacebookLink(false));
-      }
-    }
-  }
-}
-
-function createReviewArrowIcon(direction: "previous" | "next") {
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", "0 0 24 24");
-  svg.setAttribute("aria-hidden", "true");
-  svg.setAttribute("focusable", "false");
-
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute("fill", "none");
-  path.setAttribute("stroke", "currentColor");
-  path.setAttribute("stroke-width", "2");
-  path.setAttribute("stroke-linecap", "round");
-  path.setAttribute("stroke-linejoin", "round");
-  path.setAttribute("d", direction === "previous" ? "m15 18-6-6 6-6" : "m9 18 6-6-6-6");
-  svg.appendChild(path);
-  return svg;
-}
-
-function scrollReviewTrack(section: HTMLElement, direction: -1 | 1) {
-  const grid = Array.from(section.querySelectorAll<HTMLElement>("div.grid")).find((element) => element.children.length > 0);
-  if (!grid) return;
-
-  const card = grid.querySelector<HTMLElement>(".rh-review-card") || (grid.firstElementChild instanceof HTMLElement ? grid.firstElementChild : null);
-  const styles = window.getComputedStyle(grid);
-  const gap = Number.parseFloat(styles.columnGap || styles.gap || "20") || 20;
-  const cardWidth = card?.getBoundingClientRect().width || grid.clientWidth / 3;
-  grid.scrollBy({ left: direction * (cardWidth + gap), behavior: "smooth" });
-}
-
-function ensureReviewDesktopControls(section: HTMLElement) {
-  const header = section.firstElementChild;
-  const summary = header?.lastElementChild;
-  if (!(summary instanceof HTMLElement) || summary.querySelector('[data-rh-review-controls="true"]')) return;
-
-  const controls = document.createElement("span");
-  controls.className = "rh-review-controls";
-  controls.dataset.rhReviewControls = "true";
-  controls.setAttribute("role", "group");
-  controls.setAttribute("aria-label", "Review carousel controls");
-
-  const previous = document.createElement("button");
-  previous.type = "button";
-  previous.className = "rh-review-arrow";
-  previous.setAttribute("aria-label", "Previous review");
-  previous.appendChild(createReviewArrowIcon("previous"));
-  previous.addEventListener("click", () => scrollReviewTrack(section, -1));
-
-  const next = document.createElement("button");
-  next.type = "button";
-  next.className = "rh-review-arrow";
-  next.setAttribute("aria-label", "Next review");
-  next.appendChild(createReviewArrowIcon("next"));
-  next.addEventListener("click", () => scrollReviewTrack(section, 1));
-
-  controls.append(previous, next);
-  summary.appendChild(controls);
-}
-
-function ensureReviewCardClasses() {
-  const heading = Array.from(document.querySelectorAll<HTMLElement>("h3")).find(
-    (element) => element.textContent?.trim() === "Real Homes, Real Reviews",
-  );
-  const section = heading?.closest("section");
-  if (!(section instanceof HTMLElement)) return;
-
-  section.classList.add("rh-review-section");
-  const grid = Array.from(section.querySelectorAll<HTMLElement>("div.grid")).find((element) => element.children.length > 0);
-  if (!grid) return;
-
-  for (const card of Array.from(grid.children)) {
-    if (!(card instanceof HTMLElement)) continue;
-    card.classList.add("rh-review-card");
-    const children = Array.from(card.children);
-    if (children[1] instanceof HTMLElement) children[1].classList.add("rh-review-stars");
-    if (children[2] instanceof HTMLElement) children[2].classList.add("rh-review-quote");
-    if (children[3] instanceof HTMLElement) {
-      children[3].classList.add("rh-review-author");
-      const authorChildren = Array.from(children[3].children);
-      if (authorChildren[0] instanceof HTMLElement) authorChildren[0].classList.add("rh-review-monogram");
-      if (authorChildren[1] instanceof HTMLElement) {
-        const identity = Array.from(authorChildren[1].children);
-        if (identity[0] instanceof HTMLElement) identity[0].classList.add("rh-review-author-name");
-        if (identity[1] instanceof HTMLElement) identity[1].classList.add("rh-review-location");
-      }
-    }
-    const link = card.querySelector<HTMLAnchorElement>("a");
-    if (link) {
-      link.classList.add("rh-review-link");
-      if (link.getAttribute("href") === "#") {
-        link.hidden = true;
-        link.removeAttribute("target");
-        link.setAttribute("aria-hidden", "true");
-        link.tabIndex = -1;
-      }
-    }
-  }
-
-  ensureReviewDesktopControls(section);
-}
-
-function normalizeVisibleCopy() {
-  const publicEnhancerEnabled = () => !window.location.pathname.startsWith("/admin");
-  if (!publicEnhancerEnabled()) return;
+function initPublicCopyNormalization() {
+  if (window.location.pathname.startsWith("/admin")) return;
   const publicRoot = document.getElementById("root");
   if (!publicRoot) return;
 
@@ -257,62 +63,48 @@ function normalizeVisibleCopy() {
     [/3 core services from our Kathmandu studio\. Click any card to see works\./gi, "3 core services. Click any card to see works."],
     [/Factory finish at Kathmandu studio\. Clean install in 7-21 days\./gi, "Proper Finishing. Clean installation."],
   ];
+  const relevantText = /(?:\b(?:3D|workshop)\b|core services|Instagram & TikTok)/i;
 
-  const normalizeNode = (node: Node) => {
-    if (node.nodeType === Node.TEXT_NODE && node.textContent) {
-      const parent = node.parentElement;
-      if (parent?.closest("script, style, textarea")) return;
-
-      let next = node.textContent;
-      for (const [pattern, replacement] of replacements) next = next.replace(pattern, replacement);
-      if (next !== node.textContent) node.textContent = next;
-      return;
-    }
-
-    if (node.nodeType !== Node.ELEMENT_NODE && node !== publicRoot) return;
-    const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
-    let current = walker.nextNode();
-    while (current) {
-      normalizeNode(current);
-      current = walker.nextNode();
-    }
+  const normalizeText = (node: Node) => {
+    if (!node.textContent || node.parentElement?.closest("script, style, textarea")) return;
+    let next = node.textContent;
+    for (const [pattern, replacement] of replacements) next = next.replace(pattern, replacement);
+    if (next !== node.textContent) node.textContent = next;
   };
 
-  const normalizeFooter = () => {
-    const footer = document.querySelector("footer");
-    if (!footer) return;
-    const spans = Array.from(footer.querySelectorAll("span"));
-    const location = spans.find((span) => span.textContent?.trim() === "Kathmandu Nepal");
-    const separator = spans.find((span) => span.textContent?.trim() === "•" && span.parentElement?.textContent?.includes("All Right Reserved"));
-    const rights = spans.find((span) => span.textContent?.trim() === "All Right Reserved - Rupantar Homes");
-
-    if (location && rights) {
-      location.textContent = "";
-      if (separator) separator.textContent = "";
-      rights.textContent = "All Right Reserved • Rupantar Homes by Gokul Kunwar";
+  const normalizeNode = (node: Node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      normalizeText(node);
+      return;
     }
+    if (node.nodeType !== Node.ELEMENT_NODE && node !== publicRoot) return;
+    if (!relevantText.test(node.textContent ?? "")) return;
+    const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+    for (let current = walker.nextNode(); current; current = walker.nextNode()) normalizeText(current);
   };
 
   normalizeNode(publicRoot);
-  normalizeFooter();
-  ensureFacebookLinks();
-  ensureReviewCardClasses();
 
+  let frame = 0;
+  const pending = new Set<Node>();
   const observer = new MutationObserver((mutations) => {
-    if (!publicEnhancerEnabled()) return;
+    if (window.location.pathname.startsWith("/admin")) return;
     for (const mutation of mutations) {
-      for (const node of mutation.addedNodes) normalizeNode(node);
+      for (const node of mutation.addedNodes) pending.add(node);
     }
-    normalizeFooter();
-    ensureFacebookLinks();
-    ensureReviewCardClasses();
+    if (frame || pending.size === 0) return;
+    frame = window.requestAnimationFrame(() => {
+      frame = 0;
+      for (const node of pending) normalizeNode(node);
+      pending.clear();
+    });
   });
 
   observer.observe(publicRoot, { childList: true, subtree: true });
 }
 
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", normalizeVisibleCopy, { once: true });
+  document.addEventListener("DOMContentLoaded", initPublicCopyNormalization, { once: true });
 } else {
-  normalizeVisibleCopy();
+  initPublicCopyNormalization();
 }

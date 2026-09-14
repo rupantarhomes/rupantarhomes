@@ -21,13 +21,13 @@ import {
   Phone,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { brandAssets, categories, interiorDesignCategories } from "./data";
 import type { Page, SiteSettings, WorkImage } from "./types";
+import { AdminFooterLink, FacebookFooterLink } from "./public-interactions";
 
 export const whatsappUrl = `https://wa.me/9779745941799?text=${encodeURIComponent("Hello Rupantar Homes, I would like to discuss my interior project.")}`;
 export const callUrl = "tel:+9779745941799";
-
 export const categoryIcons = {
   architect: PencilRuler,
   interior: House,
@@ -68,6 +68,8 @@ export function WorkPhoto({
   eager = false,
   sizes = "(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw",
   widths = [320, 480, 768, 1200],
+  mediaClassName = "",
+  overlay,
 }: {
   image?: WorkImage;
   alt: string;
@@ -76,6 +78,8 @@ export function WorkPhoto({
   eager?: boolean;
   sizes?: string;
   widths?: readonly number[];
+  mediaClassName?: string;
+  overlay?: ReactNode;
 }) {
   const [failed, setFailed] = useState(false);
   if (!image || failed) return <PhotoPlaceholder aspect={aspect} label={label} />;
@@ -84,7 +88,7 @@ export function WorkPhoto({
     .map((width) => `${cloudinaryDeliveryUrl(image.url, width)} ${width}w`)
     .join(", ");
   return (
-    <div className={`${aspect} w-full rounded-[1.25rem] overflow-hidden bg-[#F8F8F8] ring-1 ring-inset ring-black/[0.04]`}>
+    <div className={`${aspect} ${mediaClassName} w-full rounded-[1.25rem] overflow-hidden bg-[#F8F8F8] ring-1 ring-inset ring-black/[0.04]`}>
       <img
         src={cloudinaryDeliveryUrl(image.url, fallbackWidth)}
         srcSet={sources}
@@ -96,6 +100,7 @@ export function WorkPhoto({
         decoding="async"
         onError={() => setFailed(true)}
       />
+      {overlay}
     </div>
   );
 }
@@ -304,6 +309,7 @@ export function PublicFooter({
             <div className="flex gap-2">
               <a href={settings.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="w-9 h-9 rounded-full bg-white/10 border border-white/10 text-white flex items-center justify-center hover:border-[#FF1A3D]/50 transition"><Instagram className="w-4 h-4" /></a>
               <a href={settings.tiktok} target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="w-9 h-9 rounded-full bg-[#FEFEFE] text-[#111111] flex items-center justify-center hover:bg-white transition"><Music2 className="w-4 h-4" /></a>
+              <FacebookFooterLink />
             </div>
             <a
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(settings.address)}`}
@@ -325,9 +331,9 @@ export function PublicFooter({
       </div>
       <div className="border-t border-gray-800">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 h-12 flex items-center justify-center text-[11px] text-zinc-400">
-          <span>Kathmandu Nepal</span>
-          <span className="mx-2">•</span>
-          <span>All Right Reserved - Rupantar Homes</span>
+          <span>All Right Reserved • Rupantar Homes by Gokul Kunwar</span>
+          <span className="mx-2 text-zinc-500">•</span>
+          <AdminFooterLink />
         </div>
       </div>
     </footer>

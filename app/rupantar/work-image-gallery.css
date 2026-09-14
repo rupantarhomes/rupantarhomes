@@ -13,10 +13,10 @@
 .rh-admin-work-images button:focus-visible { outline: 2px solid #ff1a3d; outline-offset: 3px; }
 
 .rh-native-work-gallery { width: 100%; }
-.rh-native-work-stack { position: relative; isolation: isolate; aspect-ratio: 9 / 16; overflow: hidden; border-radius: 1.25rem; background: #f8f8f8; box-shadow: 0 4px 16px rgb(0 0 0 / .08); touch-action: pan-y pinch-zoom; -webkit-tap-highlight-color: transparent; user-select: none; }
-.rh-native-work-track { display: flex; width: 100%; height: 100%; will-change: transform; transition: transform 320ms cubic-bezier(.22,.8,.24,1); }
-.rh-native-work-track.is-dragging { transition: none; }
-.rh-native-work-slide { flex: 0 0 100%; width: 100%; height: 100%; min-width: 100%; pointer-events: none; }
+.rh-native-work-stack { position: relative; isolation: isolate; aspect-ratio: 9 / 16; overflow: hidden; border-radius: 1.25rem; background: #f8f8f8; box-shadow: 0 4px 16px rgb(0 0 0 / .08); -webkit-tap-highlight-color: transparent; user-select: none; }
+.rh-native-work-track { display: flex; width: 100%; height: 100%; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scroll-behavior: smooth; overscroll-behavior-x: contain; touch-action: pan-x pan-y pinch-zoom; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.rh-native-work-track::-webkit-scrollbar { display: none; }
+.rh-native-work-slide { flex: 0 0 100%; width: 100%; height: 100%; min-width: 100%; scroll-snap-align: center; scroll-snap-stop: normal; pointer-events: none; }
 .rh-native-work-stack-photo { height: 100%; border-radius: 0 !important; --tw-ring-color: #ffffff; }
 .rh-native-work-stack-photo img { object-fit: cover; user-select: none; pointer-events: none; -webkit-user-drag: none; }
 
@@ -36,11 +36,6 @@
 .rh-native-work-desktop-nav { display: none; }
 .rh-native-work-swipe-hint { margin-top: 11px; text-align: center; color: #52525b; font-size: 13px; font-weight: 500; line-height: 1.45; letter-spacing: .01em; }
 
-@media (max-width: 1023px) {
-  html:has([data-native-work-gallery]), body:has([data-native-work-gallery]) { scroll-snap-type: y proximity; scroll-behavior: smooth; }
-  [data-native-work-gallery] { scroll-snap-align: start; scroll-margin-top: 92px; }
-}
-
 @media (min-width: 1024px) {
   .rh-native-work-gallery { width: min(100%, calc((100dvh - 210px) * 9 / 16)); max-width: 430px; }
   .rh-native-work-stack { cursor: grab; }
@@ -55,8 +50,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html:has([data-native-work-gallery]), body:has([data-native-work-gallery]) { scroll-behavior: auto; }
-  .rh-native-work-track { transition: none; }
+  .rh-native-work-track { scroll-behavior: auto; }
   .rh-native-work-gesture-cue, .rh-native-work-gesture-cue > span { animation: none; }
 }
 
@@ -81,10 +75,6 @@
 }
 
 /* Work-detail hero finishing. Scoped to the page that owns the native gallery. */
-main:has([data-native-work-gallery]) > button:first-child {
-  display: none;
-}
-
 main:has([data-native-work-gallery]) > .grid > div:first-child > div:first-child {
   gap: 10px;
   margin-bottom: 14px;

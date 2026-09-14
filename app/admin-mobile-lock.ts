@@ -607,3 +607,5 @@ observer.observe(document.documentElement, { childList: true, subtree: true });
 window.addEventListener("popstate", syncAdminMobileLock);
 window.addEventListener("pageshow", syncAdminMobileLock);
 syncAdminMobileLock();
+
+export {};

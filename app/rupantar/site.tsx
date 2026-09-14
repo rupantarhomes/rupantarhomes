@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle2, X } from "lucide-react";
-import { lazy, startTransition, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { emptyBlogForm, type Blog, type BlogForm } from "./blog";
 import { deleteCloudinaryImages, maximumWorkImages, uploadWorkImages } from "./cloudinary";
@@ -15,6 +15,7 @@ import {
   initialWorks,
 } from "./data";
 import { shouldWarmPublicRoutes } from "../network-policy";
+import { resetPublicRouteScroll, scrollEstimateWhenReady } from "../public-navigation";
 import { HomePage } from "./home-page";
 import { earlyHomeContent, storedHomeContent } from "./home-bootstrap";
 import { SiteErrorBoundary } from "./error-boundary";
@@ -27,7 +28,7 @@ import {
   getCurrentAdminSession,
   loadAdminContent,
   loadAdminStats,
-  loadPublicBlogs as loadAdminBlogs,
+  loadAdminBlogs,
   loadLeads,
   saveBlog,
   saveReview,
@@ -42,6 +43,7 @@ import {
 import {
   loadPublicBlogBySlug, loadPublicBlogs, loadPublicContent, loadPublicWorksPage, loadPublicWorkBySlug,
   peekPublicWork, peekPublicBlog, peekPublicWorksPage,
+  peekPublicBlogs,
   publicContentIsFresh, publicBlogsAreFresh, publicWorksAreFresh, publicWorkIsFresh, publicBlogIsFresh,
   invalidatePublicWorks, invalidatePublicBlogs, invalidatePublicContent,
   primePublicContent,
@@ -119,14 +121,18 @@ function AdminLoadWarning({ onRetry }: { onRetry: () => void }) {
 const publicPages: Page[] = ["home", "works", "work-detail", "about", "contact", "privacy", "interior-design", "blog", "blog-detail"];
 const adminWorksLimit = 1000;
 const adminVerificationIntervalMs = 5 * 60 * 1000;
-const transitionablePublicPages = new Set<Page>(["about", "contact", "privacy", "interior-design", "blog"]);
-
 type BrowserRoute = ReturnType<typeof parseRoute>;
 
 function prefetchPublicPageModules() {
   if (!shouldWarmPublicRoutes()) return;
-  void loadPublicPages().catch((error) => console.error("Unable to prefetch public pages", error));
-  void loadBlogPages().catch((error) => console.error("Unable to prefetch blog pages", error));
+  void loadPublicPages()
+    .then(() => loadPublicWorksPage(0, 12, "all"))
+    .catch((error) => console.error("Unable to prepare public Works", error));
+  window.setTimeout(() => {
+    void loadBlogPages()
+      .then(() => loadPublicBlogs())
+      .catch((error) => console.error("Unable to prepare public Blog", error));
+  }, 250);
 }
 
 function prefetchPublicRoute(page: Page) {
@@ -168,23 +174,28 @@ export function RupantarSite() {
   const initialRouteIsAdmin = initialRoute.kind === "admin";
   const storedHome = isSupabaseConfigured ? storedHomeContent() : null;
   const initialHomeWorks = isSupabaseConfigured ? storedHome?.works ?? [] : initialWorks;
-  const initialWorksState = initialRouteUsesWorks || initialRouteIsAdmin ? [] : initialHomeWorks;
+  const initialCachedWorksPage = initialRoute.kind === "works" ? peekPublicWorksPage(0, initialRoute.category) : undefined;
+  const initialCachedWork = initialRoute.kind === "work-detail" ? peekPublicWork(initialRoute.category, initialRoute.slug) : undefined;
+  const initialCachedBlogs = peekPublicBlogs() ?? [];
+  const initialCachedBlog = initialRoute.kind === "blog-detail" ? peekPublicBlog(initialRoute.slug) : undefined;
+  const initialWorksState = initialRouteIsAdmin ? []
+    : initialCachedWorksPage?.works ?? (initialCachedWork ? [initialCachedWork] : initialRouteUsesWorks ? [] : initialHomeWorks);
   const [page, setPage] = useState<Page>(() => pageForRoute(initialRoute));
   const [filter, setFilter] = useState(() => initialRoute.kind === "works" || initialRoute.kind === "work-detail" ? initialRoute.category : "all");
-  const [selectedWork, setSelectedWork] = useState<Work | null>(null);
-  const [selectedBlog, setSelectedBlog] = useState<Blog | null>(null);
+  const [selectedWork, setSelectedWork] = useState<Work | null>(initialCachedWork ?? null);
+  const [selectedBlog, setSelectedBlog] = useState<Blog | null>(initialCachedBlog ?? null);
   const [detailLoadError, setDetailLoadError] = useState("");
   const [worksLoadError, setWorksLoadError] = useState("");
   const [blogsLoadError, setBlogsLoadError] = useState("");
   const [adminLoadError, setAdminLoadError] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [works, setWorks] = useState<Work[]>(initialWorksState);
-  const [worksTotal, setWorksTotal] = useState(initialRouteUsesWorks || initialRouteIsAdmin ? 0 : initialHomeWorks.length);
-  const [worksLoading, setWorksLoading] = useState(initialRoute.kind === "works" || (initialRoute.kind === "home" && isSupabaseConfigured && initialHomeWorks.length === 0));
+  const [worksTotal, setWorksTotal] = useState(initialRouteIsAdmin ? 0 : initialCachedWorksPage?.total ?? (initialRouteUsesWorks ? initialWorksState.length : initialHomeWorks.length));
+  const [worksLoading, setWorksLoading] = useState((initialRoute.kind === "works" && !initialCachedWorksPage) || (initialRoute.kind === "home" && isSupabaseConfigured && initialHomeWorks.length === 0));
   const [reviews, setReviews] = useState<Review[]>(storedHome?.reviews ?? initialReviews);
-  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [blogs, setBlogs] = useState<Blog[]>(initialCachedBlogs);
   const [blogsLoading, setBlogsLoading] = useState(false);
-  const [blogsLoaded, setBlogsLoaded] = useState(false);
+  const [blogsLoaded, setBlogsLoaded] = useState(initialCachedBlogs.length > 0);
   const [blogForm, setBlogForm] = useState<BlogForm>(emptyBlogForm);
   const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -210,14 +221,14 @@ export function RupantarSite() {
   const homeWorksConfirmedRef = useRef(!isSupabaseConfigured || initialHomeWorks.length > 0);
   const liveHomeContentConfirmedRef = useRef(!isSupabaseConfigured);
   const worksRef = useRef(works);
-  const worksLoadedRef = useRef(false);
+  const worksLoadedRef = useRef(initialWorksState.length > 0);
   const adminWorksLoadedRef = useRef(false);
   const worksRequestIdRef = useRef(0);
   const adminWorksRequestIdRef = useRef(0);
   const contentRequestIdRef = useRef(0);
   const leadsRequestIdRef = useRef(0);
   const blogsRef = useRef(blogs);
-  const blogsLoadedRef = useRef(false);
+  const blogsLoadedRef = useRef(initialCachedBlogs.length > 0);
   const blogsRequestIdRef = useRef(0);
   const routeRequestIdRef = useRef(0);
   const persistedDraftImageIdsRef = useRef(new Set<string>());
@@ -243,14 +254,14 @@ export function RupantarSite() {
   useEffect(() => {
     if (parseRoute(window.location.pathname).kind === "admin") return;
     const idleWindow = window as typeof window & {
-      requestIdleCallback?: (callback: () => void) => number;
+      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
       cancelIdleCallback?: (handle: number) => void;
     };
     if (idleWindow.requestIdleCallback) {
-      const handle = idleWindow.requestIdleCallback(prefetchPublicPageModules);
+      const handle = idleWindow.requestIdleCallback(prefetchPublicPageModules, { timeout: 900 });
       return () => idleWindow.cancelIdleCallback?.(handle);
     }
-    const timer = window.setTimeout(prefetchPublicPageModules, 1200);
+    const timer = window.setTimeout(prefetchPublicPageModules, 450);
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -462,6 +473,7 @@ export function RupantarSite() {
   }, [expireAdminSession]);
 
   const applyBrowserRoute = useCallback(async () => {
+    resetPublicRouteScroll();
     const routeRequestId = ++routeRequestIdRef.current;
     worksRequestIdRef.current += 1;
     const isCurrentRoute = () => routeRequestId === routeRequestIdRef.current;
@@ -661,6 +673,7 @@ export function RupantarSite() {
 
   const pushPath = (path: string) => {
     if (window.location.pathname !== path) window.history.pushState(null, "", path);
+    resetPublicRouteScroll();
   };
 
   const navigate = (nextPage: Page) => {
@@ -680,8 +693,7 @@ export function RupantarSite() {
         restoreHomeWorks();
         void refreshContent().catch((error) => console.error("Unable to revalidate home content", error));
       }
-      if (transitionablePublicPages.has(nextPage)) startTransition(() => setPage(nextPage));
-      else setPage(nextPage);
+      setPage(nextPage);
       if (nextPage === "blog") {
         setSelectedBlog(null);
         void refreshBlogs().catch((error) => console.error("Unable to load blog", error));
@@ -694,7 +706,6 @@ export function RupantarSite() {
       }
       if (nextPage === "admin-dashboard") void refreshAdminStats();
     }
-    window.scrollTo({ top: 0, behavior: "auto" });
   };
 
   const goToEstimate = () => {
@@ -708,7 +719,7 @@ export function RupantarSite() {
       restoreHomeWorks();
       setPage("home");
       void refreshContent().catch((error) => console.error("Unable to revalidate home content", error));
-      window.setTimeout(() => document.getElementById("estimate")?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
+      window.requestAnimationFrame(() => scrollEstimateWhenReady());
       return;
     }
     document.getElementById("estimate")?.scrollIntoView({ behavior: "smooth" });
@@ -725,7 +736,6 @@ export function RupantarSite() {
     setFilter(category);
     setPage("works");
     void loadWorks(category, 0, categoryChanged).catch((error) => console.error("Unable to load category", error));
-    window.scrollTo({ top: 0, behavior: "auto" });
   };
 
   const openBlog = (id: string) => {
@@ -736,11 +746,8 @@ export function RupantarSite() {
     setDetailLoadError("");
     prefetchPublicRoute("blog-detail");
     pushPath(blogArticlePath(blog.slug));
-    startTransition(() => {
-      setSelectedBlog(blog);
-      setPage("blog-detail");
-    });
-    window.scrollTo({ top: 0, behavior: "auto" });
+    setSelectedBlog(blog);
+    setPage("blog-detail");
   };
 
   const openWork = (id: string) => {
@@ -751,11 +758,8 @@ export function RupantarSite() {
     setDetailLoadError("");
     prefetchPublicRoute("work-detail");
     pushPath(workPath(work));
-    startTransition(() => {
-      setSelectedWork(work);
-      setPage("work-detail");
-    });
-    window.scrollTo({ top: 0, behavior: "auto" });
+    setSelectedWork(work);
+    setPage("work-detail");
   };
 
   const persistedDraftImageIds = () => new Set(persistedDraftImageIdsRef.current);

@@ -86,13 +86,15 @@ export function WorksPage({
             }}
             role="button"
             tabIndex={0}
-            className="group cursor-pointer bg-white border border-zinc-100/90 rounded-[1.5rem] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-[border-color,box-shadow,transform] duration-300 ease-out hover:border-zinc-200 hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(0,0,0,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF1A3D]/30"
+            className="rh-work-card group cursor-pointer bg-white border border-zinc-100/90 rounded-[1.5rem] overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.04)] transition-[border-color,box-shadow,transform] duration-300 ease-out hover:border-zinc-200 hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(0,0,0,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF1A3D]/30"
           >
-            <div className="p-3">
+            <div className="rh-work-media-shell p-3">
               <WorkPhoto
                 image={work.images[0]}
                 alt={work.title}
                 eager={index < 3}
+                mediaClassName="rh-work-media-slot"
+                overlay={<span className="rh-work-location"><MapPin /> {work.location}</span>}
                 sizes="(min-width: 1280px) 389px, (min-width: 1024px) calc((100vw - 112px) / 3), (min-width: 640px) calc((100vw - 68px) / 2), calc(100vw - 56px)"
                 widths={[320, 480, 768]}
               />
@@ -109,7 +111,7 @@ export function WorksPage({
                 )}
               </div>
               <div className="font-heading font-semibold text-[16px]">{work.title}</div>
-              <div className="text-[12px] text-zinc-500 mt-1 flex items-center gap-1">
+              <div className="rh-work-location-source text-[12px] text-zinc-500 mt-1 flex items-center gap-1">
                 <MapPin className="w-3 h-3" /> {work.location}
               </div>
               <div className="text-[13px] text-zinc-600 mt-2 line-clamp-2">{work.shortDesc}</div>
@@ -193,14 +195,14 @@ export function WorkDetailPage({
 }) {
   const related = works.filter((item) => item.category === work.category && item.id !== work.id);
   const [projectBlogTitle, setProjectBlogTitle] = useState<string | null>(null);
+  const projectBlogSlug = rupantarBlogSlugFromUrl(work.blogUrl);
 
   useEffect(() => {
-    const blogSlug = rupantarBlogSlugFromUrl(work.blogUrl);
     setProjectBlogTitle(null);
-    if (!blogSlug) return;
+    if (!projectBlogSlug) return;
 
     let active = true;
-    void loadPublicBlogBySlug(blogSlug)
+    void loadPublicBlogBySlug(projectBlogSlug)
       .then((blog) => {
         if (active) setProjectBlogTitle(blog?.title ?? null);
       })
@@ -212,7 +214,7 @@ export function WorkDetailPage({
     return () => {
       active = false;
     };
-  }, [work.blogUrl]);
+  }, [projectBlogSlug]);
 
   return (
     <main className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">

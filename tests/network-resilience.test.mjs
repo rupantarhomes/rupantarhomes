@@ -4,7 +4,7 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("public delivery adapts speculative work to slow and unknown mobile networks", async () => {
+test("public delivery adapts to reported slow networks without penalizing unknown iPhone connections", async () => {
   const [policy, early, hero, runtime, site] = await Promise.all([
     read("app/network-policy.ts"), read("app/home-bootstrap-early.js"), read("app/rupantar/home-page.tsx"),
     read("app/public-performance.ts"), read("app/rupantar/site.tsx"),
@@ -12,7 +12,9 @@ test("public delivery adapts speculative work to slow and unknown mobile network
   assert.ok(policy.includes('effectiveType === "slow-2g"'));
   assert.ok(policy.includes('effectiveType === "2g"'));
   assert.ok(policy.includes('effectiveType === "3g"'));
-  assert.ok(policy.includes("unknownMobile"));
+  assert.doesNotMatch(policy, /unknownMobile/);
+  assert.match(policy, /Missing information is normal/);
+  assert.match(policy, /current\.downlink > 0 && current\.downlink < 1\.5/);
   assert.ok(policy.includes("if (profile.constrained) return 12_000;"));
   assert.ok(policy.includes("if (profile.constrained) return 0;"));
   assert.ok(early.includes("payload.works.slice(0, homeCoverPreloadCount())"));
@@ -22,7 +24,7 @@ test("public delivery adapts speculative work to slow and unknown mobile network
   assert.doesNotMatch(runtime, /warmPublicChunks|scheduleChunkWarm/);
   assert.ok(site.includes("if (!shouldWarmPublicRoutes()) return;"));
   assert.ok(site.includes("if (shouldWarmPublicRoutes()) void loadPublicBlogs()"));
-  assert.ok(site.includes("startTransition"));
+  assert.doesNotMatch(site, /startTransition/);
 });
 
 test("last-known-good public content survives brief network and origin slowness", async () => {
