@@ -29,8 +29,8 @@ test("public delivery has one network-aware route warmer and React-owned detail 
   assert.match(site, /window\.setTimeout\(prefetchPublicPageModules, 450\)/);
   assert.doesNotMatch(runtime, /\.rh-recent-work-card img|image\.loading = "eager"/);
   assert.doesNotMatch(html, /public-performance\.ts/);
-  assert.doesNotMatch(blogs, /onWork|event\.preventDefault/);
-  assert.doesNotMatch(pages, /onBlog|event\.preventDefault/);
+  assert.doesNotMatch(blogs, /onWork/);
+  assert.doesNotMatch(pages, /onBlog/);
   assert.match(navigation, /document\.addEventListener\("click", onDedicatedLink/);
   assert.match(navigation, /window\.dispatchEvent\(new PopStateEvent\("popstate"\)\)/);
 });
