@@ -89,8 +89,8 @@ test("intent and idle prefetch failures are handled without loading Admin or cha
       rejected.catch = (handler) => { handled.push(label); return catchRejection(handler); };
       return rejected;
     };
-    const fn = new Function("loadPublicPages", "loadBlogPages", "loadPublicBlogs", "publicPages", "console", `${functionSource("app/rupantar/site.tsx", name)}; return ${name};`)(
-      loader("public"), loader("blog"), loader("posts"), ["home", "works", "blog-detail"], { error: (...args) => logs.push(args) },
+    const fn = new Function("loadPublicPages", "loadBlogPages", "loadPublicBlogs", "publicPages", "shouldWarmPublicRoutes", "console", `${functionSource("app/rupantar/site.tsx", name)}; return ${name};`)(
+      loader("public"), loader("blog"), loader("posts"), ["home", "works", "blog-detail"], () => true, { error: (...args) => logs.push(args) },
     );
     fn(...args);
     await Promise.resolve();
@@ -100,10 +100,11 @@ test("intent and idle prefetch failures are handled without loading Admin or cha
   }
 });
 
-test("early chunk warming and startup session discovery have rejection handlers", () => {
+test("single route warming owner and startup session discovery have rejection handlers", () => {
   const runtime = read("app/public-performance.ts");
-  assert.match(runtime, /import\("\.\/rupantar\/public-pages"\)\.catch\(/);
-  assert.match(runtime, /import\("\.\/rupantar\/blog-pages"\)\.catch\(/);
   const site = read("app/rupantar/site.tsx");
+  assert.doesNotMatch(runtime, /import\("\.\/rupantar\/public-pages"\)|import\("\.\/rupantar\/blog-pages"\)/);
+  assert.match(site, /void loadPublicPages\(\)\.catch\(/);
+  assert.match(site, /void loadBlogPages\(\)\.catch\(/);
   assert.match(site, /getCurrentAdminSession\(\)\.then\([\s\S]*?cleanupExpiredWorkDrafts\(\);\s*\}\)\.catch\(/);
 });

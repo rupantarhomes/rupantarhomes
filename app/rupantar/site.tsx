@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle2, X } from "lucide-react";
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { lazy, startTransition, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { emptyBlogForm, type Blog, type BlogForm } from "./blog";
 import { deleteCloudinaryImages, maximumWorkImages, uploadWorkImages } from "./cloudinary";
@@ -14,6 +14,7 @@ import {
   initialSettings,
   initialWorks,
 } from "./data";
+import { shouldWarmPublicRoutes } from "../network-policy";
 import { HomePage } from "./home-page";
 import { earlyHomeContent, storedHomeContent } from "./home-bootstrap";
 import { SiteErrorBoundary } from "./error-boundary";
@@ -118,10 +119,12 @@ function AdminLoadWarning({ onRetry }: { onRetry: () => void }) {
 const publicPages: Page[] = ["home", "works", "work-detail", "about", "contact", "privacy", "interior-design", "blog", "blog-detail"];
 const adminWorksLimit = 1000;
 const adminVerificationIntervalMs = 5 * 60 * 1000;
+const transitionablePublicPages = new Set<Page>(["about", "contact", "privacy", "interior-design", "blog"]);
 
 type BrowserRoute = ReturnType<typeof parseRoute>;
 
 function prefetchPublicPageModules() {
+  if (!shouldWarmPublicRoutes()) return;
   void loadPublicPages().catch((error) => console.error("Unable to prefetch public pages", error));
   void loadBlogPages().catch((error) => console.error("Unable to prefetch blog pages", error));
 }
@@ -129,7 +132,7 @@ function prefetchPublicPageModules() {
 function prefetchPublicRoute(page: Page) {
   if (page === "blog" || page === "blog-detail") {
     void loadBlogPages().catch((error) => console.error("Unable to prefetch blog pages", error));
-    void loadPublicBlogs().catch((error) => console.error("Unable to prefetch blog posts", error));
+    if (shouldWarmPublicRoutes()) void loadPublicBlogs().catch((error) => console.error("Unable to prefetch blog posts", error));
   }
   else if (publicPages.includes(page) && page !== "home") void loadPublicPages().catch((error) => console.error("Unable to prefetch public pages", error));
 }
@@ -247,7 +250,7 @@ export function RupantarSite() {
       const handle = idleWindow.requestIdleCallback(prefetchPublicPageModules);
       return () => idleWindow.cancelIdleCallback?.(handle);
     }
-    const timer = window.setTimeout(prefetchPublicPageModules, 150);
+    const timer = window.setTimeout(prefetchPublicPageModules, 1200);
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -677,7 +680,8 @@ export function RupantarSite() {
         restoreHomeWorks();
         void refreshContent().catch((error) => console.error("Unable to revalidate home content", error));
       }
-      setPage(nextPage);
+      if (transitionablePublicPages.has(nextPage)) startTransition(() => setPage(nextPage));
+      else setPage(nextPage);
       if (nextPage === "blog") {
         setSelectedBlog(null);
         void refreshBlogs().catch((error) => console.error("Unable to load blog", error));
@@ -690,7 +694,7 @@ export function RupantarSite() {
       }
       if (nextPage === "admin-dashboard") void refreshAdminStats();
     }
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "auto" });
   };
 
   const goToEstimate = () => {
@@ -721,7 +725,7 @@ export function RupantarSite() {
     setFilter(category);
     setPage("works");
     void loadWorks(category, 0, categoryChanged).catch((error) => console.error("Unable to load category", error));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "auto" });
   };
 
   const openBlog = (id: string) => {
@@ -732,9 +736,11 @@ export function RupantarSite() {
     setDetailLoadError("");
     prefetchPublicRoute("blog-detail");
     pushPath(blogArticlePath(blog.slug));
-    setSelectedBlog(blog);
-    setPage("blog-detail");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    startTransition(() => {
+      setSelectedBlog(blog);
+      setPage("blog-detail");
+    });
+    window.scrollTo({ top: 0, behavior: "auto" });
   };
 
   const openWork = (id: string) => {
@@ -745,9 +751,11 @@ export function RupantarSite() {
     setDetailLoadError("");
     prefetchPublicRoute("work-detail");
     pushPath(workPath(work));
-    setSelectedWork(work);
-    setPage("work-detail");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    startTransition(() => {
+      setSelectedWork(work);
+      setPage("work-detail");
+    });
+    window.scrollTo({ top: 0, behavior: "auto" });
   };
 
   const persistedDraftImageIds = () => new Set(persistedDraftImageIdsRef.current);

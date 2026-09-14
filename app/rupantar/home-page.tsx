@@ -15,6 +15,7 @@ import {
   Upload,
 } from "lucide-react";
 import { useEffect, useState, type Dispatch, type MouseEvent as ReactMouseEvent, type SetStateAction } from "react";
+import { heroPreloadDelayMs } from "../network-policy";
 import { categories, interiorDesignCategories } from "./data";
 import { categoryIcons, PhotoPlaceholder, WorkPhoto } from "./shared";
 import type {
@@ -132,6 +133,8 @@ export function HomePage({
     const timer = window.setTimeout(() => {
       if (heroSlidesReady.has(nextSource)) return;
       const image = new window.Image();
+      image.decoding = "async";
+      image.fetchPriority = "low";
       image.onload = () => {
         if (cancelled) return;
         setHeroSlidesReady((current) => {
@@ -142,7 +145,7 @@ export function HomePage({
         });
       };
       image.src = nextSource;
-    }, 1800);
+    }, heroPreloadDelayMs());
 
     if (!heroSlidesReady.has(nextSource)) {
       return () => {

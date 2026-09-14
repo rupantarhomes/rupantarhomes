@@ -632,3 +632,18 @@ Accepted protected fingerprints for the exact PR tree:
 - `tests`: `8a2a0a4906b15c596782fd1683c8ce322709e5f2`
 
 Local verification passed strict TypeScript, production build, all performance budgets, YAML parsing, and 137 deterministic tests. Exact-head GitHub CI, production smoke workflow execution, and Cloudflare deployment remain required before final acceptance.
+
+## Network resilience and slow-link delivery — 2026-09-14
+
+Scope is limited to public delivery performance and resilience; the visual design, image quality, content, Admin security, Supabase schema/RLS/Auth, Cloudinary upload lifecycle, and inquiry behavior remain unchanged.
+
+- keep the exact existing hero and portfolio image sources/quality while delaying only optional next-image and card-cover preloads on constrained links;
+- treat mobile browsers without the Network Information API conservatively so iOS does not flood weak Wi-Fi/mobile data with speculative requests;
+- remove duplicate background chunk warming and suppress idle route warming on slow links while retaining intent-driven route prefetch;
+- retain the previous page during lazy public-route transitions so a delayed JavaScript chunk does not present an empty page;
+- keep a seven-day last-known-good Home snapshot for immediate repeat rendering while live content revalidates;
+- keep short browser freshness for the Home API, add a one-day edge stale fallback, and refresh that fallback in the background instead of blocking a visitor on Supabase during a brief origin slowdown;
+- preserve the established 30-second in-document public read freshness contract while using last-known-good Home and edge stale fallback for slow-link resilience;
+- preserve Supabase DNS warm-up but remove the unconditional Supabase TLS preconnect from first paint because Home now prefers the same-origin edge path.
+
+Verification requirement: `npm run verify`, Cloudflare Pages preview, and post-merge production smoke must all pass.

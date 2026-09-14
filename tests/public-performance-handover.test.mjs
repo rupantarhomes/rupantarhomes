@@ -6,7 +6,8 @@ const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
 test("critical public origins and first hero asset are warmed from the entry document", async () => {
   const html = await read("../index.html");
-  assert.match(html, /rel="preconnect" href="https:\/\/gmtdqeskyvdvyibccxwt\.supabase\.co"/);
+  assert.match(html, /rel="dns-prefetch" href="\/\/gmtdqeskyvdvyibccxwt\.supabase\.co"/);
+  assert.doesNotMatch(html, /rel="preconnect" href="https:\/\/gmtdqeskyvdvyibccxwt\.supabase\.co"/);
   assert.match(html, /rel="preconnect" href="https:\/\/res\.cloudinary\.com"/);
   assert.match(html, /href="\/hero-real-1-mobile\.webp"[^>]*fetchpriority="high"/);
   assert.match(html, /href="\/hero-real-1-v2\.webp"[^>]*fetchpriority="high"/);
@@ -20,12 +21,11 @@ test("first-visit brand intro keeps the original timing but cannot block interac
   assert.match(intro, /style=\{\{ pointerEvents: "none" \}\}/);
 });
 
-test("public runtime warms route chunks after initial image work and keeps detail cross-links inside the SPA", async () => {
-  const runtime = await read("../app/public-performance.ts");
-  assert.match(runtime, /import\("\.\/rupantar\/public-pages"\)/);
-  assert.match(runtime, /import\("\.\/rupantar\/blog-pages"\)/);
-  assert.match(runtime, /requestIdleCallback\(warmPublicChunks, \{ timeout: 2500 \}\)/);
-  assert.match(runtime, /}, 900\)/);
+test("public delivery has one network-aware route warmer and keeps detail cross-links inside the SPA", async () => {
+  const [runtime, site] = await Promise.all([read("../app/public-performance.ts"), read("../app/rupantar/site.tsx")]);
+  assert.doesNotMatch(runtime, /import\("\.\/rupantar\/public-pages"\)|import\("\.\/rupantar\/blog-pages"\)/);
+  assert.match(site, /function prefetchPublicPageModules\(\)[\s\S]*shouldWarmPublicRoutes\(\)[\s\S]*loadPublicPages\(\)[\s\S]*loadBlogPages\(\)/);
+  assert.match(site, /window\.setTimeout\(prefetchPublicPageModules, 1200\)/);
   assert.doesNotMatch(runtime, /\.rh-recent-work-card img|image\.loading = "eager"/);
   assert.match(runtime, /route\.kind !== "blog-detail" && route\.kind !== "work-detail"/);
   assert.match(runtime, /window\.history\.pushState\(null, "", path\)/);

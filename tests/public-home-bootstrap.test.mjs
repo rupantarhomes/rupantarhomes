@@ -43,8 +43,8 @@ const rows = [{
 test("public Home endpoint joins six Works and images behind one edge-cached browser request", async () => {
   let dependencyCalls = 0;
   const requestedUrls = [];
-  let cachedResponse;
-  const cache = { match: async () => null, put: async (_key, response) => { cachedResponse = response; } };
+  const cachedResponses = [];
+  const cache = { match: async () => null, put: async (key, response) => { cachedResponses.push({ key, response }); } };
   const endpoint = load("functions/api/public-home.ts", {
     "../_lib/env": { requireRuntimeEnv: (env) => env },
     "../_lib/http": { fetchWithTimeout: async (url) => {
@@ -73,7 +73,10 @@ test("public Home endpoint joins six Works and images behind one edge-cached bro
   assert.deepEqual(payload.works[0].images.map((image) => image.publicId), ["one", "two"]);
   assert.equal(payload.reviews[0].name, "Client");
   assert.equal(payload.settings.phone, "9745941799");
-  assert.match(cachedResponse.headers.get("cache-control"), /s-maxage=30/);
+  assert.equal(cachedResponses.length, 2);
+  const cacheControls = cachedResponses.map(({ response }) => response.headers.get("cache-control") || "");
+  assert.ok(cacheControls.some((value) => /s-maxage=30/.test(value)));
+  assert.ok(cacheControls.some((value) => /s-maxage=86400/.test(value)));
 });
 
 test("public Home endpoint serves an edge hit without touching Supabase", async () => {

@@ -29,7 +29,9 @@ export function readNetworkProfile(): NetworkProfile {
   const effectiveType = String(current?.effectiveType ?? "").toLowerCase();
   const saveData = current?.saveData === true;
   const constrained = saveData || effectiveType === "slow-2g" || effectiveType === "2g";
-  const slow = constrained || effectiveType === "3g" || (typeof current?.downlink === "number" && current.downlink > 0 && current.downlink < 1.5);
+  const unknownMobile = !effectiveType && typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
+  const slow = constrained || effectiveType === "3g" || unknownMobile
+    || (typeof current?.downlink === "number" && current.downlink > 0 && current.downlink < 1.5);
   return { saveData, effectiveType, constrained, slow };
 }
 
@@ -43,16 +45,16 @@ export function shouldPrefetchOptionalMedia(): boolean {
   return !readNetworkProfile().constrained;
 }
 
-export function heroPreloadDelayMs(): number | null {
+export function heroPreloadDelayMs(): number {
   const profile = readNetworkProfile();
-  if (profile.constrained) return null;
-  return profile.slow ? 7000 : 1800;
+  if (profile.constrained) return 12_000;
+  return profile.slow ? 6_000 : 1_800;
 }
 
 export function homeCoverPreloadCount(): number {
   const profile = readNetworkProfile();
-  if (profile.constrained) return 1;
-  if (profile.slow) return 2;
+  if (profile.constrained) return 0;
+  if (profile.slow) return 1;
   if (typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches) return 3;
   return 2;
 }

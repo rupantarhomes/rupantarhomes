@@ -35,7 +35,7 @@ export function siteFixture(repository, { path = '/', now, homeBootstrap } = {})
   const hooks = {
     useState(initial) { const id = cursor++; if (!(id in slots)) slots[id] = typeof initial === 'function' ? initial() : initial; return [slots[id], (value) => { slots[id] = typeof value === 'function' ? value(slots[id]) : value; }]; },
     useRef(initial) { const id = cursor++; return slots[id] ??= { current: initial }; },
-    useCallback(fn) { return fn; }, useEffect(fn) { effects.push(fn); }, lazy() { return () => null; },
+    useCallback(fn) { return fn; }, useEffect(fn) { effects.push(fn); }, startTransition(fn) { fn(); }, lazy() { return () => null; },
   };
   // Expose real handler closures and their hook state. No implementation is copied
   // into this harness; only the final JSX return is replaced (no DOM/timing claims).
@@ -50,7 +50,7 @@ export function siteFixture(repository, { path = '/', now, homeBootstrap } = {})
   const modules = {
     react: hooks, './repository': { ...repository, getCurrentAdminSession: async () => null }, './public-data': data,
     './routes': routes, './supabase': { isSupabaseConfigured: true }, './blog': { emptyBlogForm: {} },
-    './cloudinary': {}, './types': {}, './shared': {}, './home-page': {}, './error-boundary': {},
+    './cloudinary': {}, './types': {}, './shared': {}, './home-page': {}, './error-boundary': {}, '../network-policy': { shouldWarmPublicRoutes: () => true },
     './home-bootstrap': {
       storedHomeContent: () => homeBootstrap?.stored ?? null,
       earlyHomeContent: async () => {
