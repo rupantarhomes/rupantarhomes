@@ -213,7 +213,7 @@ async function runJourney(browser, config) {
     await atTop(page, "back to Blog");
 
     await mobileMenu(page, config.width, "About");
-    await page.getByRole("heading", { name: "About Rupantar Homes", exact: true }).waitFor();
+    await page.getByText("About Rupantar Homes", { exact: true }).waitFor();
     await atTop(page, "About");
     await mobileMenu(page, config.width, "Contact");
     await page.getByRole("heading", { name: "Contact Rupantar Homes", exact: true }).waitFor();
