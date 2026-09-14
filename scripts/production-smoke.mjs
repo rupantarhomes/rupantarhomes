@@ -14,6 +14,14 @@ const directEvidence = {
   appEntry: false,
 };
 
+function isSameOrigin(url) {
+  try {
+    return new URL(url).origin === productionUrl.origin;
+  } catch {
+    return false;
+  }
+}
+
 async function get(path, accept = "application/json") {
   const response = await fetch(new URL(path, productionUrl), {
     headers: {
@@ -45,14 +53,7 @@ async function detectEdgeInterruption(page, navigationResponse, blockedResponses
     return `Cloudflare challenge page (${title || "untitled"})`;
   }
 
-  const blocked = blockedResponses.find(({ status, url }) => {
-    if (!edgeBlockStatuses.has(status)) return false;
-    try {
-      return new URL(url).origin === productionUrl.origin;
-    } catch {
-      return false;
-    }
-  });
+  const blocked = blockedResponses.find(({ status, url }) => edgeBlockStatuses.has(status) && isSameOrigin(url));
   return blocked ? `${blocked.status} from ${blocked.url}` : null;
 }
 
@@ -74,6 +75,17 @@ async function waitForMarkerOrClassifyEdge(page, navigationResponse, marker, lab
       { cause: error },
     );
   }
+}
+
+async function waitForFirstImages(page, selector, count = 3) {
+  await page.waitForFunction(
+    ({ selector: imageSelector, count: wanted }) => {
+      const images = [...document.querySelectorAll(imageSelector)].slice(0, wanted);
+      return images.length > 0 && images.every((image) => image.complete && image.naturalWidth > 0);
+    },
+    { selector, count },
+    { timeout: 15_000 },
+  );
 }
 
 const healthResponse = await get("/api/health");
@@ -138,28 +150,33 @@ try {
       viewport,
       userAgent: browserUserAgent,
       locale: "en-US",
-      extraHTTPHeaders: {
-        "accept-language": "en-US,en;q=0.9",
-        "cache-control": "no-cache",
-        pragma: "no-cache",
-      },
     });
     const page = await context.newPage();
     const blockedResponses = [];
     const observedFailures = [];
+    const browserWarnings = new Set();
     let activeRoute = "Home";
     let blockedRoute = null;
 
     page.setDefaultTimeout(15_000);
     page.setDefaultNavigationTimeout(20_000);
     page.on("response", (response) => {
-      if (edgeBlockStatuses.has(response.status())) {
-        blockedResponses.push({ status: response.status(), url: response.url(), route: activeRoute });
+      const status = response.status();
+      const url = response.url();
+      if (edgeBlockStatuses.has(status)) {
+        blockedResponses.push({ status, url, route: activeRoute });
+        return;
+      }
+      if (status >= 400 && isSameOrigin(url)) {
+        observedFailures.push({
+          route: activeRoute,
+          message: `${viewport.width}px same-origin HTTP ${status}: ${url}`,
+        });
       }
     });
     page.on("pageerror", (error) => observedFailures.push({ route: activeRoute, message: `${viewport.width}px page error: ${error.message}` }));
     page.on("console", (message) => {
-      if (message.type() === "error") observedFailures.push({ route: activeRoute, message: `${viewport.width}px console error: ${message.text()}` });
+      if (message.type() === "error") browserWarnings.add(`${viewport.width}px console error: ${message.text()}`);
     });
 
     let browserBlocked = false;
@@ -205,6 +222,7 @@ try {
         await page.waitForFunction(() => document.querySelectorAll("main img").length > 0);
         const workImages = page.locator("main img");
         const imageCount = await workImages.count();
+        await waitForFirstImages(page, "main img", Math.min(3, imageCount));
         for (let index = 0; index < Math.min(3, imageCount); index++) {
           assert.equal(await workImages.nth(index).getAttribute("loading"), "eager");
           assert.equal(await workImages.nth(index).getAttribute("fetchpriority"), "high");
@@ -247,6 +265,11 @@ try {
         await page.reload({ waitUntil: "domcontentloaded" });
         await page.getByRole("heading", { name: "Blog", exact: true }).waitFor();
       }
+    }
+
+    if (browserWarnings.size > 0) {
+      for (const warning of [...browserWarnings].slice(0, 8)) console.log(`WARN ${warning}`);
+      if (browserWarnings.size > 8) console.log(`WARN ${browserWarnings.size - 8} additional browser console errors suppressed`);
     }
 
     if (browserBlocked) {
