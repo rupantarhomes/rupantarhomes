@@ -87,7 +87,7 @@ jobs:
           tar -C backup -czf backup.tar.gz roles.sql schema.sql data.sql SHA256SUMS restore-verification.txt
           openssl enc -aes-256-cbc -salt -pbkdf2 -iter 200000 -in backup.tar.gz -out rupantar-supabase-${{ github.run_id }}.tar.gz.enc -pass env:BACKUP_ENCRYPTION_PASSPHRASE
           rm -rf backup backup.tar.gz
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: rupantar-supabase-${{ github.run_id }}
           path: rupantar-supabase-${{ github.run_id }}.tar.gz.enc
