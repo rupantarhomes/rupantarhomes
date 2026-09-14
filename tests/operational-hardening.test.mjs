@@ -16,6 +16,14 @@ test("production monitoring is read-only, scheduled, and opens one recoverable i
   assert.match(smoke, /\/api\/health/);
   assert.match(smoke, /\/api\/public-home/);
   assert.match(smoke, /Back to Posts/);
+  assert.match(smoke, /edgeChallengePattern/);
+  assert.match(smoke, /sameOriginScripts/);
+  assert.match(smoke, /strictFallbackReady = Object\.values\(directEvidence\)\.every\(Boolean\)/);
+  assert.match(smoke, /GitHub browser was edge-blocked[\s\S]*strict direct fallback evidence was incomplete/);
+  assert.match(smoke, /directEvidence\.health = true/);
+  assert.match(smoke, /directEvidence\.home = true/);
+  assert.match(smoke, /directEvidence\.shell = true/);
+  assert.match(smoke, /directEvidence\.appEntry = true/);
   assert.doesNotMatch(smoke, /method:\s*["'](?:POST|PUT|PATCH|DELETE)["']/);
 });
 
