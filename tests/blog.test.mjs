@@ -63,6 +63,14 @@ test("Work project stories resolve the current Blog title without duplicating ti
   assert.doesNotMatch(workBlogMigration, /blog_title/i);
 });
 
+test("Blog listing keeps deliberate header breathing room", async () => {
+  const pages = await read("app/rupantar/blog-pages.tsx");
+  const [indexPage] = pages.split("export function BlogArticlePage");
+
+  assert.match(indexPage, /pt-20 pb-14 sm:pt-24 sm:pb-16/);
+  assert.match(indexPage, />Blog<\/h1>/);
+});
+
 test("Blog article uses original editorial title/body typography while keeping scoped spacing", async () => {
   const [pages, styles, editorial] = await Promise.all([
     read("app/rupantar/blog-pages.tsx"),
@@ -94,12 +102,11 @@ test("Blog article uses original editorial title/body typography while keeping s
   assert.match(editorial, /@media \(max-width: 639px\) \{[\s\S]*?main\.max-w-\\\[1280px\\\] > article\.max-w-\\\[800px\\\] > h1 \{[\s\S]*?font-size: 30px;[\s\S]*?line-height: 1\.16;/);
 });
 
-test("Blog articles provide Back to Posts controls above and below the article", async () => {
-  const [pages, navigation] = await Promise.all([
-    read("app/rupantar/blog-pages.tsx"),
-    read("app/rupantar/blog-navigation.tsx"),
-  ]);
-  assert.match(pages, /<BackToPostsButton navigate=\{navigate\} className="mb-8" \/>/);
-  assert.match(pages, /Back to Posts<\/button>/);
-  assert.match(navigation, /onClick=\{\(\) => navigate\("blog"\)\}/);
+test("Blog articles keep only the lower Back to Posts control", async () => {
+  const pages = await read("app/rupantar/blog-pages.tsx");
+  const [, articlePage] = pages.split("export function BlogArticlePage");
+
+  assert.doesNotMatch(articlePage, /BackToPostsButton/);
+  assert.equal((articlePage.match(/Back to Posts/g) ?? []).length, 1);
+  assert.match(articlePage, /navigate\("blog"\)/);
 });
