@@ -647,3 +647,23 @@ Scope is limited to public delivery performance and resilience; the visual desig
 - preserve Supabase DNS warm-up but remove the unconditional Supabase TLS preconnect from first paint because Home now prefers the same-origin edge path.
 
 Verification requirement: `npm run verify`, Cloudflare Pages preview, and post-merge production smoke must all pass.
+
+## Final instant public UX architecture — 2026-09-14
+
+Starting production main: `7278fe7f1599b0737c62c8102f70b8aa201ebe41`.
+Code-bearing checkpoint: `6e780d8bb9638d23bba97d16e0d52cb5f02adb12`.
+Branch: `performance/final-instant-ux`.
+
+This coherent pass replaces fragmented public navigation/loading behavior with one immediate scroll-reset owner, one route-preparation owner, edge-first Works and Blog reads, validated persistent last-known-good snapshots, prepared Blog/Work cross-links, and a native horizontal scroll-snap Work gallery. Unknown Network Information API support is normal rather than slow, the first-session Brand Intro is non-blocking and bounded to 480 ms, and Admin-only CSS/runtime no longer enters the public startup path. The approved rendered design, routes, content, responsive image quality, Cloudinary `f_auto`/`q_auto:good` delivery, Admin writes, Supabase schema/RLS/Auth/RPC security, Cloudinary upload/save/delete lifecycle, inquiries, CSP, and production data are unchanged.
+
+Local verification passed strict TypeScript, production build, all performance budgets, 144 deterministic tests, and diff whitespace validation. The committed CI gate now installs Chromium and runs mobile 390 px with 4× CPU plus delayed API/image responses, desktop 1440 px, cold/warm navigation, direct Work/Blog refreshes, image decode, repeated gallery movement, scroll-top/history behavior, layout drift, and runtime-error assertions. Local browser execution remains intentionally unclaimed because the browser binary download timed out in this environment; exact-head CI and Cloudflare preview interaction remain required before merge.
+
+Accepted protected fingerprints for this code checkpoint:
+
+- `.github/workflows/production-baseline.yml`: `f489ae7c2686c4c0fe9976fe566cdfc209b36bfd`
+- `app`: `bcf3668aa83571d0eff9db296ac8343cc86faed0`
+- `functions`: `ab40ccc48b74d75d9dd8a1380b0f2d27e30b60b3`
+- `index.html`: `d93320b1ae772f7014e76cd2cb4121cf1860f7c4`
+- `package.json`: `106235e81f233042da49b371dc58c613b60f7ad5`
+- `scripts`: `26e276627e7989c36e2bb192a263071f1bab4389`
+- `tests`: `78f3970220b4c0209f34afa64abceb3059104daf`
