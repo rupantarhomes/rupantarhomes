@@ -8,6 +8,15 @@ export type RuntimeEnv = Cloudflare.Env & {
 
 export type InquiryRuntimeEnv = RuntimeEnv;
 
+export type PublicRuntimeEnv = Pick<RuntimeEnv, "SUPABASE_URL" | "SUPABASE_PUBLISHABLE_KEY">;
+
+export function requirePublicRuntimeEnv(env: RuntimeEnv): PublicRuntimeEnv {
+  for (const name of ["SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY"] as const) {
+    if (!env[name]?.trim()) throw new Error(`Missing Cloudflare environment variable: ${name}`);
+  }
+  return env;
+}
+
 export function requireRuntimeEnv(env: RuntimeEnv): RuntimeEnv {
   const names = [
     "SUPABASE_URL",

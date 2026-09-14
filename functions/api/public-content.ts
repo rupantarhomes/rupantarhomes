@@ -1,4 +1,4 @@
-import { requireRuntimeEnv, type RuntimeEnv } from "../_lib/env";
+import { requirePublicRuntimeEnv, type RuntimeEnv } from "../_lib/env";
 import { fetchWithTimeout } from "../_lib/http";
 
 const baseHeaders = {
@@ -55,7 +55,7 @@ function blogUrlCandidates(slug: string): string[] {
 }
 
 async function supabaseJson(env: RuntimeEnv, url: URL, count = false): Promise<{ data: unknown; total?: number }> {
-  const runtime = requireRuntimeEnv(env);
+  const runtime = requirePublicRuntimeEnv(env);
   const response = await fetchWithTimeout(url, { headers: {
     apikey: runtime.SUPABASE_PUBLISHABLE_KEY,
     Accept: "application/json",
@@ -68,7 +68,7 @@ async function supabaseJson(env: RuntimeEnv, url: URL, count = false): Promise<{
 }
 
 async function fetchPublicContent(request: Request, env: RuntimeEnv): Promise<Response> {
-  const runtime = requireRuntimeEnv(env);
+  const runtime = requirePublicRuntimeEnv(env);
   const input = new URL(request.url);
   const resource = input.searchParams.get("resource");
   const url = new URL(`${runtime.SUPABASE_URL}/rest/v1/${resource?.startsWith("blog") ? "blogs" : "works"}`);

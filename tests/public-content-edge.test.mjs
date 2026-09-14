@@ -46,7 +46,7 @@ test("edge-first Works and Blog payloads are mapped, linked, cached and reusable
   const cache = memoryCache();
   const calls = [];
   const endpoint = load("functions/api/public-content.ts", {
-    "../_lib/env": { requireRuntimeEnv: (env) => env },
+    "../_lib/env": { requirePublicRuntimeEnv: (env) => env },
     "../_lib/http": { fetchWithTimeout: async (url) => {
       calls.push(new URL(url));
       if (url.pathname.endsWith("/blogs")) return Response.json([blogRow]);
@@ -89,7 +89,7 @@ test("edge public content serves last-known-good data while origin refresh fails
   const stale = Response.json({ blog: { ...blogRow }, linkedWork: null });
   const cache = { match: async (request) => new URL(request.url).searchParams.has("__stale") ? stale.clone() : null, put: async () => {} };
   const endpoint = load("functions/api/public-content.ts", {
-    "../_lib/env": { requireRuntimeEnv: (env) => env },
+    "../_lib/env": { requirePublicRuntimeEnv: (env) => env },
     "../_lib/http": { fetchWithTimeout: async () => { throw new Error("origin offline"); } },
   }, { caches: { default: cache }, console: { error() {} } });
   const pending = [];
@@ -102,4 +102,16 @@ test("edge public content serves last-known-good data while origin refresh fails
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("x-rupantar-stale"), "1");
   assert.equal((await response.json()).blog.slug, "latest-story");
+});
+
+test("public edge reads do not depend on unrelated Cloudinary secrets", () => {
+  const { requirePublicRuntimeEnv, requireRuntimeEnv } = load("functions/_lib/env.ts");
+  const publicOnly = {
+    SUPABASE_URL: "https://example.supabase.co",
+    SUPABASE_PUBLISHABLE_KEY: "public-key",
+  };
+
+  assert.equal(requirePublicRuntimeEnv(publicOnly), publicOnly);
+  assert.throws(() => requirePublicRuntimeEnv({ SUPABASE_URL: publicOnly.SUPABASE_URL }), /SUPABASE_PUBLISHABLE_KEY/);
+  assert.throws(() => requireRuntimeEnv(publicOnly), /CLOUDINARY_CLOUD_NAME/);
 });
