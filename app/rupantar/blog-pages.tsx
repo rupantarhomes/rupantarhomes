@@ -40,9 +40,9 @@ export function BlogIndexPage({ blogs, loading, navigate, onBlog }: { blogs: Blo
               tabIndex={0}
               aria-label={`Read ${blog.title}`}
               onClick={(event) => openCard(event, blog.id)}
-              onKeyDown={(event) => {
-                if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
-                event.preventDefault();
+              onKeyDown={(keyboardEvent) => {
+                if (keyboardEvent.target !== keyboardEvent.currentTarget || (keyboardEvent.key !== "Enter" && keyboardEvent.key !== " ")) return;
+                keyboardEvent.preventDefault();
                 onBlog(blog.id);
               }}
               className="py-12 sm:py-14 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF1A3D]/30"
