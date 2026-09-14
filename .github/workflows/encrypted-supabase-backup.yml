@@ -16,7 +16,7 @@ concurrency:
 jobs:
   backup:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     env:
       SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
       BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
@@ -38,9 +38,53 @@ jobs:
           grep -q "CREATE TABLE.*works" backup/schema.sql
           grep -q "COPY .*works" backup/data.sql
           sha256sum backup/roles.sql backup/schema.sql backup/data.sql > backup/SHA256SUMS
+      - name: Verify logical restore in disposable Supabase
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          drill_dir="$(mktemp -d)"
+          cleanup() {
+            if [ -f "$drill_dir/supabase/config.toml" ]; then
+              (cd "$drill_dir" && npx -y supabase@2.117.0 stop --no-backup) || true
+            fi
+            rm -rf "$drill_dir"
+          }
+          trap cleanup EXIT
+
+          cd "$drill_dir"
+          npx -y supabase@2.117.0 init
+          npx -y supabase@2.117.0 start
+
+          local_db_url="$(npx -y supabase@2.117.0 status -o env | sed -n 's/^DB_URL=//p' | tr -d '"')"
+          test -n "$local_db_url"
+
+          psql \
+            --single-transaction \
+            --variable ON_ERROR_STOP=1 \
+            --file "$GITHUB_WORKSPACE/backup/roles.sql" \
+            --file "$GITHUB_WORKSPACE/backup/schema.sql" \
+            --command 'SET session_replication_role = replica' \
+            --file "$GITHUB_WORKSPACE/backup/data.sql" \
+            --dbname "$local_db_url"
+
+          psql "$local_db_url" --variable ON_ERROR_STOP=1 --tuples-only --no-align <<'SQL' > "$GITHUB_WORKSPACE/backup/restore-verification.txt"
+          select 'works=' || count(*) from public.works;
+          select 'work_images=' || count(*) from public.work_images;
+          select 'reviews=' || count(*) from public.reviews;
+          select 'blogs=' || count(*) from public.blogs;
+          select 'site_settings=' || count(*) from public.site_settings;
+          SQL
+
+          grep -Eq '^works=[1-9][0-9]*$' "$GITHUB_WORKSPACE/backup/restore-verification.txt"
+          grep -Eq '^site_settings=[1-9][0-9]*$' "$GITHUB_WORKSPACE/backup/restore-verification.txt"
+          echo "Disposable restore drill passed."
+      - name: Recheck backup checksums
+        run: |
+          cd backup
+          sha256sum --check SHA256SUMS
       - name: Encrypt backup
         run: |
-          tar -C backup -czf backup.tar.gz roles.sql schema.sql data.sql SHA256SUMS
+          tar -C backup -czf backup.tar.gz roles.sql schema.sql data.sql SHA256SUMS restore-verification.txt
           openssl enc -aes-256-cbc -salt -pbkdf2 -iter 200000 -in backup.tar.gz -out rupantar-supabase-${{ github.run_id }}.tar.gz.enc -pass env:BACKUP_ENCRYPTION_PASSPHRASE
           rm -rf backup backup.tar.gz
       - uses: actions/upload-artifact@v4
@@ -57,7 +101,7 @@ jobs:
             const title = "Backup monitor: encrypted Supabase export failed";
             const { data } = await github.rest.issues.listForRepo({ owner: context.repo.owner, repo: context.repo.repo, state: "open", per_page: 100 });
             for (const issue of data.filter((item) => item.title === title)) {
-              await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: issue.number, body: "The encrypted Supabase export has recovered and completed successfully." });
+              await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: issue.number, body: "The encrypted Supabase export and disposable restore drill have recovered and completed successfully." });
               await github.rest.issues.update({ owner: context.repo.owner, repo: context.repo.repo, issue_number: issue.number, state: "closed" });
             }
       - name: Open one backup incident
@@ -72,6 +116,6 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title,
-                body: `The encrypted weekly database export failed. Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+                body: `The encrypted weekly database export or disposable restore drill failed. Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
               });
             }
