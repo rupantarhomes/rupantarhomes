@@ -23,6 +23,18 @@ replace(
     'return typeof window.matchMedia === "function" && window.matchMedia("(min-width: 1024px)").matches ? 3 : 2;',
 )
 
+# Preserve the established 30-second document cache freshness; edge/local stale fallbacks provide resilience instead.
+replace(
+    "app/rupantar/public-data.ts",
+    "export const publicFreshnessMs = 2 * 60_000;",
+    "export const publicFreshnessMs = 30_000;",
+)
+replace(
+    "docs/PRODUCTION-BASELINE.md",
+    "- extend the in-document public read freshness window to two minutes to prevent repeated reads during route thrash without affecting Admin cache invalidation;",
+    "- preserve the established 30-second in-document public read freshness contract while using last-known-good Home and edge stale fallback for slow-link resilience;",
+)
+
 # Model the new React transition primitive and network policy in the navigation harness.
 replace(
     "tests/helpers/public-navigation-harness.mjs",
@@ -139,7 +151,7 @@ test("last-known-good public content survives brief network and origin slowness"
     read("functions/api/public-home.ts"), read("index.html"),
   ]);
   assert.ok(bootstrap.includes("7 * 24 * 60 * 60 * 1000"));
-  assert.ok(publicData.includes("publicFreshnessMs = 2 * 60_000"));
+  assert.ok(publicData.includes("publicFreshnessMs = 30_000"));
   assert.ok(edge.includes("/api/public-home-stale"));
   assert.ok(edge.includes("X-Rupantar-Stale"));
   assert.ok(edge.includes("Public Home background refresh failed"));
