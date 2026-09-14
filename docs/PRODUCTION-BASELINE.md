@@ -651,7 +651,7 @@ Verification requirement: `npm run verify`, Cloudflare Pages preview, and post-m
 ## Final instant public UX architecture — 2026-09-14
 
 Starting production main: `7278fe7f1599b0737c62c8102f70b8aa201ebe41`.
-Code-bearing checkpoint: `b384fb367184c907cbe4196197ad53a1e3c8dd53`.
+Code-bearing checkpoint: `db3cd64b919beeaac53377f7cfd6c89d3f662399`.
 Branch: `performance/final-instant-ux`.
 
 This coherent pass replaces fragmented public navigation/loading behavior with one immediate scroll-reset owner, one route-preparation owner, edge-first Works and Blog reads, validated persistent last-known-good snapshots, prepared Blog/Work cross-links, and a native horizontal scroll-snap Work gallery. Unknown Network Information API support is normal rather than slow, the first-session Brand Intro is non-blocking and bounded to 480 ms, and Admin-only CSS/runtime no longer enters the public startup path. The approved rendered design, routes, content, responsive image quality, Cloudinary `f_auto`/`q_auto:good` delivery, Admin writes, Supabase schema/RLS/Auth/RPC security, Cloudinary upload/save/delete lifecycle, inquiries, CSP, and production data are unchanged.
@@ -662,8 +662,15 @@ Accepted protected fingerprints for this code checkpoint:
 
 - `.github/workflows/production-baseline.yml`: `f489ae7c2686c4c0fe9976fe566cdfc209b36bfd`
 - `app`: `7219924197292b18b502ffc72e4547e7bf62920c`
-- `functions`: `ab40ccc48b74d75d9dd8a1380b0f2d27e30b60b3`
+- `functions`: `1001121ec0db745727d0ec3b16138c3393c57673`
 - `index.html`: `d93320b1ae772f7014e76cd2cb4121cf1860f7c4`
 - `package.json`: `106235e81f233042da49b371dc58c613b60f7ad5`
 - `scripts`: `26e276627e7989c36e2bb192a263071f1bab4389`
-- `tests`: `e0f4b782bf8390e81449a0e13431b455529001c1`
+- `tests`: `957ad7c3fad21259599a5e1d0fed813ad97a3b68`
+
+
+### Preview public-edge dependency correction
+
+Live exact-head preview validation found that public Home, Works, Blog, and health functions were unnecessarily calling the full runtime environment validator. That validator also required unrelated Cloudinary upload credentials, so a preview without those Admin-only secrets returned 503 before reaching Supabase and fell back to the browser read path.
+
+Code checkpoint `db3cd64b919beeaac53377f7cfd6c89d3f662399` separates a least-dependency public environment contract requiring only `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`. Cloudinary upload/delete/signature endpoints retain the full secret-bearing validator. Supabase schema, RLS, Auth, grants, RPC security, data semantics, and all Cloudinary lifecycle behavior are unchanged. Local verification passes strict TypeScript, production build, performance budgets, and 145/145 deterministic tests. A replacement exact-head CI run and live Cloudflare preview verification remain mandatory before merge.
