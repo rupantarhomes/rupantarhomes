@@ -46,3 +46,15 @@ test("public pages do not run admin scans and DOM observers stay inside the app 
   assert.match(footer, /observer\.observe\(root, \{ childList: true, subtree: true \}\)/);
   assert.doesNotMatch(footer, /observer\.observe\(document\.body/);
 });
+
+test("non-Home routes warm Blog data and prioritize only the visible Works row", async () => {
+  const [site, pages] = await Promise.all([
+    read("../app/rupantar/site.tsx"),
+    read("../app/rupantar/public-pages.tsx"),
+  ]);
+  assert.match(site, /if \(page === "blog" \|\| page === "blog-detail"\) \{[\s\S]*?loadPublicBlogs\(\)/);
+  assert.match(pages, /visibleWorks\.map\(\(work, index\) =>/);
+  assert.match(pages, /eager=\{index < 3\}/);
+  assert.match(pages, /widths=\{\[320, 480, 768\]\}/);
+  assert.match(pages, /fetchPriority="high"[\s\S]*?decoding="async"/);
+});

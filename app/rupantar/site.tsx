@@ -127,7 +127,10 @@ function prefetchPublicPageModules() {
 }
 
 function prefetchPublicRoute(page: Page) {
-  if (page === "blog" || page === "blog-detail") void loadBlogPages().catch((error) => console.error("Unable to prefetch blog pages", error));
+  if (page === "blog" || page === "blog-detail") {
+    void loadBlogPages().catch((error) => console.error("Unable to prefetch blog pages", error));
+    void loadPublicBlogs().catch((error) => console.error("Unable to prefetch blog posts", error));
+  }
   else if (publicPages.includes(page) && page !== "home") void loadPublicPages().catch((error) => console.error("Unable to prefetch public pages", error));
 }
 

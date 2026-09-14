@@ -72,7 +72,7 @@ test("intent and idle prefetch failures are handled without loading Admin or cha
   for (const [name, args, expected] of [
     ["prefetchPublicPageModules", [], ["public", "blog"]],
     ["prefetchPublicRoute", ["works"], ["public"]],
-    ["prefetchPublicRoute", ["blog-detail"], ["blog"]],
+    ["prefetchPublicRoute", ["blog-detail"], ["blog", "posts"]],
     ["prefetchPublicRoute", ["home"], []],
     ["prefetchPublicRoute", ["admin-dashboard"], []],
   ]) {
@@ -89,8 +89,8 @@ test("intent and idle prefetch failures are handled without loading Admin or cha
       rejected.catch = (handler) => { handled.push(label); return catchRejection(handler); };
       return rejected;
     };
-    const fn = new Function("loadPublicPages", "loadBlogPages", "publicPages", "console", `${functionSource("app/rupantar/site.tsx", name)}; return ${name};`)(
-      loader("public"), loader("blog"), ["home", "works", "blog-detail"], { error: (...args) => logs.push(args) },
+    const fn = new Function("loadPublicPages", "loadBlogPages", "loadPublicBlogs", "publicPages", "console", `${functionSource("app/rupantar/site.tsx", name)}; return ${name};`)(
+      loader("public"), loader("blog"), loader("posts"), ["home", "works", "blog-detail"], { error: (...args) => logs.push(args) },
     );
     fn(...args);
     await Promise.resolve();
