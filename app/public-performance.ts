@@ -25,30 +25,8 @@ function internalDetailPath(anchor: HTMLAnchorElement): string | null {
   }
 }
 
-function warmPublicChunks() {
-  void import("./rupantar/public-pages").catch((error) => console.error("Unable to prefetch public pages", error));
-  void import("./rupantar/blog-pages").catch((error) => console.error("Unable to prefetch blog pages", error));
-}
-
-type IdleWindow = Window & typeof globalThis & {
-  requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
-  cancelIdleCallback?: (handle: number) => void;
-};
-
 function initPublicPerformanceRuntime() {
   if (parseRoute(window.location.pathname).kind === "admin") return;
-
-  const idleWindow = window as IdleWindow;
-  let chunkTimer = 0;
-  let idleHandle: number | undefined;
-  const scheduleChunkWarm = () => {
-    chunkTimer = window.setTimeout(() => {
-      if (idleWindow.requestIdleCallback) idleHandle = idleWindow.requestIdleCallback(warmPublicChunks, { timeout: 2500 });
-      else warmPublicChunks();
-    }, 900);
-  };
-  if (document.readyState === "complete") scheduleChunkWarm();
-  else window.addEventListener("load", scheduleChunkWarm, { once: true });
 
   const onClick = (event: MouseEvent) => {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -67,9 +45,6 @@ function initPublicPerformanceRuntime() {
 
   document.addEventListener("click", onClick, true);
   window.addEventListener("pagehide", () => {
-    if (chunkTimer) window.clearTimeout(chunkTimer);
-    if (idleHandle !== undefined) idleWindow.cancelIdleCallback?.(idleHandle);
-    window.removeEventListener("load", scheduleChunkWarm);
     document.removeEventListener("click", onClick, true);
   }, { once: true });
 }

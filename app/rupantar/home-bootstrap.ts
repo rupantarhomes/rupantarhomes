@@ -6,7 +6,7 @@ type BootstrapWindow = Window & typeof globalThis & {
 };
 
 const storageKey = "rupantar-home-bootstrap-v1";
-const maximumStoredAgeMs = 24 * 60 * 60 * 1000;
+const maximumStoredAgeMs = 7 * 24 * 60 * 60 * 1000;
 
 function validImage(value: unknown): boolean {
   if (!value || typeof value !== "object") return false;

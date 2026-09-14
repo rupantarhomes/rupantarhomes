@@ -30,7 +30,7 @@ type PublicReviewRow = { id?: unknown; name?: unknown; location?: unknown; messa
 type PublicSettingsRow = { slogan?: unknown; phone?: unknown; instagram_url?: unknown; tiktok_url?: unknown; address?: unknown; workshop_note?: unknown };
 
 const responseHeaders = {
-  "Cache-Control": "public, max-age=30, s-maxage=30",
+  "Cache-Control": "public, max-age=30, s-maxage=30, stale-while-revalidate=86400",
   "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
   "X-Content-Type-Options": "nosniff",
 } as const;
@@ -118,18 +118,54 @@ async function fetchHomeWorks(env: RuntimeEnv): Promise<Response> {
   if (!Array.isArray(reviewRows) || !Array.isArray(settingsRows) || !settingsRows[0]) throw new Error("Public Home shell returned an invalid payload");
   const works = (rows as PublicWorkRow[]).map(mapWork).filter((work) => work.id && work.title && work.slug && work.category);
   const reviews = (reviewRows as PublicReviewRow[]).map(mapReview).filter((review) => review.id && review.name && review.message);
-  return Response.json({ works, reviews, settings: mapSettings(settingsRows[0] as PublicSettingsRow), confirmedAt: Date.now() }, { headers: responseHeaders });
+  const confirmedAt = Date.now();
+  return Response.json(
+    { works, reviews, settings: mapSettings(settingsRows[0] as PublicSettingsRow), confirmedAt },
+    { headers: { ...responseHeaders, "X-Rupantar-Generated-At": String(confirmedAt) } },
+  );
+}
+
+function storedResponse(response: Response, cacheControl: string): Promise<Response> {
+  const headers = new Headers(response.headers);
+  headers.set("Cache-Control", cacheControl);
+  return response.clone().arrayBuffer().then((body) => new Response(body, { status: response.status, headers }));
+}
+
+async function populateHomeCaches(cache: Cache, freshKey: Request, staleKey: Request, response: Response): Promise<void> {
+  const [fresh, stale] = await Promise.all([
+    storedResponse(response, "public, max-age=30, s-maxage=30"),
+    storedResponse(response, "public, max-age=0, s-maxage=86400"),
+  ]);
+  await Promise.all([cache.put(freshKey, fresh), cache.put(staleKey, stale)]);
+}
+
+function clientStaleResponse(response: Response): Response {
+  const headers = new Headers(response.headers);
+  headers.set("Cache-Control", "public, max-age=0, s-maxage=30, stale-while-revalidate=86400");
+  headers.set("X-Rupantar-Stale", "1");
+  return new Response(response.body, { status: response.status, headers });
 }
 
 export const onRequestGet: PagesFunction<RuntimeEnv> = async ({ request, env, waitUntil }) => {
   const cache = (caches as CacheStorage & { default: Cache }).default;
-  const cacheKey = new Request(new URL("/api/public-home", request.url), { method: "GET" });
-  const cached = await cache.match(cacheKey);
+  const freshKey = new Request(new URL("/api/public-home", request.url), { method: "GET" });
+  const staleKey = new Request(new URL("/api/public-home-stale", request.url), { method: "GET" });
+  const cached = await cache.match(freshKey);
   if (cached) return cached;
+
+  const stale = await cache.match(staleKey);
+  if (stale) {
+    waitUntil(
+      fetchHomeWorks(env)
+        .then((response) => populateHomeCaches(cache, freshKey, staleKey, response))
+        .catch((error) => console.error("Public Home background refresh failed", error)),
+    );
+    return clientStaleResponse(stale);
+  }
 
   try {
     const response = await fetchHomeWorks(env);
-    waitUntil(cache.put(cacheKey, response.clone()));
+    waitUntil(populateHomeCaches(cache, freshKey, staleKey, response));
     return response;
   } catch (error) {
     console.error("Public Home bootstrap failed", error);

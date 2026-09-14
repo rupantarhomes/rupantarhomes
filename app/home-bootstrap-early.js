@@ -6,10 +6,22 @@ function deliveryUrl(sourceUrl, width) {
   return sourceUrl.replace("/image/upload/", `/image/upload/c_limit,w_${width}/f_auto/q_auto:good/`);
 }
 
+function homeCoverPreloadCount() {
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const effectiveType = String(connection?.effectiveType || "").toLowerCase();
+  const constrained = connection?.saveData === true || effectiveType === "slow-2g" || effectiveType === "2g";
+  const unknownMobile = !effectiveType && typeof window.matchMedia === "function" && window.matchMedia("(max-width: 767px)").matches;
+  const slow = constrained || effectiveType === "3g" || unknownMobile
+    || (typeof connection?.downlink === "number" && connection.downlink > 0 && connection.downlink < 1.5);
+  if (constrained) return 0;
+  if (slow) return 1;
+  return typeof window.matchMedia === "function" && window.matchMedia("(min-width: 1024px)").matches ? 3 : 2;
+}
+
 function preloadHomeCovers(payload) {
   if (!payload || !Array.isArray(payload.works)) return payload;
 
-  for (const work of payload.works) {
+  for (const work of payload.works.slice(0, homeCoverPreloadCount())) {
     const image = work && Array.isArray(work.images) ? work.images[0] : null;
     if (!image || typeof image.url !== "string" || !image.url.startsWith("https://res.cloudinary.com/")) continue;
     if (preloadedHomeCovers.has(image.url)) continue;
@@ -115,7 +127,7 @@ async function edgeHomeBootstrap() {
 if (window.location.pathname === "/") {
   try {
     const storedHome = JSON.parse(window.localStorage.getItem("rupantar-home-bootstrap-v1") || "null");
-    if (storedHome && typeof storedHome.confirmedAt === "number" && Date.now() - storedHome.confirmedAt <= 86_400_000) {
+    if (storedHome && typeof storedHome.confirmedAt === "number" && Date.now() - storedHome.confirmedAt <= 604_800_000) {
       preloadHomeCovers(storedHome);
     }
   } catch {
