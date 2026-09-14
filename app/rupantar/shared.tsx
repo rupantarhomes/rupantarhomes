@@ -260,9 +260,7 @@ export function PublicFooter({
 }) {
   const intent = (page: Page) => ({
     onPointerDown: () => onPublicNavigationIntent(page),
-    onTouchStart: () => onPublicNavigationIntent(page),
     onPointerEnter: () => onPublicNavigationIntent(page),
-    onFocus: () => onPublicNavigationIntent(page),
   });
 
   return (
