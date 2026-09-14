@@ -4,7 +4,6 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useEffect, useMemo, useState, type MouseEvent as ReactMouseEvent } from "react";
 import "./blog-article.css";
 import { blogCategories, blogExcerpt, type Blog, type BlogCategory } from "./blog";
-import { BackToPostsButton } from "./blog-navigation";
 import type { BlogLinkedWork } from "./blog-project-link";
 import { loadLinkedWorkForBlog, peekLinkedWorkForBlog } from "./public-data";
 import { workPath } from "./routes";
@@ -24,7 +23,7 @@ export function BlogIndexPage({ blogs, loading, navigate, onBlog }: { blogs: Blo
   };
 
   return (
-    <main className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16" aria-busy={loading}>
+    <main className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-14 sm:pt-24 sm:pb-16" aria-busy={loading}>
       <div className="max-w-[800px]">
         <h1 className="font-heading text-[40px] sm:text-[54px] font-bold leading-[1.02] tracking-[-0.04em]">Blog</h1>
         <p className="mt-4 max-w-[720px] text-[15px] leading-7 text-zinc-600">Practical guidance for planning homes, interiors, and construction projects.</p>
@@ -85,7 +84,6 @@ export function BlogArticlePage({ blog, navigate }: { blog: Blog; navigate: (pag
   return (
     <main className="rh-blog-article-page max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-[4.75rem] pb-14 sm:py-16">
       <article className="rh-blog-article max-w-[800px]">
-        <BackToPostsButton navigate={navigate} className="mb-8" />
         <div className="rh-blog-article-category text-[11px] font-semibold uppercase tracking-[0.12em] text-[#FF1A3D]">{label}</div>
         <h1 className="rh-blog-article-title mt-3 font-heading text-[40px] sm:text-[56px] leading-[1.04] font-bold tracking-[-0.045em]">{blog.title}</h1>
         <div className="rh-blog-article-body mt-9 space-y-6 text-[16px] leading-7 sm:leading-8 text-zinc-700">{paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
