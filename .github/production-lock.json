@@ -19,9 +19,9 @@
     "package-lock.json": "2aec56549f52032ab671c5da71475717a97459c0",
     "pnpm-workspace.yaml": "661850fd02b3863cf84ab63d4d1f01e09c1ff98a",
     "public": "8a225d4cfdcdba53643184a980a05c4209473576",
-    "scripts": "f985c4b200cf1d5a96766b12f193c8913be937f1",
+    "scripts": "834a3e512b6bc44c7066ee0cafedeaa94e666c61",
     "supabase": "27543b4517a14bfb6821014f5ca75356765d647b",
-    "tests": "504cb56e443a062ed6dc98ee14d7067672db5f9f",
+    "tests": "23c6895fb7ca0aefc3ac853e715850b8ac9e3783",
     "tsconfig.json": "e7a4b1bc1895736832e2af16296bdf5c434591ad",
     "vite.config.ts": "08eaec596555476a7c4a6eff4d26821881747654",
     "worker-configuration.d.ts": "ffd7c212afba76bcbc9211e9a30d866cd320ff14"
