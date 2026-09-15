@@ -31,11 +31,32 @@ async function waitForServer() {
   throw new Error(`Theme UX Vite server did not start.\n${viteOutput}`);
 }
 
+async function installThemeFixture(context) {
+  await context.route("**/api/public-home", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({
+      works: [],
+      reviews: [],
+      settings: {
+        slogan: "Transforming Spaces Inspiring Lives",
+        phone: "+9779745941799",
+        instagram: "https://instagram.com/",
+        tiktok: "https://tiktok.com/",
+        address: "Kathmandu, Nepal",
+        workshopNote: "Visit",
+      },
+      confirmedAt: Date.now(),
+    }),
+  }));
+}
+
 await waitForServer();
 let browser;
 try {
   browser = await chromium.launch(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL, headless: true } : { headless: true });
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  await installThemeFixture(context);
   await context.addInitScript(() => {
     try { sessionStorage.setItem("rupantar-brand-intro-seen", "1"); } catch { /* ignore */ }
   });
@@ -86,6 +107,7 @@ try {
   await context.close();
 
   const desktopContext = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  await installThemeFixture(desktopContext);
   await desktopContext.addInitScript(() => {
     try {
       sessionStorage.setItem("rupantar-brand-intro-seen", "1");
