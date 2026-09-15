@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import { createRequire } from "node:module";
 
 const phase = process.argv[2] || "all";
-const allowedPhases = new Set(["all", "public", "persistence", "admin", "restore"]);
+const allowedPhases = new Set(["all", "public", "persistence", "admin-state", "admin-surface", "admin-errors", "restore"]);
 if (!allowedPhases.has(phase)) throw new Error(`Unknown theme UX phase: ${phase}`);
 
 const require = createRequire(import.meta.url);
@@ -60,6 +60,13 @@ async function homeReady(page) {
   await page.getByRole("heading", { name: "Recent Works", exact: true }).waitFor();
 }
 
+async function adminReady(page) {
+  await page.goto(`${origin}/admin`, { waitUntil: "domcontentloaded" });
+  const heading = page.getByRole("heading", { name: "Admin Login", exact: true });
+  await heading.waitFor();
+  return heading;
+}
+
 async function waitThemeSettled(page) {
   await page.waitForFunction(() => !document.documentElement.classList.contains("rh-theme-changing"));
 }
@@ -112,20 +119,44 @@ async function runPersistence(browser) {
   }
 }
 
-async function runAdmin(browser) {
+async function runAdminState(browser) {
+  const context = await createContext(browser, true);
+  const page = await context.newPage();
+  page.setDefaultTimeout(15_000);
+  try {
+    await adminReady(page);
+    assert.equal(await page.evaluate(() => document.documentElement.dataset.rhTheme), "charcoal", "Admin did not inherit the shared theme preference");
+    await page.getByRole("button", { name: "Switch to light theme", exact: true }).waitFor({ state: "visible" });
+  } finally {
+    await context.close();
+  }
+}
+
+async function runAdminSurface(browser) {
+  const context = await createContext(browser, true);
+  const page = await context.newPage();
+  page.setDefaultTimeout(15_000);
+  try {
+    const heading = await adminReady(page);
+    const adminCard = heading.locator("xpath=ancestor::div[contains(concat(' ', normalize-space(@class), ' '), ' bg-white ')][1]");
+    await adminCard.waitFor({ state: "visible" });
+    assert.equal(await adminCard.evaluate((node) => getComputedStyle(node).backgroundColor), "rgb(28, 26, 24)");
+    const email = page.getByPlaceholder("Email");
+    assert.equal(await email.evaluate((node) => getComputedStyle(node).backgroundColor), "rgb(28, 26, 24)");
+  } finally {
+    await context.close();
+  }
+}
+
+async function runAdminErrors(browser) {
   const context = await createContext(browser, true);
   const page = await context.newPage();
   page.setDefaultTimeout(15_000);
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   try {
-    await page.goto(`${origin}/admin`, { waitUntil: "domcontentloaded" });
-    const heading = page.getByRole("heading", { name: "Admin Login", exact: true });
-    await heading.waitFor();
-    assert.equal(await page.evaluate(() => document.documentElement.dataset.rhTheme), "charcoal", "Admin did not inherit the shared theme preference");
-    await page.getByRole("button", { name: "Switch to light theme", exact: true }).waitFor({ state: "visible" });
-    const adminCard = heading.locator("xpath=ancestor::div[contains(concat(' ', normalize-space(@class), ' '), ' bg-white ')][1]");
-    assert.equal(await adminCard.evaluate((node) => getComputedStyle(node).backgroundColor), "rgb(28, 26, 24)");
+    await adminReady(page);
+    await page.waitForTimeout(250);
     await assertNoErrors(errors);
   } finally {
     await context.close();
@@ -139,8 +170,7 @@ async function runRestore(browser) {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   try {
-    await page.goto(`${origin}/admin`, { waitUntil: "domcontentloaded" });
-    await page.getByRole("heading", { name: "Admin Login", exact: true }).waitFor();
+    await adminReady(page);
     const lightButton = page.getByRole("button", { name: "Switch to light theme", exact: true });
     await lightButton.waitFor({ state: "visible" });
     await lightButton.click();
@@ -162,7 +192,9 @@ try {
   browser = await chromium.launch(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL, headless: true } : { headless: true });
   if (phase === "all" || phase === "public") await runPublic(browser);
   if (phase === "all" || phase === "persistence") await runPersistence(browser);
-  if (phase === "all" || phase === "admin") await runAdmin(browser);
+  if (phase === "all" || phase === "admin-state") await runAdminState(browser);
+  if (phase === "all" || phase === "admin-surface") await runAdminSurface(browser);
+  if (phase === "all" || phase === "admin-errors") await runAdminErrors(browser);
   if (phase === "all" || phase === "restore") await runRestore(browser);
   console.log(`Rupantar charcoal theme UX PASS (${phase})`);
 } finally {
