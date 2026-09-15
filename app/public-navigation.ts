@@ -1,9 +1,17 @@
 export function resetPublicRouteScroll(): void {
   if (typeof window === "undefined") return;
-  // Write all three positions synchronously. This prevents a painted frame at
-  // the previous route's scroll offset on Safari before scrollTo is processed.
+  // Clamp both axes synchronously before the next route can paint. This avoids
+  // Safari restoring a stale vertical or horizontal offset during SPA navigation.
+  const scrollingElement = document.scrollingElement as HTMLElement | null;
+  if (scrollingElement) {
+    scrollingElement.scrollTop = 0;
+    scrollingElement.scrollLeft = 0;
+  }
   document.documentElement.scrollTop = 0;
+  document.documentElement.scrollLeft = 0;
   document.body.scrollTop = 0;
+  document.body.scrollLeft = 0;
+  document.getElementById("root")?.scrollTo({ top: 0, left: 0, behavior: "auto" });
   window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 }
 
@@ -29,6 +37,7 @@ export function initPublicRouteScroll(): () => void {
     const url = new URL(anchor.href, window.location.href);
     if (url.origin !== window.location.origin || !/^\/(?:blog\/[^/]+|works\/[^/]+\/[^/]+)\/?$/.test(url.pathname)) return;
     event.preventDefault();
+    resetPublicRouteScroll();
     window.history.pushState(null, "", url.pathname + url.search + url.hash);
     resetPublicRouteScroll();
     window.dispatchEvent(new PopStateEvent("popstate"));
