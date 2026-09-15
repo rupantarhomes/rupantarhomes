@@ -18,6 +18,7 @@ test("loads one shared theme control system beside public navigation and through
   const theme = await read("../app/rupantar/brand-theme.tsx");
   assert.match(entry, /import "\.\/brand-charcoal-theme\.css"/);
   assert.match(entry, /<BrandThemeControls \/>/);
+  assert.match(entry, /<SiteErrorBoundary fallback=\{null\}>\s*<BrandThemeControls \/>\s*<\/SiteErrorBoundary>/);
   assert.match(theme, /themeStorageKey = "rupantar-theme"/);
   assert.match(theme, /aria-label=\{label\}/);
   assert.match(theme, /nav button\[aria-label="Open menu"\]/);
@@ -33,7 +34,7 @@ test("charcoal skin changes surfaces only and keeps the approved red brand intro
   assert.match(css, /--rh-theme-surface-soft: #23211e/);
   assert.match(css, /--rh-theme-text: #f6f1ea/);
   assert.match(css, /#root > \.min-h-screen\.bg-white\.text-zinc-950/);
-  assert.match(css, /#root > \[class~="min-h-screen"\]\[class~="bg\[\#fbfbfb\]"\]/);
+  assert.ok(css.includes('#root > [class~="min-h-screen"][class~="bg-[#fbfbfb]"]'), "Admin charcoal root selector is missing");
   assert.match(css, /#root input:not\(\[type="file"\]\)/);
   assert.match(css, /nav \.rh-theme-toggle--public[\s\S]*order: 1/);
   assert.match(css, /nav button\[aria-label="Open menu"\][\s\S]*order: 2/);
