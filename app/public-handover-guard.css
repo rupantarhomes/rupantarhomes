@@ -1,0 +1,35 @@
+/* Final public handover guard.
+ * The page itself must never become a horizontal scroller; intentional galleries
+ * and filter rows keep their own local horizontal scrolling.
+ */
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+html,
+body {
+  overscroll-behavior-x: none;
+}
+
+body,
+#root {
+  width: 100%;
+}
+
+/* Route changes must land immediately; explicit component-level smooth scrolls
+ * (for example Get Estimate) still request smooth behavior themselves.
+ */
+html {
+  scroll-behavior: auto !important;
+}
+
+@supports (overflow: clip) {
+  html,
+  body,
+  #root {
+    overflow-x: clip;
+  }
+}

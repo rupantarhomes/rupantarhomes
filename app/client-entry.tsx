@@ -11,6 +11,7 @@ import "./review-cards-mobile-opt.css";
 import "./recent-works-unified-covers.css";
 import "./recent-works-location-badge.css";
 import "./recent-works-mobile-readable.css";
+import "./public-handover-guard.css";
 import { BrandIntro } from "./rupantar/brand-intro";
 import { SiteErrorBoundary } from "./rupantar/error-boundary";
 import { RupantarSite } from "./rupantar/site";
