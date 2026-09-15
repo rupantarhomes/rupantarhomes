@@ -117,12 +117,9 @@ a[href*="wa.me"]:hover::before {
   justify-content: center;
   overflow: hidden;
   background: #ff1a3d;
-  transform: translateY(0) scale(1);
-  transform-origin: 50% 0%;
-  will-change: transform, filter;
-  transition:
-    transform 220ms cubic-bezier(0.77, 0, 0.18, 1),
-    filter 220ms ease;
+  opacity: 1;
+  will-change: opacity;
+  transition: opacity 520ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .brand-intro__glow {
@@ -138,28 +135,8 @@ a[href*="wa.me"]:hover::before {
   pointer-events: none;
 }
 
-.brand-intro__edge {
-  position: absolute;
-  left: -5%;
-  right: -5%;
-  bottom: -2px;
-  height: 28px;
-  background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0.18));
-  filter: blur(8px);
-  opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 160ms ease, transform 220ms cubic-bezier(0.77, 0, 0.18, 1);
-  pointer-events: none;
-}
-
 .brand-intro--leaving {
-  transform: translateY(-108%) scale(1.015);
-  filter: saturate(0.96) brightness(1.02);
-}
-
-.brand-intro--leaving .brand-intro__edge {
-  opacity: 1;
-  transform: translateY(0);
+  opacity: 0;
 }
 
 .brand-intro__content {
@@ -173,15 +150,15 @@ a[href*="wa.me"]:hover::before {
   color: #ffffff;
   will-change: transform, opacity, filter;
   transition:
-    opacity 180ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    filter 180ms ease;
+    opacity 360ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 380ms ease;
 }
 
 .brand-intro--leaving .brand-intro__content {
   opacity: 0;
-  transform: translateY(-28px) scale(0.94);
-  filter: blur(7px);
+  transform: scale(0.985);
+  filter: blur(2px);
 }
 
 .brand-intro__mark-wrap {
