@@ -14,16 +14,29 @@ test("critical public origins and first hero asset are warmed from the entry doc
   assert.ok(html.indexOf("/app/public-performance.ts") < html.indexOf("/app/client-entry.tsx"));
 });
 
-test("first-visit brand intro holds for 1.8 seconds and exits with a stationary fade", async () => {
+test("brand intro is present in the first HTML frame, stays stationary, and exits with a layered fade", async () => {
   const intro = await read("../app/rupantar/brand-intro.tsx");
   const css = await read("../app/globals.css");
+  const html = await read("../index.html");
   assert.match(intro, /const revealDelay = 1_800/);
-  assert.match(intro, /const removeDelay = revealDelay \+ \(reduceMotion \? 40 : 560\)/);
+  assert.match(intro, /const removeDelay = revealDelay \+ \(reduceMotion \? 40 : 1_040\)/);
   assert.match(intro, /style=\{\{ pointerEvents: "none" \}\}/);
   assert.doesNotMatch(intro, /brand-intro__edge/);
+  assert.match(html, /html, body \{ margin: 0; background: #ff1a3d; \}/);
+  assert.match(html, /rel="preload" as="image" href="\/assets\/rupantar-logo\.jpg" fetchpriority="high"/);
+  assert.match(html, /id="brand-intro-bootstrap"[\s\S]*Rupantar Homes[\s\S]*Transforming Spaces Inspiring Lives/);
+  assert.match(html, /#brand-intro-bootstrap\.brand-intro--leaving \{ opacity: 0; \}/);
+  assert.match(html, /#brand-intro-bootstrap\.brand-intro--leaving \.brand-intro__content \{ opacity: 0; filter: blur\(3px\); \}/);
+  for (const selector of [".brand-intro__mark-wrap", ".brand-intro__name", ".brand-intro__slogan"]) {
+    const rule = css.slice(css.indexOf(`${selector} {`), css.indexOf("}", css.indexOf(`${selector} {`)) + 1);
+    assert.match(rule, /opacity: 1/);
+    assert.match(rule, /transform: none/);
+    assert.doesNotMatch(rule, /animation:/);
+  }
   const leavingRule = css.slice(css.indexOf(".brand-intro--leaving {"), css.indexOf("}", css.indexOf(".brand-intro--leaving {")) + 1);
   assert.match(leavingRule, /opacity: 0/);
   assert.doesNotMatch(leavingRule, /translate|transform/);
+  assert.match(css, /opacity 980ms cubic-bezier\(0\.16, 1, 0\.3, 1\)/);
 });
 
 test("public delivery has one network-aware route warmer and React-owned detail cross-links", async () => {

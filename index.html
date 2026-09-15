@@ -9,7 +9,16 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Rupantar Homes" />
     <style>
-      body { background: #ff1a3d; }
+      html, body { margin: 0; background: #ff1a3d; }
+      #brand-intro-bootstrap { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #ff1a3d; opacity: 1; pointer-events: none; transition: opacity 980ms cubic-bezier(.16, 1, .3, 1); }
+      #brand-intro-bootstrap .brand-intro__glow { position: absolute; width: min(72vw, 760px); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.18) 0%, rgba(255,255,255,.07) 34%, rgba(255,255,255,0) 72%); filter: blur(18px); opacity: .72; pointer-events: none; }
+      #brand-intro-bootstrap .brand-intro__content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; padding: 24px; text-align: center; color: #fff; opacity: 1; transform: none; }
+      #brand-intro-bootstrap .brand-intro__mark-wrap { width: 86px; height: 86px; padding: 5px; border-radius: 25px; background: rgba(255,255,255,.12); box-shadow: 0 24px 64px rgba(92,0,17,.24); opacity: 1; transform: none; }
+      #brand-intro-bootstrap .brand-intro__mark { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 20px; }
+      #brand-intro-bootstrap .brand-intro__name { margin-top: 18px; font-family: "Space Grotesk", sans-serif; font-size: clamp(24px, 3vw, 34px); line-height: 1; font-weight: 700; letter-spacing: -.035em; opacity: 1; transform: none; }
+      #brand-intro-bootstrap .brand-intro__slogan { margin-top: 9px; font-family: Inter, sans-serif; font-size: clamp(11px, 1.3vw, 13px); line-height: 1.45; font-weight: 500; letter-spacing: .08em; color: rgba(255,255,255,.78); opacity: 1; transform: none; }
+      #brand-intro-bootstrap.brand-intro--leaving { opacity: 0; }
+      #brand-intro-bootstrap.brand-intro--leaving .brand-intro__content { opacity: 0; filter: blur(3px); }
     </style>
     <link rel="icon" href="/assets/rupantar-favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" />
@@ -17,6 +26,7 @@
     <link rel="dns-prefetch" href="//gmtdqeskyvdvyibccxwt.supabase.co" />
     <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
     <link rel="dns-prefetch" href="//res.cloudinary.com" />
+    <link rel="preload" as="image" href="/assets/rupantar-logo.jpg" fetchpriority="high" />
     <link rel="preload" as="image" href="/hero-real-1-mobile.webp" media="(max-width: 639px)" fetchpriority="high" />
     <link rel="preload" as="image" href="/hero-real-1-v2.webp" media="(min-width: 640px)" fetchpriority="high" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -26,6 +36,16 @@
     <title>Rupantar Homes</title>
   </head>
   <body>
+    <div id="brand-intro-bootstrap" class="brand-intro" aria-hidden="true">
+      <div class="brand-intro__glow"></div>
+      <div class="brand-intro__content">
+        <div class="brand-intro__mark-wrap">
+          <img src="/assets/rupantar-logo.jpg" alt="" class="brand-intro__mark" width="86" height="86" fetchpriority="high" />
+        </div>
+        <div class="brand-intro__name">Rupantar Homes</div>
+        <div class="brand-intro__slogan">Transforming Spaces Inspiring Lives</div>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/app/home-bootstrap-early.js"></script>
     <script type="module" src="/app/navigation-precision.ts"></script>

@@ -7,14 +7,24 @@ export function BrandIntro({ enabled }: { enabled: boolean }) {
   const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
-    if (!enabled) return;
+    const bootstrap = document.getElementById("brand-intro-bootstrap");
+    if (!enabled) {
+      bootstrap?.remove();
+      return;
+    }
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const revealDelay = 1_800;
-    const removeDelay = revealDelay + (reduceMotion ? 40 : 560);
+    const removeDelay = revealDelay + (reduceMotion ? 40 : 1_040);
 
-    const revealTimer = window.setTimeout(() => setLeaving(true), revealDelay);
-    const removeTimer = window.setTimeout(() => setVisible(false), removeDelay);
+    const revealTimer = window.setTimeout(() => {
+      bootstrap?.classList.add("brand-intro--leaving");
+      setLeaving(true);
+    }, revealDelay);
+    const removeTimer = window.setTimeout(() => {
+      bootstrap?.remove();
+      setVisible(false);
+    }, removeDelay);
 
     return () => {
       window.clearTimeout(revealTimer);
@@ -22,7 +32,7 @@ export function BrandIntro({ enabled }: { enabled: boolean }) {
     };
   }, [enabled]);
 
-  if (!visible) return null;
+  if (!visible || (typeof document !== "undefined" && document.getElementById("brand-intro-bootstrap"))) return null;
 
   return (
     <div
