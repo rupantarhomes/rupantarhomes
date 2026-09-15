@@ -27,8 +27,12 @@ function setThemeColor(theme: RupantarTheme) {
 }
 
 function updateToggle(button: HTMLButtonElement) {
-  const charcoal = activeTheme() === charcoalTheme;
-  button.innerHTML = charcoal ? sunIcon : moonIcon;
+  const theme = activeTheme();
+  const charcoal = theme === charcoalTheme;
+  if (button.dataset.rhThemeState !== theme) {
+    button.innerHTML = charcoal ? sunIcon : moonIcon;
+    button.dataset.rhThemeState = theme;
+  }
   button.setAttribute("aria-label", charcoal ? "Switch to light theme" : "Switch to charcoal theme");
   button.setAttribute("title", charcoal ? "Light theme" : "Charcoal theme");
   button.setAttribute("aria-pressed", charcoal ? "true" : "false");
