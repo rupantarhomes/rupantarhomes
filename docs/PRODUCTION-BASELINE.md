@@ -703,3 +703,17 @@ Accepted protected fingerprints for this checkpoint:
 - `tests`: `5dee7d8f899810934afa81471333dc6e9b7f0301`
 
 Verification requires strict TypeScript, the production build, performance budgets, all 145 deterministic tests, exact-head CI with mobile/desktop Playwright coverage, an exact-head Cloudflare preview, and post-merge production smoke.
+
+## Brand Intro public-load replay — 2026-09-15
+
+Starting production main: `5670e349f364c5e653086b855eac4925e175715d`.
+Code-bearing checkpoint: `19b3a4896a44974a2e41c8ccdb0ad1123f015196`.
+
+Live reproduction found that the retained session gate suppressed the complete Brand Intro after its first playback in a tab: a refresh removed the bootstrap in roughly 294 ms instead of showing the approved 1.8-second hold and dissolve. This exact-scope correction removes that stale gate for public document loads. Every public full load now plays the complete approved intro, while Admin remains excluded and SPA route navigation remains unchanged.
+
+Accepted protected fingerprints for this checkpoint:
+
+- `app`: `bab68810ba87dbd3b835eebbffb3b909566b4e7a`
+- `tests`: `0b6314206a781efcb8c688b294dfe832f789a2b1`
+
+No layout, route, content, public data, images, Admin functionality, Supabase/Cloudinary contract, forms, or security policy is changed.
