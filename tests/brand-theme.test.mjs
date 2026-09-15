@@ -4,11 +4,21 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
-test("applies the saved Rupantar theme before first paint while preserving light as the default", async () => {
+test("applies the saved Rupantar theme before first paint through the production CSP", async () => {
   const index = await read("../index.html");
-  assert.match(index, /let theme = "light"/);
-  assert.match(index, /localStorage\.getItem\("rupantar-theme"\) === "dark"/);
-  assert.match(index, /document\.documentElement\.dataset\.rhTheme = theme/);
+  const bootstrap = await read("../public/theme-bootstrap.js");
+  const headers = await read("../public/_headers");
+
+  assert.match(index, /<script src="\/theme-bootstrap\.js"><\/script>/);
+  assert.ok(
+    index.indexOf('<script src="/theme-bootstrap.js"></script>') < index.indexOf("<style>"),
+    "Saved theme bootstrap must run before first-paint theme styles",
+  );
+  assert.doesNotMatch(index, /<script>\s*\(\(\) =>/);
+  assert.match(headers, /script-src 'self'/);
+  assert.match(bootstrap, /let theme = "light"/);
+  assert.match(bootstrap, /localStorage\.getItem\("rupantar-theme"\) === "dark"/);
+  assert.match(bootstrap, /document\.documentElement\.dataset\.rhTheme = theme/);
   assert.match(index, /html\[data-rh-theme="dark"\][\s\S]*background: #151412/);
   assert.match(index, /html\.brand-intro-pending[\s\S]*background: #ff1a3d/);
 });
