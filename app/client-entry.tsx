@@ -37,9 +37,11 @@ createRoot(root).render(
   <StrictMode>
     <SiteErrorBoundary>
       <RupantarSite />
-      <BrandThemeControls />
       <SiteErrorBoundary fallback={null}>
         <BrandIntro enabled={showBrandIntro} />
+      </SiteErrorBoundary>
+      <SiteErrorBoundary fallback={null}>
+        <BrandThemeControls />
       </SiteErrorBoundary>
     </SiteErrorBoundary>
   </StrictMode>,
