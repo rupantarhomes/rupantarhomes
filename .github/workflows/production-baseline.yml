@@ -73,3 +73,15 @@ jobs:
 
       - name: Mobile, desktop, throttled and warm-cache UX journeys
         run: npm run test:e2e:ux
+
+      - name: Charcoal public toggle journey
+        run: npm run test:e2e:theme -- public
+
+      - name: Charcoal reload persistence journey
+        run: npm run test:e2e:theme -- persistence
+
+      - name: Charcoal Admin inheritance journey
+        run: npm run test:e2e:theme -- admin
+
+      - name: Charcoal return-to-light journey
+        run: npm run test:e2e:theme -- restore

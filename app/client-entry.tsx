@@ -12,10 +12,12 @@ import "./recent-works-unified-covers.css";
 import "./recent-works-location-badge.css";
 import "./recent-works-mobile-readable.css";
 import "./public-handover-guard.css";
+import "./brand-charcoal-theme.css";
 import { BrandIntro } from "./rupantar/brand-intro";
 import { SiteErrorBoundary } from "./rupantar/error-boundary";
 import { RupantarSite } from "./rupantar/site";
 import { initPublicRouteScroll } from "./public-navigation";
+import { initRupantarTheme } from "./theme-runtime";
 
 const root = document.getElementById("root");
 
@@ -42,6 +44,7 @@ createRoot(root).render(
   </StrictMode>,
 );
 
+initRupantarTheme();
 initPublicRouteScroll();
 
 function initPublicCopyNormalization() {
