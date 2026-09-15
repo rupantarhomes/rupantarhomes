@@ -162,7 +162,9 @@ function parsePath(pathname: string) {
     try { return decodeURIComponent(segment); } catch { return segment; }
   });
   if (!segments.length) return { kind: "home" } as const;
-  if (segments.length === 1 && ["about", "contact", "privacy"].includes(segments[0])) return { kind: segments[0] };
+  if (segments.length === 1 && segments[0] === "about") return { kind: "about" } as const;
+  if (segments.length === 1 && segments[0] === "contact") return { kind: "contact" } as const;
+  if (segments.length === 1 && segments[0] === "privacy") return { kind: "privacy" } as const;
   if (segments.length === 1 && segments[0] === "blog") return { kind: "blog" } as const;
   if (segments.length === 2 && segments[0] === "blog") return { kind: "blog-detail", slug: segments[1] } as const;
   if (segments[0] === "works") {
