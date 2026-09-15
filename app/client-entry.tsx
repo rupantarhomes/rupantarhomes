@@ -12,7 +12,9 @@ import "./recent-works-unified-covers.css";
 import "./recent-works-location-badge.css";
 import "./recent-works-mobile-readable.css";
 import "./public-handover-guard.css";
+import "./brand-charcoal-theme.css";
 import { BrandIntro } from "./rupantar/brand-intro";
+import { BrandThemeControls } from "./rupantar/brand-theme";
 import { SiteErrorBoundary } from "./rupantar/error-boundary";
 import { RupantarSite } from "./rupantar/site";
 import { initPublicRouteScroll } from "./public-navigation";
@@ -35,6 +37,7 @@ createRoot(root).render(
   <StrictMode>
     <SiteErrorBoundary>
       <RupantarSite />
+      <BrandThemeControls />
       <SiteErrorBoundary fallback={null}>
         <BrandIntro enabled={showBrandIntro} />
       </SiteErrorBoundary>
