@@ -60,6 +60,10 @@ async function homeReady(page) {
   await page.getByRole("heading", { name: "Recent Works", exact: true }).waitFor();
 }
 
+async function waitThemeSettled(page) {
+  await page.waitForFunction(() => !document.documentElement.classList.contains("rh-theme-changing"));
+}
+
 async function assertNoErrors(errors) {
   assert.deepEqual(errors, [], errors.join("\n"));
 }
@@ -78,6 +82,7 @@ async function runPublic(browser) {
     await charcoalButton.click();
     assert.equal(await page.evaluate(() => document.documentElement.dataset.rhTheme), "charcoal");
     assert.equal(await page.evaluate(() => localStorage.getItem("rupantar-theme")), "charcoal");
+    await waitThemeSettled(page);
     assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), "rgb(21, 20, 18)");
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, "theme control introduced horizontal drift");
     await page.getByRole("button", { name: "Switch to light theme", exact: true }).waitFor({ state: "visible" });
@@ -141,6 +146,7 @@ async function runRestore(browser) {
     await lightButton.click();
     assert.equal(await page.evaluate(() => document.documentElement.dataset.rhTheme), "light");
     assert.equal(await page.evaluate(() => localStorage.getItem("rupantar-theme")), null);
+    await waitThemeSettled(page);
     await homeReady(page);
     assert.equal(await page.evaluate(() => document.documentElement.dataset.rhTheme), "light", "light mode did not remain the default after clearing charcoal preference");
     await page.getByRole("button", { name: "Switch to charcoal theme", exact: true }).waitFor({ state: "visible" });
