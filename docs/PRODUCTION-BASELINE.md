@@ -674,3 +674,17 @@ Accepted protected fingerprints for this code checkpoint:
 Live exact-head preview validation found that public Home, Works, Blog, and health functions were unnecessarily calling the full runtime environment validator. That validator also required unrelated Cloudinary upload credentials, so a preview without those Admin-only secrets returned 503 before reaching Supabase and fell back to the browser read path.
 
 Code checkpoint `db3cd64b919beeaac53377f7cfd6c89d3f662399` separates a least-dependency public environment contract requiring only `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`. Cloudinary upload/delete/signature endpoints retain the full secret-bearing validator. Supabase schema, RLS, Auth, grants, RPC security, data semantics, and all Cloudinary lifecycle behavior are unchanged. Local verification passes strict TypeScript, production build, performance budgets, and 145/145 deterministic tests. A replacement exact-head CI run and live Cloudflare preview verification remain mandatory before merge.
+
+## Brand Intro stationary fade — 2026-09-15
+
+Starting production main: `338504c93b0eca2f04fd20f2e6b1d98dfb331ce7`.
+Code-bearing checkpoint: `1d5515da167aad4f3afeb4790bb70b4fb3832752`.
+
+This narrowly scoped follow-up changes only the first-session Brand Intro and its direct regression coverage. The red logo/name display now holds for 1.8 seconds, then fades in place; the former upward screen translation and edge streak are removed. The intro remains pointer-transparent and public content continues loading underneath. No public page, Home presentation, route, data/cache behavior, Admin behavior, Supabase/Cloudinary contract, form, security policy, content, or image quality is changed.
+
+Accepted protected fingerprints for this checkpoint:
+
+- `app`: `8245a62363a3361e11ce777d3a79c4dc607a7a91`
+- `tests`: `bcc9547436ae79de1ea8a294479791709705d843`
+
+Verification requires strict TypeScript, production build, performance budgets, all 145 deterministic tests, exact-head CI with the mobile/desktop Playwright journey, an exact-head Cloudflare preview, and a post-merge production smoke.
