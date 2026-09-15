@@ -30,6 +30,8 @@ try {
   showBrandIntro = true;
 }
 
+if (!showBrandIntro) document.getElementById("brand-intro-bootstrap")?.remove();
+
 createRoot(root).render(
   <StrictMode>
     <SiteErrorBoundary>

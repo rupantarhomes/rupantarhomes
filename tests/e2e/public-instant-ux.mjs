@@ -156,12 +156,18 @@ async function runJourney(browser, config) {
     const intro = page.locator(".brand-intro");
     await intro.waitFor({ state: "visible" });
     assert.equal(await intro.evaluate((node) => getComputedStyle(node).pointerEvents), "none");
+    for (const selector of [".brand-intro__mark-wrap", ".brand-intro__name", ".brand-intro__slogan"]) {
+      assert.deepEqual(await page.locator(selector).evaluate((node) => {
+        const style = getComputedStyle(node);
+        return { opacity: style.opacity, transform: style.transform };
+      }), { opacity: "1", transform: "none" }, `${selector} moved or appeared late`);
+    }
     assert.ok(await page.locator("main").count(), "Brand Intro blocked the public content render");
     const introStarted = Date.now();
     await intro.waitFor({ state: "detached" });
     metrics.brandIntro = Date.now() - introStarted;
-    assert.ok(metrics.brandIntro >= 1_700, `Brand Intro left before its 1.8s hold: ${metrics.brandIntro}ms`);
-    assert.ok(metrics.brandIntro < 3_000, `Brand Intro remained for ${metrics.brandIntro}ms after display`);
+    assert.ok(metrics.brandIntro >= 2_650, `Brand Intro left before the full hold and cinematic fade: ${metrics.brandIntro}ms`);
+    assert.ok(metrics.brandIntro < 3_800, `Brand Intro remained for ${metrics.brandIntro}ms after display`);
     await page.getByRole("heading", { name: "Recent Works", exact: true }).waitFor();
     await page.waitForFunction(() => document.querySelectorAll(".rh-recent-work-card").length === 6);
     metrics.homeCold = Date.now() - homeStarted;
