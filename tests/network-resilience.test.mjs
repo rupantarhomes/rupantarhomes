@@ -5,8 +5,8 @@ import test from "node:test";
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
 test("public delivery adapts to reported slow networks without penalizing unknown iPhone connections", async () => {
-  const [policy, early, hero, runtime, site] = await Promise.all([
-    read("app/network-policy.ts"), read("app/home-bootstrap-early.js"), read("app/rupantar/home-page.tsx"),
+  const [policy, early, routeBootstrap, hero, runtime, site] = await Promise.all([
+    read("app/network-policy.ts"), read("app/home-bootstrap-early.js"), read("app/public-route-bootstrap.ts"), read("app/rupantar/home-page.tsx"),
     read("app/public-performance.ts"), read("app/rupantar/site.tsx"),
   ]);
   assert.ok(policy.includes('effectiveType === "slow-2g"'));
@@ -18,7 +18,11 @@ test("public delivery adapts to reported slow networks without penalizing unknow
   assert.ok(policy.includes("if (profile.constrained) return 12_000;"));
   assert.ok(policy.includes("if (profile.constrained) return 0;"));
   assert.ok(early.includes("payload.works.slice(0, homeCoverPreloadCount())"));
-  assert.ok(early.includes('typeof window.matchMedia === "function"'));
+  assert.ok(early.includes("if (slow) return 2;"));
+  assert.ok(early.includes("return 6;"));
+  assert.match(routeBootstrap, /if \(speculative && networkProfile\(\)\.slow\) return;/);
+  assert.match(routeBootstrap, /if \(speculative && profile\.constrained\) return;/);
+  assert.match(routeBootstrap, /desktop \? 3 : tablet \? 2 : 1/);
   assert.ok(hero.includes("heroPreloadDelayMs"));
   assert.ok(hero.includes('image.fetchPriority = "low"'));
   assert.doesNotMatch(runtime, /warmPublicChunks|scheduleChunkWarm/);
