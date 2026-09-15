@@ -20,9 +20,15 @@ const root = document.getElementById("root");
 
 if (!root) throw new Error("Rupantar Homes root element was not found.");
 
-const showBrandIntro = !window.location.pathname.startsWith("/admin");
+const brandIntroSessionKey = "rupantar-brand-intro-seen";
+let showBrandIntro = false;
 
-if (!showBrandIntro) document.getElementById("brand-intro-bootstrap")?.remove();
+try {
+  showBrandIntro = window.sessionStorage.getItem(brandIntroSessionKey) !== "1";
+  if (showBrandIntro) window.sessionStorage.setItem(brandIntroSessionKey, "1");
+} catch {
+  showBrandIntro = true;
+}
 
 createRoot(root).render(
   <StrictMode>
