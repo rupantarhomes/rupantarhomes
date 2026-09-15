@@ -7,13 +7,18 @@ export function BrandIntro({ enabled }: { enabled: boolean }) {
   const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
+    document.documentElement.classList.remove("brand-intro-pending");
     if (!enabled) return;
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const revealDelay = 1_800;
-    const removeDelay = revealDelay + (reduceMotion ? 80 : 260);
+    const blankDelay = 400;
+    const revealDuration = reduceMotion ? 0 : 700;
+    const holdDuration = 1_800;
+    const exitDuration = reduceMotion ? 40 : 1_000;
+    const exitDelay = blankDelay + revealDuration + holdDuration;
+    const removeDelay = exitDelay + exitDuration;
 
-    const revealTimer = window.setTimeout(() => setLeaving(true), revealDelay);
+    const revealTimer = window.setTimeout(() => setLeaving(true), exitDelay);
     const removeTimer = window.setTimeout(() => setVisible(false), removeDelay);
 
     return () => {
