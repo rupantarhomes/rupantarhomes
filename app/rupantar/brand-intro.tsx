@@ -10,8 +10,8 @@ export function BrandIntro({ enabled }: { enabled: boolean }) {
     if (!enabled) return;
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const revealDelay = reduceMotion ? 80 : 260;
-    const removeDelay = reduceMotion ? 160 : 480;
+    const revealDelay = 1_800;
+    const removeDelay = revealDelay + (reduceMotion ? 40 : 560);
 
     const revealTimer = window.setTimeout(() => setLeaving(true), revealDelay);
     const removeTimer = window.setTimeout(() => setVisible(false), removeDelay);
@@ -42,7 +42,6 @@ export function BrandIntro({ enabled }: { enabled: boolean }) {
         <div className="brand-intro__name">Rupantar Homes</div>
         <div className="brand-intro__slogan">Transforming Spaces Inspiring Lives</div>
       </div>
-      <div className="brand-intro__edge" />
     </div>
   );
 }
