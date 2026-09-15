@@ -9,10 +9,10 @@ export const publicFreshnessMs = 30_000;
 type Entry = { value?: unknown; confirmedAt: number; revision: number; pending?: Promise<unknown> };
 
 type CriticalBootstrap = { read: (key: string) => Promise<unknown> | undefined };
-type CriticalBootstrapWindow = Window & typeof globalThis & { __RUPANTAR_PUBLIC_BOOTSTRAP__?: CriticalBootstrap };
+type CriticalBootstrapGlobal = typeof globalThis & { __RUPANTAR_PUBLIC_BOOTSTRAP__?: CriticalBootstrap };
 
 function preparedRead<T>(key: string, fallback: () => Promise<T>): Promise<T> {
-  const prepared = (window as CriticalBootstrapWindow).__RUPANTAR_PUBLIC_BOOTSTRAP__?.read(key);
+  const prepared = (globalThis as CriticalBootstrapGlobal).__RUPANTAR_PUBLIC_BOOTSTRAP__?.read(key);
   if (!prepared) return fallback();
   return prepared.then((value) => value as T).catch(() => fallback());
 }
