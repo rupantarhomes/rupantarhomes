@@ -1,0 +1,282 @@
+/* Rupantar Homes — brand-level charcoal theme.
+ * Theme-only skin: no layout, spacing, media, route or Admin workflow changes.
+ * Light mode remains the production default unless the visitor explicitly opts in.
+ */
+
+html[data-rh-theme="charcoal"] {
+  color-scheme: dark;
+  --rh-charcoal-canvas: #151412;
+  --rh-charcoal-surface: #1c1a18;
+  --rh-charcoal-raised: #23211e;
+  --rh-charcoal-muted-surface: #2a2723;
+  --rh-charcoal-line: #36322d;
+  --rh-charcoal-line-soft: #2d2a26;
+  --rh-charcoal-text: #f6f1ea;
+  --rh-charcoal-text-soft: #d7d0c7;
+  --rh-charcoal-text-muted: #b8b0a5;
+  --rh-charcoal-text-faint: #91897f;
+  --rh-charcoal-red-wash: #2b1b1e;
+  background: var(--rh-charcoal-canvas);
+}
+
+html[data-rh-theme="charcoal"] body,
+html[data-rh-theme="charcoal"] #root {
+  background: var(--rh-charcoal-canvas);
+  color: var(--rh-charcoal-text);
+}
+
+html[data-rh-theme="charcoal"] body {
+  scrollbar-color: #4a443d var(--rh-charcoal-canvas);
+}
+
+/* Public and Admin canvases. */
+html[data-rh-theme="charcoal"] .min-h-screen.bg-white.text-zinc-950,
+html[data-rh-theme="charcoal"] [class~="bg-[#fbfbfb]"] {
+  background: var(--rh-charcoal-canvas) !important;
+  color: var(--rh-charcoal-text) !important;
+}
+
+/* Primary and secondary surfaces. */
+html[data-rh-theme="charcoal"] [class~="bg-white"] {
+  background-color: var(--rh-charcoal-surface) !important;
+}
+
+html[data-rh-theme="charcoal"] [class~="bg-zinc-50"],
+html[data-rh-theme="charcoal"] [class~="bg-[#F8F8F8]"] {
+  background-color: #191816 !important;
+}
+
+html[data-rh-theme="charcoal"] [class~="bg-zinc-100"] {
+  background-color: var(--rh-charcoal-muted-surface) !important;
+}
+
+html[data-rh-theme="charcoal"] [class~="bg-zinc-900"],
+html[data-rh-theme="charcoal"] [class~="bg-[#111111]"] {
+  background-color: var(--rh-charcoal-raised) !important;
+}
+
+html[data-rh-theme="charcoal"] [class~="bg-black"] {
+  background-color: #100f0e !important;
+}
+
+html[data-rh-theme="charcoal"] [class~="bg-[#FFF0F2]"] {
+  background-color: var(--rh-charcoal-red-wash) !important;
+}
+
+/* Typography hierarchy. */
+html[data-rh-theme="charcoal"] [class~="text-zinc-950"],
+html[data-rh-theme="charcoal"] [class~="text-zinc-900"],
+html[data-rh-theme="charcoal"] [class~="text-[#111111]"] {
+  color: var(--rh-charcoal-text) !important;
+}
+
+html[data-rh-theme="charcoal"] [class~="text-zinc-800"],
+html[data-rh-theme="charcoal"] [class~="text-zinc-700"] {
+  color: var(--rh-charcoal-text-soft) !important;
+}
+
+html[data-rh-theme="charcoal"] [class~="text-zinc-600"] {
+  color: var(--rh-charcoal-text-muted) !important;
+}
+
+html[data-rh-theme="charcoal"] [class~="text-zinc-500"] {
+  color: var(--rh-charcoal-text-faint) !important;
+}
+
+html[data-rh-theme="charcoal"] [class~="text-zinc-400"] {
+  color: #80786e !important;
+}
+
+html[data-rh-theme="charcoal"] [class~="text-zinc-300"] {
+  color: #c9c1b7 !important;
+}
+
+/* Structural lines. */
+html[data-rh-theme="charcoal"] [class~="border-zinc-100"],
+html[data-rh-theme="charcoal"] [class~="border-zinc-100/90"] {
+  border-color: var(--rh-charcoal-line-soft) !important;
+}
+
+html[data-rh-theme="charcoal"] [class~="border-zinc-200"],
+html[data-rh-theme="charcoal"] [class~="border-zinc-200/80"],
+html[data-rh-theme="charcoal"] [class~="border-zinc-300"],
+html[data-rh-theme="charcoal"] [class~="border-[#111111]"] {
+  border-color: var(--rh-charcoal-line) !important;
+}
+
+html[data-rh-theme="charcoal"] [class~="divide-zinc-100"] > :not([hidden]) ~ :not([hidden]),
+html[data-rh-theme="charcoal"] [class~="divide-zinc-200"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--rh-charcoal-line-soft) !important;
+}
+
+/* Header surfaces retain the approved glass/material hierarchy. */
+html[data-rh-theme="charcoal"] .min-h-screen.bg-white.text-zinc-950 > nav.sticky,
+html[data-rh-theme="charcoal"] nav.sticky.bg-white\/90,
+html[data-rh-theme="charcoal"] .sticky.top-0.bg-white {
+  background: rgba(28, 26, 24, 0.94) !important;
+  border-color: rgba(54, 50, 45, 0.9) !important;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.16) !important;
+}
+
+html[data-rh-theme="charcoal"] nav .absolute [class~="bg-white"] {
+  background-color: var(--rh-charcoal-raised) !important;
+}
+
+/* Forms and editors across public pages and Admin. */
+html[data-rh-theme="charcoal"] input:not([type="checkbox"]):not([type="radio"]),
+html[data-rh-theme="charcoal"] textarea,
+html[data-rh-theme="charcoal"] select {
+  background-color: var(--rh-charcoal-surface) !important;
+  border-color: var(--rh-charcoal-line) !important;
+  color: var(--rh-charcoal-text) !important;
+  caret-color: var(--rh-charcoal-text);
+}
+
+html[data-rh-theme="charcoal"] input::placeholder,
+html[data-rh-theme="charcoal"] textarea::placeholder {
+  color: var(--rh-charcoal-text-faint) !important;
+  opacity: 1;
+}
+
+html[data-rh-theme="charcoal"] select option {
+  background: var(--rh-charcoal-surface);
+  color: var(--rh-charcoal-text);
+}
+
+html[data-rh-theme="charcoal"] input:-webkit-autofill,
+html[data-rh-theme="charcoal"] input:-webkit-autofill:hover,
+html[data-rh-theme="charcoal"] input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--rh-charcoal-text) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--rh-charcoal-surface) inset !important;
+  transition: background-color 9999s ease-out 0s;
+}
+
+html[data-rh-theme="charcoal"] input[type="file"]::file-selector-button {
+  background: var(--rh-charcoal-raised);
+  color: var(--rh-charcoal-text);
+  border-color: var(--rh-charcoal-line);
+}
+
+/* Neutral hover states. Brand-red controls are intentionally unchanged. */
+@media (hover: hover) and (pointer: fine) {
+  html[data-rh-theme="charcoal"] [class*="hover:bg-zinc-50"]:hover,
+  html[data-rh-theme="charcoal"] [class*="hover:bg-zinc-100"]:hover {
+    background-color: var(--rh-charcoal-muted-surface) !important;
+  }
+
+  html[data-rh-theme="charcoal"] [class*="hover:border-zinc-200"]:hover,
+  html[data-rh-theme="charcoal"] [class*="hover:border-zinc-300"]:hover {
+    border-color: #4a443d !important;
+  }
+}
+
+/* Keep dark material panels distinct without turning them pure black. */
+html[data-rh-theme="charcoal"] footer,
+html[data-rh-theme="charcoal"] .rh-connect-panel.rh-connect-panel {
+  background-color: #171614 !important;
+  border-color: var(--rh-charcoal-line) !important;
+}
+
+/* Image placeholders change surface only; project photography is never filtered or recolored. */
+html[data-rh-theme="charcoal"] .rh-work-media-slot,
+html[data-rh-theme="charcoal"] [class*="border-dashed"] {
+  border-color: var(--rh-charcoal-line) !important;
+}
+
+html[data-rh-theme="charcoal"] img,
+html[data-rh-theme="charcoal"] picture,
+html[data-rh-theme="charcoal"] video {
+  filter: none !important;
+}
+
+/* Dedicated theme control. It is inserted beside the existing hamburger on public pages,
+ * beside Logout in Admin, and floats only while the Admin login header does not yet exist. */
+.rh-theme-toggle {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border-radius: 9999px;
+  border: 1px solid #ddd3c6;
+  background: #fffdfa;
+  color: #211f1c;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  box-shadow: 0 4px 16px rgba(45, 37, 28, 0.06);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rh-theme-toggle svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  pointer-events: none;
+}
+
+.rh-theme-toggle:focus-visible {
+  outline: 2px solid #d91131;
+  outline-offset: 3px;
+}
+
+html[data-rh-theme="charcoal"] .rh-theme-toggle {
+  background: var(--rh-charcoal-raised);
+  border-color: var(--rh-charcoal-line);
+  color: var(--rh-charcoal-text);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.2);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rh-theme-toggle:hover {
+    border-color: #c8bdae;
+    transform: translateY(-1px);
+  }
+
+  html[data-rh-theme="charcoal"] .rh-theme-toggle:hover {
+    background: #2a2723;
+    border-color: #4a443d;
+  }
+}
+
+.rh-theme-toggle--floating {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 2147482500;
+}
+
+/* Calm theme handoff: only material properties transition. Layout and images never animate. */
+html.rh-theme-changing body,
+html.rh-theme-changing nav,
+html.rh-theme-changing footer,
+html.rh-theme-changing main,
+html.rh-theme-changing .rh-theme-toggle,
+html.rh-theme-changing [class~="bg-white"],
+html.rh-theme-changing [class~="bg-zinc-50"],
+html.rh-theme-changing [class~="bg-zinc-100"],
+html.rh-theme-changing input,
+html.rh-theme-changing textarea,
+html.rh-theme-changing select {
+  transition-property: background-color, color, border-color, box-shadow;
+  transition-duration: 220ms;
+  transition-timing-function: ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.rh-theme-changing body,
+  html.rh-theme-changing nav,
+  html.rh-theme-changing footer,
+  html.rh-theme-changing main,
+  html.rh-theme-changing .rh-theme-toggle,
+  html.rh-theme-changing [class~="bg-white"],
+  html.rh-theme-changing [class~="bg-zinc-50"],
+  html.rh-theme-changing [class~="bg-zinc-100"],
+  html.rh-theme-changing input,
+  html.rh-theme-changing textarea,
+  html.rh-theme-changing select {
+    transition-duration: 0ms !important;
+  }
+}
