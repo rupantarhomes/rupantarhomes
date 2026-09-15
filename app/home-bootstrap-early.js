@@ -13,8 +13,8 @@ function homeCoverPreloadCount() {
   const slow = constrained || effectiveType === "3g"
     || (typeof connection?.downlink === "number" && connection.downlink > 0 && connection.downlink < 1.5);
   if (constrained) return 0;
-  if (slow) return 1;
-  return typeof window.matchMedia === "function" && window.matchMedia("(min-width: 1024px)").matches ? 3 : 2;
+  if (slow) return 2;
+  return 6;
 }
 
 function preloadHomeCovers(payload) {

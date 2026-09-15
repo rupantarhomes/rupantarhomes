@@ -8,6 +8,15 @@ import { loadLinkedWorkForBlog as fetchLinkedWork, type BlogLinkedWork } from ".
 export const publicFreshnessMs = 30_000;
 type Entry = { value?: unknown; confirmedAt: number; revision: number; pending?: Promise<unknown> };
 
+type CriticalBootstrap = { read: (key: string) => Promise<unknown> | undefined };
+type CriticalBootstrapGlobal = typeof globalThis & { __RUPANTAR_PUBLIC_BOOTSTRAP__?: CriticalBootstrap };
+
+function preparedRead<T>(key: string, fallback: () => Promise<T>): Promise<T> {
+  const prepared = (globalThis as CriticalBootstrapGlobal).__RUPANTAR_PUBLIC_BOOTSTRAP__?.read(key);
+  if (!prepared) return fallback();
+  return prepared.then((value) => value as T).catch(() => fallback());
+}
+
 export class PublicReadCache {
   private entries = new Map<string, Entry>();
   private revision = 0;
@@ -193,18 +202,19 @@ export function loadPublicWorksPage(offset = 0, limit = 12, category = "all") {
   // Admin requires a current complete collection, never the public cache.
   if (limit !== 12) return repository.loadPublicWorksPage(offset, limit, category);
   const key = worksKey(offset, category);
-  return cache.read(key, () => repository.loadPublicWorksPage(offset, limit, category),
+  return cache.read(key, () => preparedRead(key, () => repository.loadPublicWorksPage(offset, limit, category)),
     (page, revision) => { rememberWorks(page.works, revision); if (offset === 0) persist(key, page); });
 }
 export function loadPublicWorkBySlug(category: string, slug: string) {
   const key = workKey(category, slug);
-  return cache.read(key, () => repository.loadPublicWorkBySlug(category, slug), (work) => persist(key, work));
+  return cache.read(key, () => preparedRead(key, () => repository.loadPublicWorkBySlug(category, slug)), (work) => persist(key, work));
 }
 export function loadPublicBlogs() {
   return cache.read("blogs:list", async () => {
-    const payload = typeof repository.loadPublicBlogsPayload === "function"
-      ? await repository.loadPublicBlogsPayload()
-      : { blogs: await repository.loadPublicBlogs(), linkedWorks: {} };
+    const payload = await preparedRead<repository.PublicBlogsPayload>("blogs:payload", async () =>
+      typeof repository.loadPublicBlogsPayload === "function"
+        ? repository.loadPublicBlogsPayload()
+        : { blogs: await repository.loadPublicBlogs(), linkedWorks: {} });
     for (const [slug, work] of Object.entries(payload.linkedWorks)) {
       cache.prime(`works:blog:${slug}`, work, (value) => persist(`works:blog:${slug}`, value));
     }
@@ -213,7 +223,7 @@ export function loadPublicBlogs() {
 }
 export function loadPublicBlogBySlug(slug: string) {
   const key = blogKey(slug);
-  return cache.read(key, async () => {
+  return cache.read(key, () => preparedRead(key, async () => {
     const payload = typeof repository.loadPublicBlogPayload === "function"
       ? await repository.loadPublicBlogPayload(slug)
       : { blog: await repository.loadPublicBlogBySlug(slug) };
@@ -221,10 +231,11 @@ export function loadPublicBlogBySlug(slug: string) {
       cache.prime(`works:blog:${slug}`, payload.linkedWork ?? null, (value) => persist(`works:blog:${slug}`, value));
     }
     return payload.blog;
-  }, (blog) => persist(key, blog));
+  }), (blog) => persist(key, blog));
 }
 export function loadLinkedWorkForBlog(slug: string) {
-  return cache.read(`works:blog:${slug}`, () => fetchLinkedWork(slug));
+  const key = `works:blog:${slug}`;
+  return cache.read(key, () => preparedRead(key, () => fetchLinkedWork(slug)), (work) => persist(key, work));
 }
 export function invalidatePublicWorks() { cache.invalidate("works:"); cache.invalidate("home"); removePersistent("works:"); }
 export function invalidatePublicBlogs() { cache.invalidate("blogs:"); removePersistent("blogs:"); }
