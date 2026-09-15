@@ -668,9 +668,22 @@ Accepted protected fingerprints for this code checkpoint:
 - `scripts`: `26e276627e7989c36e2bb192a263071f1bab4389`
 - `tests`: `957ad7c3fad21259599a5e1d0fed813ad97a3b68`
 
-
 ### Preview public-edge dependency correction
 
 Live exact-head preview validation found that public Home, Works, Blog, and health functions were unnecessarily calling the full runtime environment validator. That validator also required unrelated Cloudinary upload credentials, so a preview without those Admin-only secrets returned 503 before reaching Supabase and fell back to the browser read path.
 
 Code checkpoint `db3cd64b919beeaac53377f7cfd6c89d3f662399` separates a least-dependency public environment contract requiring only `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`. Cloudinary upload/delete/signature endpoints retain the full secret-bearing validator. Supabase schema, RLS, Auth, grants, RPC security, data semantics, and all Cloudinary lifecycle behavior are unchanged. Local verification passes strict TypeScript, production build, performance budgets, and 145/145 deterministic tests. A replacement exact-head CI run and live Cloudflare preview verification remain mandatory before merge.
+
+## Brand Intro 1.8-second hold with approved upward exit — 2026-09-15
+
+Starting production main: `61c7752d9b1351f1f53ab6ae2f96c23b64ab54c5`.
+Code-bearing checkpoint: `df63abeb0fc6bcc8694011a58c465d5673741d5c`.
+
+The exact PR #155 Brand Intro design, entry motion, upward-swipe exit, session behavior, and CSS geometry remain unchanged. Only the exit schedule changes: the presentation begins its existing upward exit at 1.8 seconds and is removed 260 ms later, after the existing 220 ms compositor transition completes. No Home layout, content, routes, public data, images, Admin behavior, Supabase/Cloudinary contract, forms, or security policy changes.
+
+Accepted protected fingerprints for this checkpoint:
+
+- `app`: `31f94b52d21b48803a87a7fd475cf6e35bf339fe`
+- `tests`: `450bdda3c38a40cd7e305bc17a988b5f4bf98fd1`
+
+Verification requires strict TypeScript, the production build, performance budgets, all 145 deterministic tests, exact-head CI with mobile/desktop Playwright coverage, an exact-head Cloudflare preview, and post-merge production smoke.
