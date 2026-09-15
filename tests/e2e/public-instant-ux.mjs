@@ -160,8 +160,8 @@ async function runJourney(browser, config) {
     const introStarted = Date.now();
     await intro.waitFor({ state: "detached" });
     metrics.brandIntro = Date.now() - introStarted;
-    assert.ok(metrics.brandIntro >= 1_700, `Brand Intro held for only ${metrics.brandIntro}ms after display`);
-    assert.ok(metrics.brandIntro < 2_600, `Brand Intro remained for ${metrics.brandIntro}ms after display`);
+    assert.ok(metrics.brandIntro >= 3_500, `Brand Intro sequence completed in only ${metrics.brandIntro}ms`);
+    assert.ok(metrics.brandIntro < 4_800, `Brand Intro remained for ${metrics.brandIntro}ms after display`);
     await page.getByRole("heading", { name: "Recent Works", exact: true }).waitFor();
     await page.waitForFunction(() => document.querySelectorAll(".rh-recent-work-card").length === 6);
     metrics.homeCold = Date.now() - homeStarted;
