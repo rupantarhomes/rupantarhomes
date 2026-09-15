@@ -20,15 +20,7 @@ const root = document.getElementById("root");
 
 if (!root) throw new Error("Rupantar Homes root element was not found.");
 
-const brandIntroSessionKey = "rupantar-brand-intro-seen";
-let showBrandIntro = false;
-
-try {
-  showBrandIntro = window.sessionStorage.getItem(brandIntroSessionKey) !== "1";
-  if (showBrandIntro) window.sessionStorage.setItem(brandIntroSessionKey, "1");
-} catch {
-  showBrandIntro = true;
-}
+const showBrandIntro = !window.location.pathname.startsWith("/admin");
 
 if (!showBrandIntro) document.getElementById("brand-intro-bootstrap")?.remove();
 

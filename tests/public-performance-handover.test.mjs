@@ -16,6 +16,7 @@ test("critical public origins and first hero asset are warmed from the entry doc
 
 test("brand intro is present in the first HTML frame, stays stationary, and exits with a layered fade", async () => {
   const intro = await read("../app/rupantar/brand-intro.tsx");
+  const entry = await read("../app/client-entry.tsx");
   const css = await read("../app/globals.css");
   const html = await read("../index.html");
   assert.match(intro, /const revealDelay = 1_800/);
@@ -27,6 +28,8 @@ test("brand intro is present in the first HTML frame, stays stationary, and exit
   assert.match(html, /id="brand-intro-bootstrap"[\s\S]*Rupantar Homes[\s\S]*Transforming Spaces Inspiring Lives/);
   assert.match(html, /#brand-intro-bootstrap\.brand-intro--leaving \{ opacity: 0; \}/);
   assert.match(html, /#brand-intro-bootstrap\.brand-intro--leaving \.brand-intro__content \{ opacity: 0; filter: blur\(3px\); \}/);
+  assert.match(entry, /const showBrandIntro = !window\.location\.pathname\.startsWith\("\/admin"\)/);
+  assert.doesNotMatch(entry, /brandIntroSessionKey|rupantar-brand-intro-seen/);
   for (const selector of [".brand-intro__mark-wrap", ".brand-intro__name", ".brand-intro__slogan"]) {
     const rule = css.slice(css.indexOf(`${selector} {`), css.indexOf("}", css.indexOf(`${selector} {`)) + 1);
     assert.match(rule, /opacity: 1/);
