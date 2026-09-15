@@ -151,6 +151,12 @@ try {
       userAgent: browserUserAgent,
       locale: "en-US",
     });
+    if (viewport.width === 390) {
+      await context.addInitScript(() => {
+        localStorage.setItem("rupantar-theme", "dark");
+        sessionStorage.setItem("rupantar-brand-intro-seen", "1");
+      });
+    }
     const page = await context.newPage();
     const blockedResponses = [];
     const observedFailures = [];
@@ -201,6 +207,12 @@ try {
       const recentImages = page.locator(".rh-recent-work-card img");
       await recentImages.first().waitFor();
       await page.waitForFunction(() => [...document.querySelectorAll(".rh-recent-work-card img")].every((image) => image.complete && image.naturalWidth > 0));
+
+      if (viewport.width === 390) {
+        await page.getByRole("button", { name: "Switch to light theme", exact: true }).waitFor();
+        assert.equal(await page.evaluate(() => document.documentElement.dataset.rhTheme), "dark", "Production CSP blocked saved charcoal theme bootstrap");
+        assert.equal(await page.evaluate(() => document.querySelector('meta[name="theme-color"]')?.getAttribute("content")), "#151412");
+      }
     }
 
     if (!browserBlocked) {
