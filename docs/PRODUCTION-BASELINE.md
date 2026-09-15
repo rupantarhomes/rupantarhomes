@@ -687,3 +687,20 @@ Accepted protected fingerprints for this checkpoint:
 - `tests`: `450bdda3c38a40cd7e305bc17a988b5f4bf98fd1`
 
 Verification requires strict TypeScript, the production build, performance budgets, all 145 deterministic tests, exact-head CI with mobile/desktop Playwright coverage, an exact-head Cloudflare preview, and post-merge production smoke.
+
+## Calm Brand Intro sequence — 2026-09-15
+
+Starting production main: `a43c99388d5ce2a8f254c4c2faa3dab5c2445a17`.
+Code-bearing checkpoint: `b23c1acf3d308cc08ad4640a5d6f286a35fa9831`.
+
+The first-session Brand Intro now follows one deterministic sequence: 400 ms of uninterrupted brand red, a centered 700 ms opacity/blur reveal without positional movement, a full 1.8-second hold after the reveal completes, and a calm 950 ms compositor-driven upward exit. The complete logo/name/slogan group travels with the red screen instead of fading away ahead of it. A first-paint pending class keeps the document canvas red until the React intro is mounted, closing the white-flash handoff without blocking the public page underneath.
+
+No Home layout, content, routes, public data, images, mobile menu, Admin behavior, Supabase/Cloudinary contract, forms, or security policy changes.
+
+Accepted protected fingerprints for this checkpoint:
+
+- `app`: `f4733616ee4a3a10c47c3d57fd9fd15a201de504`
+- `index.html`: `bf78d7fbfa659f91e1afbee67a57e0c596ae82d8`
+- `tests`: `ea6c30bee79bfcbd94536d0113eaddc7d4095c90`
+
+Verification requires strict TypeScript, the production build, performance budgets, all deterministic tests, exact-head CI with mobile/desktop Playwright coverage, an exact-head Cloudflare preview, and post-merge production smoke.
