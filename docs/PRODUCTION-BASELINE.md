@@ -692,14 +692,14 @@ Verification requires strict TypeScript, production build, performance budgets, 
 ## Brand Intro first-frame polish — 2026-09-15
 
 Starting production main: `21c38c9a50e79aeef1b0157dac3686f814918fed`.
-Code-bearing checkpoint: `388f259efddf44bec43746aa1a5e9dd5c1b9fe27`.
+Code-bearing checkpoint: `cae9bb44f9f78d231d37c4dc90b190c7fa0f2e35`.
 
 This exact-scope follow-up changes only the Brand Intro bootstrap, stationary presentation, timing, and direct regression coverage. The initial HTML now paints the red branded screen with the logo, name, and slogan already centered before React starts. Those elements never translate or scale. After the full 1.8-second hold, a layered 980 ms opacity/blur dissolve reveals the already-loading public page underneath. No Home/page layout, navigation, public data, images, Admin behavior, Supabase/Cloudinary contract, forms, content, security policy, or deployment configuration is changed.
 
 Accepted protected fingerprints for this checkpoint:
 
 - `app`: `adbf1879c77134238fd7830a901fc61f3a0f48d1`
-- `index.html`: `86fa9684e70edc9f4acfc0f5c6120c0f6ab453e7`
-- `tests`: `79c0524a77b68a93c3759ea2e617d4783e545ca0`
+- `index.html`: `62d107102e76c7a1f21c86b82b9a70ac8572226d`
+- `tests`: `5dee7d8f899810934afa81471333dc6e9b7f0301`
 
 Verification requires strict TypeScript, the production build, performance budgets, all 145 deterministic tests, exact-head CI with mobile/desktop Playwright coverage, an exact-head Cloudflare preview, and post-merge production smoke.
