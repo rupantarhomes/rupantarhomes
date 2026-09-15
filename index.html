@@ -8,7 +8,24 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Rupantar Homes" />
+    <script>
+      (() => {
+        let theme = "light";
+        try {
+          if (window.localStorage.getItem("rupantar-theme") === "dark") theme = "dark";
+        } catch {
+          /* Storage restrictions preserve the approved light default. */
+        }
+        document.documentElement.dataset.rhTheme = theme;
+        document.documentElement.style.colorScheme = theme === "dark" ? "dark" : "light";
+        if (theme === "dark") {
+          document.querySelector('meta[name="theme-color"]')?.setAttribute("content", "#151412");
+        }
+      })();
+    </script>
     <style>
+      html[data-rh-theme="dark"],
+      html[data-rh-theme="dark"] body { margin: 0; background: #151412; }
       html.brand-intro-pending,
       html.brand-intro-pending body { margin: 0; background: #ff1a3d; }
     </style>

@@ -1,0 +1,299 @@
+/* Rupantar Homes — shared Light / Charcoal brand theme.
+ * This file is intentionally loaded after every approved public/Admin style layer.
+ * It changes only color/surface tokens and the new theme control. Layout, spacing,
+ * typography, media, routes and interaction geometry remain untouched.
+ */
+
+:root {
+  --rh-theme-canvas: #f7f5f0;
+  --rh-theme-surface: #fffdfa;
+  --rh-theme-surface-soft: #f3f0ea;
+  --rh-theme-surface-raised: #ffffff;
+  --rh-theme-line: #e9e2d8;
+  --rh-theme-line-strong: #ddd3c6;
+  --rh-theme-text: #1b1916;
+  --rh-theme-text-soft: #47423b;
+  --rh-theme-text-muted: #766f65;
+  --rh-theme-text-faint: #8b8278;
+  --rh-theme-control: #211f1c;
+  --rh-theme-control-text: #ffffff;
+  --rh-theme-brand-wash: #f4eee9;
+  --rh-theme-shadow: 0 12px 34px rgba(45, 37, 28, 0.05);
+}
+
+html[data-rh-theme="dark"] {
+  color-scheme: dark;
+  --rh-theme-canvas: #151412;
+  --rh-theme-surface: #1c1a18;
+  --rh-theme-surface-soft: #23211e;
+  --rh-theme-surface-raised: #292620;
+  --rh-theme-line: #2f2c28;
+  --rh-theme-line-strong: #3b3732;
+  --rh-theme-text: #f6f1ea;
+  --rh-theme-text-soft: #d6cec4;
+  --rh-theme-text-muted: #b8b0a5;
+  --rh-theme-text-faint: #91897f;
+  --rh-theme-control: #23211e;
+  --rh-theme-control-text: #f6f1ea;
+  --rh-theme-brand-wash: #2a2020;
+  --rh-theme-shadow: 0 16px 44px rgba(0, 0, 0, 0.22);
+  background: var(--rh-theme-canvas);
+}
+
+html[data-rh-theme="dark"] body,
+html[data-rh-theme="dark"] #root {
+  background: var(--rh-theme-canvas);
+  color: var(--rh-theme-text);
+}
+
+/* Public architectural token bridge. Existing premium CSS continues to own
+ * component design; these values simply replace the light material palette. */
+html[data-rh-theme="dark"] #root > .min-h-screen.bg-white.text-zinc-950 {
+  --rh-canvas: var(--rh-theme-canvas);
+  --rh-surface: var(--rh-theme-surface);
+  --rh-surface-soft: var(--rh-theme-surface-soft);
+  --rh-surface-muted: var(--rh-theme-surface-raised);
+  --rh-ink: var(--rh-theme-text);
+  --rh-ink-soft: var(--rh-theme-text-soft);
+  --rh-muted: var(--rh-theme-text-muted);
+  --rh-faint: var(--rh-theme-text-faint);
+  --rh-line: var(--rh-theme-line);
+  --rh-line-strong: var(--rh-theme-line-strong);
+  --rh-dark: #11100e;
+  --rh-dark-soft: #1a1816;
+  --rh-dark-line: #37332e;
+  --rh-brand-wash: var(--rh-theme-brand-wash);
+  --rh-shadow-subtle: 0 4px 18px rgba(0, 0, 0, 0.12);
+  --rh-shadow-card: 0 10px 30px rgba(0, 0, 0, 0.18);
+  --rh-shadow-hover: 0 18px 48px rgba(0, 0, 0, 0.26);
+  background: var(--rh-theme-canvas) !important;
+  color: var(--rh-theme-text) !important;
+}
+
+/* Shared surface remapping covers public pages, Admin, login, warnings and
+ * lazy-loaded editors without changing any component markup. */
+html[data-rh-theme="dark"] #root [class~="bg-white"] {
+  background-color: var(--rh-theme-surface) !important;
+}
+
+html[data-rh-theme="dark"] #root [class~="bg-zinc-50"],
+html[data-rh-theme="dark"] #root [class~="bg-[#F8F8F8]"],
+html[data-rh-theme="dark"] #root [class~="bg-[#fbfbfb]"],
+html[data-rh-theme="dark"] #root [class~="bg-[#FAFAFA]"] {
+  background-color: var(--rh-theme-surface-soft) !important;
+}
+
+html[data-rh-theme="dark"] #root [class~="bg-zinc-100"] {
+  background-color: var(--rh-theme-surface-raised) !important;
+}
+
+html[data-rh-theme="dark"] #root [class~="bg-zinc-900"],
+html[data-rh-theme="dark"] #root [class~="bg-[#111111]"] {
+  background-color: #1a1816 !important;
+}
+
+html[data-rh-theme="dark"] #root [class~="bg-[#FFF0F2]"] {
+  background-color: var(--rh-theme-brand-wash) !important;
+}
+
+html[data-rh-theme="dark"] #root [class~="text-zinc-950"],
+html[data-rh-theme="dark"] #root [class~="text-zinc-900"],
+html[data-rh-theme="dark"] #root [class~="text-[#111111]"] {
+  color: var(--rh-theme-text) !important;
+}
+
+html[data-rh-theme="dark"] #root [class~="text-zinc-800"],
+html[data-rh-theme="dark"] #root [class~="text-zinc-700"] {
+  color: var(--rh-theme-text-soft) !important;
+}
+
+html[data-rh-theme="dark"] #root [class~="text-zinc-600"] {
+  color: #c1b8ae !important;
+}
+
+html[data-rh-theme="dark"] #root [class~="text-zinc-500"] {
+  color: var(--rh-theme-text-muted) !important;
+}
+
+html[data-rh-theme="dark"] #root [class~="text-zinc-400"] {
+  color: var(--rh-theme-text-faint) !important;
+}
+
+html[data-rh-theme="dark"] #root [class~="text-zinc-300"] {
+  color: #cec6bc !important;
+}
+
+html[data-rh-theme="dark"] #root [class~="border-zinc-100"],
+html[data-rh-theme="dark"] #root [class~="border-zinc-100/90"],
+html[data-rh-theme="dark"] #root [class~="divide-zinc-100"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--rh-theme-line) !important;
+}
+
+html[data-rh-theme="dark"] #root [class~="border-zinc-200"],
+html[data-rh-theme="dark"] #root [class~="border-zinc-200/80"],
+html[data-rh-theme="dark"] #root [class~="border-zinc-300"],
+html[data-rh-theme="dark"] #root [class~="border-[#111111]"] {
+  border-color: var(--rh-theme-line-strong) !important;
+}
+
+html[data-rh-theme="dark"] #root [class~="border-gray-200"],
+html[data-rh-theme="dark"] #root [class~="border-gray-100"] {
+  border-color: var(--rh-theme-line) !important;
+}
+
+/* Public glass header, dropdowns and mobile menu become warm graphite. */
+html[data-rh-theme="dark"] #root .min-h-screen.bg-white.text-zinc-950 > nav.sticky {
+  background: rgba(21, 20, 18, 0.94) !important;
+  border-color: rgba(59, 55, 50, 0.9) !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.025), 0 14px 38px rgba(0, 0, 0, 0.22) !important;
+}
+
+html[data-rh-theme="dark"] #root .min-h-screen.bg-white.text-zinc-950 [class*="hover:bg-zinc-50"]:hover,
+html[data-rh-theme="dark"] #root [class*="hover:bg-zinc-50"]:hover {
+  background-color: #292620 !important;
+}
+
+html[data-rh-theme="dark"] #root [class*="hover:border-zinc-200"]:hover,
+html[data-rh-theme="dark"] #root [class*="hover:border-zinc-300"]:hover {
+  border-color: #4a443d !important;
+}
+
+/* Inputs/editors use the same graphite material system in public forms and Admin. */
+html[data-rh-theme="dark"] #root input:not([type="file"]),
+html[data-rh-theme="dark"] #root textarea,
+html[data-rh-theme="dark"] #root select {
+  background-color: var(--rh-theme-surface-soft) !important;
+  border-color: var(--rh-theme-line-strong) !important;
+  color: var(--rh-theme-text) !important;
+  color-scheme: dark;
+}
+
+html[data-rh-theme="dark"] #root input::placeholder,
+html[data-rh-theme="dark"] #root textarea::placeholder {
+  color: var(--rh-theme-text-faint) !important;
+}
+
+html[data-rh-theme="dark"] #root select option {
+  background: var(--rh-theme-surface-soft);
+  color: var(--rh-theme-text);
+}
+
+/* Admin root and login retain every approved layout measurement; only their
+ * cold white canvas is exchanged for the same Rupantar charcoal system. */
+html[data-rh-theme="dark"] #root > [class~="min-h-screen"][class~="bg-[#fbfbfb]"] {
+  background: var(--rh-theme-canvas) !important;
+  color: var(--rh-theme-text) !important;
+}
+
+html[data-rh-theme="dark"] #root > [class~="min-h-screen"][class~="bg-[#fbfbfb]"] > [class~="sticky"] {
+  background: rgba(28, 26, 24, 0.96) !important;
+  border-color: var(--rh-theme-line) !important;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.16);
+}
+
+/* Preserve semantic status colors while removing white islands around them. */
+html[data-rh-theme="dark"] #root [class~="bg-amber-50"] {
+  background-color: #2d2619 !important;
+}
+
+html[data-rh-theme="dark"] #root [class~="bg-green-50"] {
+  background-color: #17251d !important;
+}
+
+html[data-rh-theme="dark"] #root [class~="bg-red-50"] {
+  background-color: #2b191b !important;
+}
+
+/* Theme toggle: same 40px geometry as the existing hamburger, no layout change. */
+.rh-theme-toggle {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  flex: 0 0 40px;
+  border-radius: 9999px;
+  border: 1px solid var(--rh-theme-line-strong);
+  background: var(--rh-theme-control);
+  color: var(--rh-theme-control-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-sizing: border-box;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.09);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease, transform 200ms ease;
+}
+
+.rh-theme-toggle > svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.9;
+}
+
+.rh-theme-toggle:focus-visible {
+  outline: 2px solid #d91131;
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rh-theme-toggle:hover {
+    transform: translateY(-1px);
+  }
+}
+
+/* Portal order keeps the public button directly beside the three-line menu. */
+nav .rh-theme-toggle--public {
+  order: 1;
+}
+
+nav button[aria-label="Open menu"],
+nav button[aria-label="Close menu"] {
+  order: 2;
+}
+
+.rh-theme-toggle--admin {
+  order: 1;
+}
+
+.rh-theme-toggle--login {
+  position: fixed;
+  z-index: 2147483001;
+  top: max(18px, env(safe-area-inset-top));
+  right: max(18px, env(safe-area-inset-right));
+}
+
+html[data-rh-theme="dark"] .rh-theme-toggle {
+  background: #23211e;
+  border-color: #3b3732;
+  color: #f6f1ea;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+}
+
+/* The existing public confirmation portal uses inline light colors. Important
+ * declarations are required here so switching theme never leaves a white flash. */
+html[data-rh-theme="dark"] body > [role="status"] {
+  background: rgba(21, 20, 18, 0.98) !important;
+}
+
+html[data-rh-theme="dark"] body > [role="status"] > div {
+  background: var(--rh-theme-surface) !important;
+  border-color: var(--rh-theme-line-strong) !important;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32) !important;
+}
+
+html[data-rh-theme="dark"] body > [role="status"] p {
+  color: var(--rh-theme-text) !important;
+}
+
+/* Brand Intro remains the exact approved red sequence in both modes. */
+html[data-rh-theme="dark"] .brand-intro,
+html[data-rh-theme="dark"] .brand-intro * {
+  color-scheme: light;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rh-theme-toggle {
+    transition: none;
+  }
+}
