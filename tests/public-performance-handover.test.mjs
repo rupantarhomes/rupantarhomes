@@ -20,7 +20,7 @@ test("first-visit brand intro follows the calm red, reveal, hold, and upward-exi
   const html = await read("../index.html");
   assert.match(intro, /const blankDelay = 400/);
   assert.match(intro, /const revealDuration = reduceMotion \? 0 : 700/);
-  assert.match(intro, /const holdDuration = 1_800/);
+  assert.match(intro, /const holdDuration = 1_300/);
   assert.match(intro, /const exitDuration = reduceMotion \? 40 : 1_000/);
   assert.match(intro, /const exitDelay = blankDelay \+ revealDuration \+ holdDuration/);
   assert.match(intro, /const removeDelay = exitDelay \+ exitDuration/);
