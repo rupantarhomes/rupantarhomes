@@ -25,6 +25,8 @@ test("brand intro is present in the first HTML frame, stays stationary, and exit
   assert.match(html, /html, body \{ margin: 0; background: #ff1a3d; \}/);
   assert.match(html, /rel="preload" as="image" href="\/assets\/rupantar-logo\.jpg" fetchpriority="high"/);
   assert.match(html, /id="brand-intro-bootstrap"[\s\S]*Rupantar Homes[\s\S]*Transforming Spaces Inspiring Lives/);
+  assert.match(html, /#brand-intro-bootstrap\.brand-intro--leaving \{ opacity: 0; \}/);
+  assert.match(html, /#brand-intro-bootstrap\.brand-intro--leaving \.brand-intro__content \{ opacity: 0; filter: blur\(3px\); \}/);
   for (const selector of [".brand-intro__mark-wrap", ".brand-intro__name", ".brand-intro__slogan"]) {
     const rule = css.slice(css.indexOf(`${selector} {`), css.indexOf("}", css.indexOf(`${selector} {`)) + 1);
     assert.match(rule, /opacity: 1/);
