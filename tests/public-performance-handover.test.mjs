@@ -14,11 +14,14 @@ test("critical public origins and first hero asset are warmed from the entry doc
   assert.ok(html.indexOf("/app/public-performance.ts") < html.indexOf("/app/client-entry.tsx"));
 });
 
-test("first-visit brand intro is non-blocking and clears within 500ms", async () => {
+test("first-visit brand intro holds for 1.8 seconds and preserves the approved upward exit", async () => {
   const intro = await read("../app/rupantar/brand-intro.tsx");
-  assert.match(intro, /const revealDelay = reduceMotion \? 80 : 260/);
-  assert.match(intro, /const removeDelay = reduceMotion \? 160 : 480/);
+  const css = await read("../app/globals.css");
+  assert.match(intro, /const revealDelay = 1_800/);
+  assert.match(intro, /const removeDelay = revealDelay \+ \(reduceMotion \? 80 : 260\)/);
   assert.match(intro, /style=\{\{ pointerEvents: "none" \}\}/);
+  assert.match(css, /\.brand-intro--leaving \{[\s\S]*?transform: translateY\(-108%\) scale\(1\.015\)/);
+  assert.match(css, /transform 220ms cubic-bezier\(0\.77, 0, 0\.18, 1\)/);
 });
 
 test("public delivery has one network-aware route warmer and React-owned detail cross-links", async () => {
