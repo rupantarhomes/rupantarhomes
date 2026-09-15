@@ -6,10 +6,6 @@ const transitionMs = 220;
 
 type RupantarTheme = typeof charcoalTheme | typeof lightTheme;
 
-type ThemeDocument = Document & {
-  startViewTransition?: (callback: () => void) => { finished: Promise<void> };
-};
-
 const moonIcon = `
   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path d="M20.2 15.25A8.2 8.2 0 0 1 8.75 3.8a8.65 8.65 0 1 0 11.45 11.45Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -31,8 +27,7 @@ function setThemeColor(theme: RupantarTheme) {
 }
 
 function updateToggle(button: HTMLButtonElement) {
-  const theme = activeTheme();
-  const charcoal = theme === charcoalTheme;
+  const charcoal = activeTheme() === charcoalTheme;
   button.innerHTML = charcoal ? sunIcon : moonIcon;
   button.setAttribute("aria-label", charcoal ? "Switch to light theme" : "Switch to charcoal theme");
   button.setAttribute("title", charcoal ? "Light theme" : "Charcoal theme");
@@ -48,7 +43,7 @@ function persistTheme(theme: RupantarTheme) {
     if (theme === charcoalTheme) window.localStorage.setItem(themeStorageKey, charcoalTheme);
     else window.localStorage.removeItem(themeStorageKey);
   } catch {
-    // A restricted storage context still receives the active theme for this page lifetime.
+    // Restricted storage still receives the active theme for this page lifetime.
   }
 }
 
@@ -86,7 +81,7 @@ function publicThemeHost(): HTMLElement | null {
   return menu?.parentElement ?? null;
 }
 
-function adminThemeHost(): { host: HTMLElement; before: HTMLElement | null } | null {
+function adminThemeHost(): { host: HTMLElement; before: HTMLElement } | null {
   const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>("button"));
   const logout = buttons.find((button) => button.textContent?.trim().includes("Logout"));
   if (!logout?.parentElement) return null;
@@ -124,8 +119,7 @@ function placeToggle(button: HTMLButtonElement) {
 }
 
 export function initRupantarTheme() {
-  const initialTheme = activeTheme();
-  applyTheme(initialTheme, false, false);
+  applyTheme(activeTheme(), false, false);
 
   const button = createToggle();
   let frame = 0;
