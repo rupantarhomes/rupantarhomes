@@ -80,29 +80,57 @@
 }
 
 @media (max-width: 639px) {
-  .rh-social-actions {
-    width: 100%;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .rh-social-actions > a {
+  /* The current Home component predates the semantic helper class. Bind its exact
+   * Connect With Us action row to the same responsive contract without touching
+   * the approved panel structure, colors, spacing or desktop composition. */
+  .rh-social-actions,
+  .min-h-screen.bg-white.text-zinc-950 main > section[class~="py-10"][class~="sm:py-12"] > div > div:last-child {
     width: 100%;
     min-width: 0;
-    padding-left: 10px !important;
-    padding-right: 10px !important;
-    justify-content: center;
-    font-size: 11px !important;
-    gap: 6px !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px !important;
   }
 
+  .rh-social-actions > a,
+  .min-h-screen.bg-white.text-zinc-950 main > section[class~="py-10"][class~="sm:py-12"] > div > div:last-child > a {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    justify-content: center;
+    gap: 5px !important;
+    font-size: 10.5px !important;
+    line-height: 1 !important;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .rh-social-actions > a > svg,
+  .min-h-screen.bg-white.text-zinc-950 main > section[class~="py-10"][class~="sm:py-12"] > div > div:last-child > a > svg,
   .rh-facebook-icon {
-    width: 15px;
-    height: 15px;
+    width: 15px !important;
+    height: 15px !important;
+    min-width: 15px;
+    flex: 0 0 15px;
   }
 
   .rh-footer-social-links {
     gap: 8px;
+  }
+}
+
+/* 320–359px devices do not have enough inner card width for three named pills.
+ * Keep every action fully visible instead of shrinking icons/text into illegibility. */
+@media (max-width: 359px) {
+  .rh-social-actions,
+  .min-h-screen.bg-white.text-zinc-950 main > section[class~="py-10"][class~="sm:py-12"] > div > div:last-child {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rh-social-actions > a:last-child,
+  .min-h-screen.bg-white.text-zinc-950 main > section[class~="py-10"][class~="sm:py-12"] > div > div:last-child > a:last-child {
+    grid-column: 1 / -1;
   }
 }
