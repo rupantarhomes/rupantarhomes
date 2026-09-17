@@ -121,6 +121,30 @@ try {
   assert.equal(await desktopTheme.isVisible(), true, "Desktop lost access to the theme control");
   assert.equal(await desktop.getByRole("button", { name: "Open menu", exact: true }).isVisible(), false, "Desktop unexpectedly exposed the mobile menu");
   assert.equal(await desktop.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, "Desktop charcoal theme introduced horizontal drift");
+
+  const topbar = desktop.locator("#root .min-h-screen > .w-full.bg-black.text-white").first();
+  await topbar.waitFor({ state: "visible" });
+  assert.equal(await topbar.evaluate((node) => getComputedStyle(node).borderBottomWidth), "0px", "Top utility strip red divider returned");
+  const topbarLocation = topbar.getByText("Kathmandu, Nepal", { exact: true });
+  assert.equal(await topbarLocation.evaluate((node) => getComputedStyle(node).color), "rgb(255, 255, 255)", "Dark topbar location is not white");
+  assert.equal(await topbarLocation.evaluate((node) => getComputedStyle(node).opacity), "1", "Dark topbar location is still faded");
+  const topbarPhone = topbar.getByRole("link", { name: "Call Rupantar Homes at +9779745941799", exact: true });
+  assert.equal(await topbarPhone.evaluate((node) => getComputedStyle(node).color), "rgb(255, 255, 255)", "Dark topbar phone is not white");
+  assert.equal(await topbarPhone.locator("svg").evaluate((node) => getComputedStyle(node).color), "rgb(255, 255, 255)", "Dark topbar phone icon is not white");
+
+  const footer = desktop.locator("footer");
+  await footer.scrollIntoViewIfNeeded();
+  const instagram = footer.getByRole("link", { name: "Instagram", exact: true });
+  const tiktok = footer.getByRole("link", { name: "TikTok", exact: true });
+  const facebook = footer.getByRole("link", { name: "Facebook", exact: true });
+  const maps = footer.getByRole("link", { name: "Open Kathmandu, Nepal in Google Maps", exact: true });
+  assert.equal(await instagram.evaluate((node) => getComputedStyle(node).color), "rgb(255, 255, 255)", "Instagram footer icon lost white contrast");
+  assert.equal(await facebook.evaluate((node) => getComputedStyle(node).color), "rgb(255, 255, 255)", "Facebook footer icon lost white contrast");
+  assert.equal(await tiktok.evaluate((node) => getComputedStyle(node).backgroundColor), "rgb(254, 254, 254)", "TikTok footer control is not white");
+  assert.equal(await tiktok.evaluate((node) => getComputedStyle(node).color), "rgb(17, 17, 17)", "TikTok footer icon is not dark on white");
+  assert.equal(await maps.evaluate((node) => getComputedStyle(node).backgroundColor), "rgb(254, 254, 254)", "Google Maps footer control is not white");
+  assert.equal(await maps.evaluate((node) => getComputedStyle(node).color), "rgb(17, 17, 17)", "Google Maps footer text is not dark on white");
+
   await desktopContext.close();
 
   console.log("Brand charcoal theme UX PASS");
