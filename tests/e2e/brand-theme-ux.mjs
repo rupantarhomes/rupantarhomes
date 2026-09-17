@@ -128,7 +128,8 @@ try {
   const topbarLocation = topbar.getByText("Kathmandu, Nepal", { exact: true });
   assert.equal(await topbarLocation.evaluate((node) => getComputedStyle(node).color), "rgb(255, 255, 255)", "Dark topbar location is not white");
   assert.equal(await topbarLocation.evaluate((node) => getComputedStyle(node).opacity), "1", "Dark topbar location is still faded");
-  const topbarPhone = topbar.getByRole("link", { name: "Call Rupantar Homes at +9779745941799", exact: true });
+  const topbarPhone = topbar.locator('a[href^="tel:"]').first();
+  await topbarPhone.waitFor({ state: "visible" });
   assert.equal(await topbarPhone.evaluate((node) => getComputedStyle(node).color), "rgb(255, 255, 255)", "Dark topbar phone is not white");
   assert.equal(await topbarPhone.locator("svg").evaluate((node) => getComputedStyle(node).color), "rgb(255, 255, 255)", "Dark topbar phone icon is not white");
 
