@@ -148,6 +148,31 @@ html[data-rh-theme="dark"] #root .min-h-screen.bg-white.text-zinc-950 > nav.stic
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.025), 0 14px 38px rgba(0, 0, 0, 0.22) !important;
 }
 
+/* The utility strip has no divider in either theme. In charcoal mode its
+ * location, phone text and utility icons stay full white for crisp contrast. */
+#root .min-h-screen.bg-white.text-zinc-950 > .w-full.bg-black.text-white {
+  border-bottom-width: 0 !important;
+  border-bottom-color: transparent !important;
+}
+
+html[data-rh-theme="dark"] #root .min-h-screen.bg-white.text-zinc-950 > .w-full.bg-black.text-white,
+html[data-rh-theme="dark"] #root .min-h-screen.bg-white.text-zinc-950 > .w-full.bg-black.text-white a,
+html[data-rh-theme="dark"] #root .min-h-screen.bg-white.text-zinc-950 > .w-full.bg-black.text-white svg {
+  color: #ffffff !important;
+}
+
+html[data-rh-theme="dark"] #root .min-h-screen.bg-white.text-zinc-950 > .w-full.bg-black.text-white span {
+  opacity: 1 !important;
+}
+
+/* Footer light controls intentionally remain white controls with dark ink.
+ * Keep their contrast out of the global charcoal text remap. */
+html[data-rh-theme="dark"] #root footer a[aria-label="TikTok"],
+html[data-rh-theme="dark"] #root footer a[aria-label^="Open "][aria-label$=" in Google Maps"] {
+  background-color: #fefefe !important;
+  color: #111111 !important;
+}
+
 html[data-rh-theme="dark"] #root .min-h-screen.bg-white.text-zinc-950 [class*="hover:bg-zinc-50"]:hover,
 html[data-rh-theme="dark"] #root [class*="hover:bg-zinc-50"]:hover {
   background-color: #292620 !important;

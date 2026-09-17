@@ -51,3 +51,11 @@ test("charcoal skin changes surfaces only and keeps the approved red brand intro
   assert.match(css, /\.brand-intro,[\s\S]*color-scheme: light/);
   assert.doesNotMatch(css, /filter:\s*(?:invert|brightness)\([^)]*\).*img/i);
 });
+
+test("top utility strip and footer controls keep the approved contrast in charcoal mode", async () => {
+  const css = await read("../app/brand-charcoal-theme.css");
+  assert.match(css, /\.w-full\.bg-black\.text-white\s*\{[\s\S]*border-bottom-width:\s*0\s*!important/);
+  assert.match(css, /\.w-full\.bg-black\.text-white a,[\s\S]*\.w-full\.bg-black\.text-white svg\s*\{[\s\S]*color:\s*#ffffff\s*!important/);
+  assert.match(css, /\.w-full\.bg-black\.text-white span\s*\{[\s\S]*opacity:\s*1\s*!important/);
+  assert.match(css, /footer a\[aria-label="TikTok"\],[\s\S]*aria-label\$=" in Google Maps"\][\s\S]*background-color:\s*#fefefe\s*!important[\s\S]*color:\s*#111111\s*!important/);
+});
