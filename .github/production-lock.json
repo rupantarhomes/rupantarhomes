@@ -2,7 +2,7 @@
   "schema": 1,
   "name": "Rupantar Homes production handover lock",
   "frozen_at": "2026-09-17",
-  "baseline_commit": "1b39dde8aca45be648e9a54e311fca39e0d59be4",
+  "baseline_commit": "1944679a621aac9dab8e7f2cd9025fe954dc0960",
   "instructions": "Production-bearing paths must match these Git object SHAs. To intentionally change production after handover, update only the affected fingerprints in the same reviewed PR after verification and document the new accepted baseline in docs/PRODUCTION-BASELINE.md.",
   "objects": {
     ".cloudflare-deploy-trigger": "b941e05a0ecdaa9c6620b70f73aa28424ccff6b4",
@@ -21,7 +21,7 @@
     "public": "4fa9f1991d8c0edb69eebfaf4fbc87dde08dbd74",
     "scripts": "984a98fc5187cc04bb3a894e6c192b50cb00c7e7",
     "supabase": "27543b4517a14bfb6821014f5ca75356765d647b",
-    "tests": "3f6a2dba2636df4b120aa3400f72a2317f33ea64",
+    "tests": "3d05d89e45adc7a779c1742318c5eba3628c2724",
     "tsconfig.json": "e7a4b1bc1895736832e2af16296bdf5c434591ad",
     "vite.config.ts": "08eaec596555476a7c4a6eff4d26821881747654",
     "worker-configuration.d.ts": "ffd7c212afba76bcbc9211e9a30d866cd320ff14"
